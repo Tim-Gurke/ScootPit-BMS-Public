@@ -1,0 +1,11 @@
+**/build/
+.gradle/
+local.properties
+*.keystore
+*.jks
+*.p12
+*.pfx
+release-signing-private/
+*PRIVAT*
+*.bundle
+*.bundle.enc

@@ -1,0 +1,253 @@
+package de.wortmonster.jbdtrigger;
+
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicReference;
+
+/** Device smoke check: fresh launch, actual rendered measurements, persistence and editors. */
+public class CockpitSmokeTest extends Instrumentation {
+    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+    @Override public void onStart() {
+        Bundle result = new Bundle();
+        try {
+            SharedPreferences prefs=getTargetContext().getSharedPreferences("settings",0);
+            prefs.edit().clear().putString("total_km","123.45").commit();
+            Activity activity=startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            waitForIdleSync();
+            checked(()->{
+                if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS"))throw new AssertionError("App name");
+                if(!contains(activity.getWindow().getDecorView(),"123,45 km"))throw new AssertionError("Saved odometer before readiness");
+                if(prefs.contains("device_address")||!contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Fresh installation must require BMS selection");
+                try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
+                    if(board.tiles.length()!=17||board.tiles.getJSONObject(1).getInt("x")!=6||!board.tiles.getJSONObject(4).getString("background").equals("#64B966"))throw new AssertionError("Screenshot default layout");
+                    if(board.tiles.getJSONObject(4).getInt("w")!=6||board.tiles.getJSONObject(4).getInt("h")!=4||board.tiles.getJSONObject(5).getInt("x")!=6||board.tiles.getJSONObject(5).getInt("y")!=4||board.tiles.getJSONObject(6).getInt("y")!=6)throw new AssertionError("Half-width gauge with stacked power and odometer");
+                    CockpitBoard.validate(board.tiles);
+                    if(!contains(activity.getWindow().getDecorView(),"AN")||!contains(activity.getWindow().getDecorView(),"AUS"))throw new AssertionError("Default readiness labels");
+                }catch(Exception e){throw new RuntimeException(e);}
+                invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()
+                    .putExtra("soc",75).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true)
+                    .putExtra("discharge_enabled",true).putExtra("range_km",24.5).putExtra("speed_kmh",18.2).putExtra("temperatures",new double[]{25,30}).putExtra("max_power_w",980.0)});
+                if(!contains(activity.getWindow().getDecorView(),"BMS-Lastausgang"))throw new AssertionError("No control without readiness");
+                if(!contains(activity.getWindow().getDecorView(),"25,0 °C")||!contains(activity.getWindow().getDecorView(),"30,0 °C"))throw new AssertionError("Independent temperatures");
+                if(!contains(activity.getWindow().getDecorView(),"980 W"))throw new AssertionError("Maximum power");
+                if(!contains(activity.getWindow().getDecorView(),"75 %"))throw new AssertionError("SOC");
+                if(!contains(activity.getWindow().getDecorView(),"24,5 km"))throw new AssertionError("Range");
+            });
+            checked(()->{invoke(activity,"startMonitoring",new Class[0],new Object[0]);if(BmsMonitorService.running)throw new AssertionError("Readiness started without BMS");});
+            checked(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("picker");field.setAccessible(true);BmsPicker picker=(BmsPicker)field.get(activity);for(int i=0;i<20;i++)picker.add(String.format(java.util.Locale.US,"02:00:00:00:01:%02X",i),"JBD-Test "+i,-50-i,true);picker.list.setSelection(19);}catch(Exception e){throw new RuntimeException(e);}});
+            checked(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("picker");field.setAccessible(true);BmsPicker picker=(BmsPicker)field.get(activity);if(picker.list.getAdapter().getCount()!=20||picker.list.getLastVisiblePosition()<19)throw new AssertionError("BMS picker cannot scroll past three candidates");}catch(Exception e){throw new RuntimeException(e);}});
+            sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
+            checked(()->{
+                java.util.concurrent.atomic.AtomicInteger selected=new java.util.concurrent.atomic.AtomicInteger();
+                BmsPicker probe=new BmsPicker(activity,(address,name)->{if(!address.equals("02:00:00:00:00:01"))throw new AssertionError("Probe identity");selected.incrementAndGet();});
+                try{java.lang.reflect.Field busy=BmsPicker.class.getDeclaredField("busy"),candidate=BmsPicker.class.getDeclaredField("checking");busy.setAccessible(true);candidate.setAccessible(true);busy.set(probe,true);candidate.set(probe,new BmsPicker.Candidate("02:00:00:00:00:01","Test-BMS",-50,true));
+                    byte[] frame=new byte[30];frame[0]=(byte)0xdd;frame[1]=3;frame[3]=23;frame[4]=0x13;frame[5]=(byte)0xbf;frame[23]=75;frame[25]=13;frame[29]=0x77;int sum=0;for(int i=2;i<27;i++)sum+=frame[i]&255;int checksum=(-sum)&65535;frame[27]=(byte)(checksum>>8);frame[28]=(byte)checksum;
+                    byte[] corrupt=frame.clone();corrupt[5]++;invoke(probe,"receive",new Class[]{byte[].class},new Object[]{corrupt});
+                    invoke(probe,"receive",new Class[]{byte[].class},new Object[]{java.util.Arrays.copyOfRange(frame,0,20)});if(selected.get()!=0)throw new AssertionError("Partial/corrupt BMS selected");
+                    invoke(probe,"receive",new Class[]{byte[].class},new Object[]{java.util.Arrays.copyOfRange(frame,20,30)});if(selected.get()!=1)throw new AssertionError("Fragmented BMS response not selected");
+                }catch(Exception e){throw new RuntimeException(e);}finally{probe.close();}
+            });
+            checked(()->{
+                invoke(activity,"selectBms",new Class[]{String.class,String.class},new Object[]{"02:00:00:00:00:01","Test-BMS"});
+                if(!prefs.getString("device_address","").equals("02:00:00:00:00:01")||contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Selected BMS not applied");
+            });
+            checked(()->{
+                try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());for(int i=0;i<board.tiles.length();i++){org.json.JSONObject t=board.tiles.getJSONObject(i);if(t.getString("key").equals("soc"))t.put("h",2);if(t.getString("key").equals("ready_start"))t.put("caption","Los geht’s");}prefs.edit().putString("header_name","Mein Joyor").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS")||!contains(activity.getWindow().getDecorView(),"Los geht’s"))throw new AssertionError("Custom header/button labels");
+                org.json.JSONArray rides=new org.json.JSONArray();for(int i=0;i<3;i++)rides.put(new org.json.JSONObject().put("temperature",10+i).put("km",5).put("wh",100));TemperatureHistory.validate(rides);if(Math.abs(TemperatureHistory.estimate(rides,11,15)-20)>.01)throw new AssertionError("Temperature start estimate");if(TemperatureHistory.estimate(rides,30,15)!=15)throw new AssertionError("No unsupported extrapolation");
+                CockpitBoard b=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject top=b.tiles.getJSONObject(0);top.put("h",4);b.push(top);CockpitBoard.validate(b.tiles);if(b.tiles.getJSONObject(2).getInt("y")<4)throw new AssertionError("Automatic displacement");top.put("h",3);b.compact();
+                }catch(Exception e){throw new RuntimeException(e);}
+            });
+            profileCheck(prefs);
+            checked(()->{
+                boolean old=BmsMonitorService.running;
+                try{invoke(activity,"addTile",new Class[]{String.class},new Object[]{"bms_cell_delta"});
+                    TextView heading=findText(activity.getWindow().getDecorView(),"ScootPit BMS");if(heading==null||heading.getCurrentTextColor()!=android.graphics.Color.parseColor("#42A5F5"))throw new AssertionError("Independent header colour");
+                    BmsMonitorService.running=true;long now=System.currentTimeMillis();Intent status=new Intent().putExtra("bms_connected",true).putExtra("bms_at",now).putExtra("bms_values","{\"bms_cell_delta\":\"5 mV\"}").putExtra("bms_times","{\"bms_cell_delta\":"+now+"}");
+                    invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{status});MetricTile tile=findMetric(activity.getWindow().getDecorView(),"bms_cell_delta");
+                    if(!tile.getText().toString().equals("5 mV")||tile.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Optional BMS tile value/freshness");
+                    status.putExtra("bms_times","{\"bms_cell_delta\":"+(now-16000)+"}");invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{status});if(!tile.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Stale optional tile");
+                }finally{BmsMonitorService.running=old;}
+            });
+            storageCheck(prefs);
+            checked(()->{
+                boolean running=BmsMonitorService.running;
+                try{
+                    prefs.edit().putString("tile_background","#64B966").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);
+                    BmsMonitorService.running=true;
+                    Intent fresh=new Intent().putExtra("soc",75).putExtra("range_km",24.5).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true).putExtra("trip_active",true).putExtra("gps_at",System.currentTimeMillis()).putExtra("outside_temperature",15.0).putExtra("weather_at",System.currentTimeMillis());
+                    invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{fresh});
+                    MetricTile soc=findMetric(activity.getWindow().getDecorView(),"soc"),power=findMetric(activity.getWindow().getDecorView(),"power");
+                    if(soc.getContentDescription().toString().contains("nicht aktuell")||power.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Fresh zero is active");
+                    if(tileBackground(soc)!=android.graphics.Color.parseColor("#64B966"))throw new AssertionError("Fresh custom background");
+                    Intent stale=new Intent(fresh).putExtra("bms_at",System.currentTimeMillis()-9000).putExtra("gps_at",System.currentTimeMillis()-6000).putExtra("weather_at",System.currentTimeMillis()-1801000);
+                    invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{stale});
+                    if(!soc.getText().toString().equals("75 %")||!soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Stale reading retained and marked");
+                    int bg=tileBackground(soc);if(android.graphics.Color.red(bg)!=android.graphics.Color.green(bg)||android.graphics.Color.green(bg)!=android.graphics.Color.blue(bg))throw new AssertionError("Inactive custom background remains coloured");
+                    soc.layout(0,0,320,160);Bitmap pixels=Bitmap.createBitmap(320,160,Bitmap.Config.ARGB_8888);soc.draw(new android.graphics.Canvas(pixels));
+                    for(int y=0;y<pixels.getHeight();y++)for(int x=0;x<pixels.getWidth();x++){int p=pixels.getPixel(x,y);if(android.graphics.Color.alpha(p)>0&&(android.graphics.Color.red(p)!=android.graphics.Color.green(p)||android.graphics.Color.green(p)!=android.graphics.Color.blue(p)))throw new AssertionError("Inactive text/bar remains coloured");}pixels.recycle();
+                    if(!findMetric(activity.getWindow().getDecorView(),"speed").getContentDescription().toString().contains("nicht aktuell")||!findMetric(activity.getWindow().getDecorView(),"outside").getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("GPS/weather freshness");
+                    invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{fresh});if(tileBackground(soc)!=android.graphics.Color.parseColor("#64B966")||soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Fresh colour restoration");
+                    BmsMonitorService.running=false;invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{fresh});
+                    if(!soc.getContentDescription().toString().contains("nicht aktuell")||!findMetric(activity.getWindow().getDecorView(),"distance").getContentDescription().toString().contains("nicht aktuell")||findMetric(activity.getWindow().getDecorView(),"total").getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Stopped tracking and odometer");
+                    invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()});if(!soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Missing value");
+                }finally{BmsMonitorService.running=running;prefs.edit().remove("tile_background").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);}
+            });
+            checked(()->invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent().putExtra("soc",75).putExtra("range_km",24.5).putExtra("speed_kmh",18.2).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true).putExtra("temperatures",new double[]{25,30}).putExtra("max_power_w",980.0)}));
+            screenshot("cockpit.png");
+            checked(()->invoke(activity,"editLayout",new Class[0],new Object[0]));
+            screenshot("layout-editor.png");
+            checked(()->{
+                try{java.lang.reflect.Field tiles=MainActivity.class.getDeclaredField("boardTiles");tiles.setAccessible(true);org.json.JSONArray layout=(org.json.JSONArray)tiles.get(activity);CockpitBoard.validate(layout);CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());layout.getJSONObject(1).put("x",0).put("y",board.bottom()).put("w",6).put("h",2);board.requestLayout();}catch(Exception e){throw new RuntimeException(e);}
+            });
+            checked(()->{
+                try{
+                    CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());View overlay=board.getChildAt(3);
+                    float x=overlay.getWidth()-4,y=overlay.getHeight()-4;long time=android.os.SystemClock.uptimeMillis();
+                    android.view.MotionEvent down=android.view.MotionEvent.obtain(time,time,0,x,y,0);overlay.dispatchTouchEvent(down);down.recycle();
+                    android.view.MotionEvent move=android.view.MotionEvent.obtain(time,time+20,2,x+board.getWidth()/12f,y+40*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(move);move.recycle();
+                    android.view.MotionEvent up=android.view.MotionEvent.obtain(time,time+40,1,x+board.getWidth()/12f,y+40*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(up);up.recycle();
+                    if(board.tiles.getJSONObject(1).getInt("w")!=7 || board.tiles.getJSONObject(1).getInt("h")!=3)throw new AssertionError("Visual tile resize");
+                    if(!clickText(activity.getWindow().getDecorView(),"Speichern"))throw new AssertionError("Editor save");CockpitBoard.validate(new org.json.JSONArray(prefs.getString("cockpit_board","")));
+                    org.json.JSONObject snapshot=StorageFolders.install(getTargetContext()).snapshot();if(!snapshot.getJSONObject("settings").getString("total_km").equals("123.45"))throw new AssertionError("Settings snapshot");
+                }catch(Exception e){throw new RuntimeException(e);}
+            });
+            checked(()->{
+                try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("log");field.setAccessible(true);java.util.ArrayDeque<String> log=(java.util.ArrayDeque<String>)field.get(activity);for(int i=0;i<60;i++)log.add("Logeintrag "+i+" – Test der Scrollbarkeit");invoke(activity,"rebuild",new Class[0],new Object[0]);if(!clickText(activity.getWindow().getDecorView(),"Statusdetails / Log ▸"))throw new AssertionError("Log toggle");}catch(Exception e){throw new RuntimeException(e);}
+            });
+            Thread.sleep(200);
+            checked(()->{androidx.core.widget.NestedScrollView log=findLog(activity.getWindow().getDecorView());if(log==null)throw new AssertionError("Log scroll container");log.scrollTo(0,500);if(log.getScrollY()<=0)throw new AssertionError("Log scrolling");});
+            checked(()->{
+                try{
+                    String portrait=prefs.getString("cockpit_board","");
+                    if(!CockpitBoard.load(prefs,"cockpit_board_landscape").toString().equals(portrait))throw new AssertionError("Landscape fallback");
+                    org.json.JSONArray landscape=new org.json.JSONArray(portrait);landscape.getJSONObject(0).put("caption","Querformat-Test");
+                    prefs.edit().putString("cockpit_board_landscape",landscape.toString()).putString("connect_rssi","-85").putString("departure_rssi","-95").commit();
+                    if(!CockpitBoard.load(prefs,"cockpit_board_landscape").getJSONObject(0).getString("caption").equals("Querformat-Test"))throw new AssertionError("Independent landscape");
+                    if(!CockpitBoard.load(prefs).toString().equals(portrait))throw new AssertionError("Landscape overwrote portrait");
+                    StorageFolders.validateValues(StorageFolders.install(getTargetContext()).snapshot().getJSONObject("settings"),false);
+                    invoke(activity,"editLayout",new Class[0],new Object[0]);invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{1});
+                    java.lang.reflect.Field dialogField=MainActivity.class.getDeclaredField("tileDialog");dialogField.setAccessible(true);android.app.AlertDialog dialog=(android.app.AlertDialog)dialogField.get(activity);
+                    View apply=findText(dialog.getWindow().getDecorView(),"Übernehmen"),back=findText(dialog.getWindow().getDecorView(),"Zurück"),remove=findText(dialog.getWindow().getDecorView(),"Entfernen");
+                    if(apply==null||back==null||remove==null||apply.getParent()!=back.getParent()||apply.getParent()!=remove.getParent())throw new AssertionError("Dialog actions not in one row");
+                    org.json.JSONObject tile=((CockpitBoard)findBoard(activity.getWindow().getDecorView())).tiles.getJSONObject(1);
+                    java.util.ArrayList<android.widget.SeekBar> sliders=new java.util.ArrayList<>();findSliders(dialog.getWindow().getDecorView(),sliders);
+                    if(sliders.size()!=2)throw new AssertionError("Opacity controls");sliders.get(0).setProgress(50);sliders.get(1).setProgress(25);apply.performClick();
+                    if(android.graphics.Color.alpha(android.graphics.Color.parseColor(tile.getString("background")))!=128)throw new AssertionError("Tile background alpha");
+                    if(android.graphics.Color.alpha(android.graphics.Color.parseColor(tile.getString("text")))!=191)throw new AssertionError("Tile text alpha");
+                    clickText(activity.getWindow().getDecorView(),"Zurück");
+                }catch(Exception e){throw new RuntimeException(e);}
+            });
+            String saved=prefs.getString("cockpit_board","");
+            checked(()->invoke(activity,"editLayout",new Class[0],new Object[0]));
+            final float[] origin=new float[2];
+            checked(()->{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());View overlay=board.getChildAt(3);origin[0]=overlay.getWidth()/2f;origin[1]=overlay.getHeight()/2f;long t=android.os.SystemClock.uptimeMillis();android.view.MotionEvent down=android.view.MotionEvent.obtain(t,t,0,origin[0],origin[1],0);overlay.dispatchTouchEvent(down);down.recycle();});
+            Thread.sleep(450);
+            checked(()->{try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());View overlay=board.getChildAt(3);int y=board.tiles.getJSONObject(1).getInt("y");long t=android.os.SystemClock.uptimeMillis();float x=origin[0]+board.getWidth()/12f,yy=origin[1]+40*getTargetContext().getResources().getDisplayMetrics().density;android.view.MotionEvent move=android.view.MotionEvent.obtain(t,t,2,x,yy,0);overlay.dispatchTouchEvent(move);move.recycle();android.view.MotionEvent up=android.view.MotionEvent.obtain(t,t+20,1,x,yy,0);overlay.dispatchTouchEvent(up);up.recycle();if(board.tiles.getJSONObject(1).getInt("x")!=1||board.tiles.getJSONObject(1).getInt("y")!=y+1)throw new AssertionError("Visual tile drag");if(!clickText(activity.getWindow().getDecorView(),"Zurück"))throw new AssertionError("Editor cancel");if(!prefs.getString("cockpit_board","").equals(saved))throw new AssertionError("Cancel changed saved layout");CockpitBoard restored=(CockpitBoard)findBoard(activity.getWindow().getDecorView());if(restored.tiles.getJSONObject(1).getInt("x")!=0)throw new AssertionError("Cancel did not restore layout");}catch(Exception e){throw new RuntimeException(e);}});
+            checked(()->invoke(activity,"startMonitoring",new Class[0],new Object[0]));
+            Thread.sleep(1200);
+            if(!BmsMonitorService.running || BmsMonitorService.latestStatus==null)throw new AssertionError("Readiness service");
+            long stamp=BmsMonitorService.latestStatus.getLongExtra("timestamp",0);
+            getUiAutomation().executeShellCommand("input keyevent 223").close();
+            Thread.sleep(6200);
+            android.os.PowerManager power=getTargetContext().getSystemService(android.os.PowerManager.class);
+            if(power.isInteractive())throw new AssertionError("Screen should be off");
+            if(BmsMonitorService.latestStatus.getLongExtra("timestamp",0)<=stamp)throw new AssertionError("Screen-off readiness heartbeat");
+            getUiAutomation().executeShellCommand("input keyevent 224").close();
+            getUiAutomation().executeShellCommand("wm dismiss-keyguard").close();
+            Thread.sleep(500);
+            checked(()->activity.startActivity(new Intent(activity,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)));
+            if(!BmsMonitorService.running)throw new AssertionError("Cockpit reopening stops readiness");
+            checked(()->invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()
+                .putExtra("bms_connected",true).putExtra("bms_at",System.currentTimeMillis()).putExtra("discharge_enabled",true)}));
+            screenshot("cockpit-controls.png");
+            checked(()->activity.stopService(new Intent(activity,BmsMonitorService.class)));
+            Thread.sleep(300);
+            if(BmsMonitorService.running)throw new AssertionError("Readiness stop");
+            checked(()->{invoke(activity,"editLayout",new Class[0],new Object[0]);try{((CockpitBoard)findBoard(activity.getWindow().getDecorView())).tiles.getJSONObject(0).put("caption","Portrait draft");}catch(Exception e){throw new RuntimeException(e);}});
+            android.app.Instrumentation.ActivityMonitor rotation=addMonitor(MainActivity.class.getName(),null,false);
+            checked(()->activity.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            Activity landscape=rotation.waitForActivityWithTimeout(10000);if(landscape==null)throw new AssertionError("Landscape recreation");waitForIdleSync();
+            checked(()->{if(!contains(landscape.getWindow().getDecorView(),"Layout: Querformat · Kachel lange drücken und ziehen · unten rechts Größe ziehen · antippen für Inhalt/Farbe."))throw new AssertionError("Landscape editor lost");try{((CockpitBoard)findBoard(landscape.getWindow().getDecorView())).tiles.getJSONObject(0).put("caption","Landscape draft");}catch(Exception e){throw new RuntimeException(e);}});
+            checked(()->landscape.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            Activity portrait=rotation.waitForActivityWithTimeout(10000);if(portrait==null)throw new AssertionError("Portrait recreation");waitForIdleSync();removeMonitor(rotation);
+            checked(()->{try{if(!((CockpitBoard)findBoard(portrait.getWindow().getDecorView())).tiles.getJSONObject(0).getString("caption").equals("Portrait draft"))throw new AssertionError("Portrait draft lost on rotation");if(!clickText(portrait.getWindow().getDecorView(),"Speichern"))throw new AssertionError("Save orientation drafts");if(!new org.json.JSONArray(prefs.getString("cockpit_board_landscape","")).getJSONObject(0).getString("caption").equals("Landscape draft"))throw new AssertionError("Landscape draft lost on save");}catch(Exception e){throw new RuntimeException(e);}});
+            result.putString("stream","Cockpit launch, battery/range display, persisted odometer layout editor and screen-off readiness: OK\n");
+            finish(Activity.RESULT_OK,result);
+        } catch(Throwable e){result.putString("stream", "FAIL: "+android.util.Log.getStackTraceString(e));finish(Activity.RESULT_CANCELED,result);}
+    }
+    private void profileCheck(SharedPreferences prefs)throws Exception{
+        String first=prefs.getString(ScooterProfiles.ACTIVE,"");String board=CockpitBoard.defaults().toString();
+        prefs.edit().putString("total_km","123.45").putString("header_color","#42A5F5").putString("temp1_label","BMS (vermutet)").putString("cockpit_board",board).putString("temperature_history","[]").putLong("last_started_at",123456).putString("trips_tree","content://first").commit();
+        ScooterProfiles.add(prefs,"Zweiter Scooter",true);String second=prefs.getString(ScooterProfiles.ACTIVE,"");
+        if(prefs.contains("device_address")||prefs.contains("total_km")||prefs.contains("last_started_at")||prefs.contains("trips_tree"))throw new AssertionError("Copied profile retained scooter identity/history");
+        if(!prefs.getString("header_color","").equals("#42A5F5")||!prefs.getString("cockpit_board","").equals(board))throw new AssertionError("Copied profile lost design");
+        prefs.edit().putString("total_km","7").putString("device_address","02:00:00:00:00:02").commit();
+        ScooterProfiles.switchTo(prefs,first);
+        if(!prefs.getString("total_km","").equals("123.45")||!prefs.getString("device_address","").equals("02:00:00:00:00:01")||prefs.getLong("last_started_at",0)!=123456||!prefs.getString("trips_tree","").equals("content://first"))throw new AssertionError("Profile restore mixed scooter data");
+        boolean old=BmsMonitorService.running;BmsMonitorService.running=true;boolean blocked=false;try{ScooterProfiles.switchTo(prefs,second);}catch(Exception expected){blocked=true;}finally{BmsMonitorService.running=old;}if(!blocked)throw new AssertionError("Profile switch during readiness");
+        prefs.edit().remove("trips_tree").remove("last_started_at").remove("temp1_label").commit();
+        StorageFolders.validateProfiles(ScooterProfiles.export(prefs),first);
+        org.json.JSONArray invalid=ScooterProfiles.export(prefs);invalid.getJSONObject(1).put("id",first);boolean rejected=false;try{StorageFolders.validateProfiles(invalid,first);}catch(Exception expected){rejected=true;}if(!rejected)throw new AssertionError("Duplicate profile id accepted");
+    }
+    private void storageCheck(SharedPreferences prefs)throws Exception{
+        StorageFolders storage=StorageFolders.install(getTargetContext());String tree="content://de.wortmonster.jbdtrigger.test.documents/tree/root";
+        getTargetContext().startActivity(new Intent().setComponent(new android.content.ComponentName(getContext(),TestGrantActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Thread.sleep(1000);
+        getTargetContext().getContentResolver().takePersistableUriPermission(android.net.Uri.parse(tree),Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        storage.choose(StorageFolders.SETTINGS,tree,false);
+        android.net.Uri uri=StorageFolders.document(getTargetContext(),tree,StorageFolders.NAME,false,"application/json");
+        if(uri==null)throw new AssertionError("SAF settings snapshot missing");
+        org.json.JSONObject document=new org.json.JSONObject(StorageFolders.read(getTargetContext(),uri));
+        if(!document.getJSONObject("settings").getString("header_name").equals("Mein Joyor"))throw new AssertionError("Header stored in settings");
+        if(!document.getJSONObject("settings").getString("total_km").equals("123.45"))throw new AssertionError("SAF settings write");
+        if(document.getInt("version")!=2||document.getJSONArray("profiles").length()!=2)throw new AssertionError("Multi-scooter backup");
+        String savedLayout=document.getJSONObject("settings").getString("cockpit_board");CockpitBoard.validate(new org.json.JSONArray(savedLayout));
+        prefs.edit().putString("total_km","987.65").putString("cockpit_board","[]").commit();storage.importSettings(tree);
+        if(!prefs.getString("total_km","").equals("123.45"))throw new AssertionError("SAF import");
+        if(!prefs.getString("cockpit_board","").equals(savedLayout))throw new AssertionError("SAF layout import");
+        document.put("version",99);StorageFolders.write(getTargetContext(),uri,document.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        boolean rejected=false;try{storage.importSettings(tree);}catch(Exception e){rejected=true;}
+        if(!rejected||!prefs.getString("total_km","").equals("123.45"))throw new AssertionError("Invalid import should preserve settings");
+        StorageFolders.write(getTargetContext(),uri,storage.snapshot().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        File trip=new File(getTargetContext().getFilesDir(),"test-trip.csv");try(FileOutputStream output=new FileOutputStream(trip)){output.write("trip;980".getBytes(java.nio.charset.StandardCharsets.UTF_8));}
+        String bad="content://de.wortmonster.jbdtrigger.test.documents/tree/readonly";
+        storage.exportTrip(bad,trip);Thread.sleep(500);
+        if(!trip.isFile()||new org.json.JSONArray(prefs.getString("pending_exports","[]")).length()!=1)throw new AssertionError("Failed export must retain local file and retry job");
+        // Retarget this test job to a writable tree, then retry the actual persisted queue.
+        org.json.JSONArray jobs=new org.json.JSONArray(prefs.getString("pending_exports","[]"));jobs.getJSONObject(0).put("tree",tree);prefs.edit().putString("pending_exports",jobs.toString()).commit();storage.retry();
+        if(new org.json.JSONArray(prefs.getString("pending_exports","[]")).length()!=0)throw new AssertionError("Retry queue not cleared");
+        android.net.Uri copied=StorageFolders.document(getTargetContext(),tree,"test-trip.csv",false,"text/csv");if(copied==null||!StorageFolders.read(getTargetContext(),copied).equals("trip;980"))throw new AssertionError("SAF trip copy");
+        prefs.edit().remove(StorageFolders.SETTINGS).apply();
+    }
+    private static TextView findText(View view,String text){if(view instanceof TextView&&((TextView)view).getText().toString().equals(text))return (TextView)view;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){TextView found=findText(group.getChildAt(i),text);if(found!=null)return found;}}return null;}
+    private static MetricTile findMetric(View v,String key){if(v instanceof MetricTile && ((MetricTile)v).key.equals(key))return (MetricTile)v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){MetricTile found=findMetric(g.getChildAt(i),key);if(found!=null)return found;}}return null;}
+    private static int tileBackground(MetricTile tile){return ((android.graphics.drawable.GradientDrawable)((View)tile.getParent()).getBackground()).getColor().getDefaultColor();}
+    private void checked(Runnable task) throws Throwable {
+        AtomicReference<Throwable> error=new AtomicReference<>();
+        runOnMainSync(()->{try{task.run();}catch(Throwable t){error.set(t);}});
+        if(error.get()!=null)throw error.get();waitForIdleSync();
+    }
+    private static void invoke(Object target,String name,Class[] types,Object[] args){try{Method m=target.getClass().getDeclaredMethod(name,types);m.setAccessible(true);m.invoke(target,args);}catch(Exception e){throw new RuntimeException(e);}}
+    private static void findSliders(View view,java.util.List<android.widget.SeekBar> result){if(view instanceof android.widget.SeekBar)result.add((android.widget.SeekBar)view);if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)findSliders(((ViewGroup)view).getChildAt(i),result);}
+    private static androidx.core.widget.NestedScrollView findLog(View v){if(v instanceof androidx.core.widget.NestedScrollView)return (androidx.core.widget.NestedScrollView)v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){androidx.core.widget.NestedScrollView found=findLog(g.getChildAt(i));if(found!=null)return found;}}return null;}
+    private static View findBoard(View view){if(view instanceof CockpitBoard)return view;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++){View found=findBoard(g.getChildAt(i));if(found!=null)return found;}}return null;}
+    private static boolean clickText(View view,String text){if(view instanceof TextView && text.contentEquals(((TextView)view).getText()))return view.performClick();if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++)if(clickText(g.getChildAt(i),text))return true;}return false;}
+    private static boolean contains(View view,String text){if(view instanceof TextView && text.contentEquals(((TextView)view).getText()))return true;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++)if(contains(g.getChildAt(i),text))return true;}return false;}
+    private void screenshot(String name)throws Exception {
+        // Wait only for the compositor after the UI thread has become idle.
+        Thread.sleep(300);
+        Bitmap bitmap=getUiAutomation().takeScreenshot();
+        File dir=new File(getTargetContext().getExternalFilesDir(null),"screenshots");dir.mkdirs();
+        try(FileOutputStream out=new FileOutputStream(new File(dir,name))){bitmap.compress(Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();
+    }
+}

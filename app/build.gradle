@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'de.wortmonster.jbdtrigger'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'de.wortmonster.jbdtrigger'
+        minSdk 26
+        targetSdk 35
+        versionCode 11
+        versionName '6.2'
+        testInstrumentationRunner 'de.wortmonster.jbdtrigger.CockpitSmokeTest'
+    }
+    def signingFile = System.getenv('APP_KEYSTORE_FILE')
+    if (signingFile && file(signingFile).isFile()) {
+        signingConfigs {
+            release {
+                storeFile file(signingFile)
+                storePassword System.getenv('APP_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('APP_KEY_ALIAS')
+                keyPassword System.getenv('APP_KEY_PASSWORD')
+            }
+        }
+        buildTypes { release { signingConfig signingConfigs.release } }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+}
