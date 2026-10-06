@@ -1,0 +1,53 @@
+name: Repository privacy check
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check commit identities and historical files
+        run: |
+          python3 - <<'PYTHON'
+          import subprocess, re, json
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          commits = git('rev-list', '--all').decode().splitlines()
+          blobs = set()
+          forbidden = []
+          for commit in commits:
+              identities = git('show', '-s', '--format=%ae%n%ce', commit).decode().splitlines()
+              if any(not (e.endswith('@users.noreply.github.com') or e == 'noreply@github.com') for e in identities):
+                  forbidden.append('Non-private commit identity')
+              for entry in git('ls-tree', '-r', '-z', commit).split(b'\0'):
+                  if not entry:
+                      continue
+                  meta, path = entry.split(b'\t', 1)
+                  mode, kind, sha = meta.decode().split()
+                  name = path.decode()
+                  if name.lower().endswith(('.p12', '.pfx', '.jks', '.keystore', '.gpx', '.bundle', '.bundle.enc')) or 'docs/screenshots/' in name or 'PRIVAT' in name:
+                      forbidden.append('Private file type in history')
+                  if kind == 'blob':
+                      blobs.add(sha)
+          for sha in blobs:
+              content = git('cat-file', 'blob', sha)
+              if b'-----BEGIN PRIVATE KEY-----' in content or b'-----BEGIN RSA PRIVATE KEY-----' in content:
+                  forbidden.append('Private key material')
+              text = content.decode('utf-8', errors='replace')
+              for mac in re.findall(r'(?i)\b(?:[0-9a-f]{2}:){5}[0-9a-f]{2}\b', text):
+                  if mac.upper() not in ['02:00:00:00:00:01', '02:00:00:00:00:02', 'AA:BB:CC:DD:EE:FF']:
+                      forbidden.append('Non-example Bluetooth address')
+              for email in re.findall(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', text):
+                  if not (email.endswith('@users.noreply.github.com') or email == 'noreply@github.com'):
+                      forbidden.append('Non-example email address')
+          report = {'commits_checked': len(commits), 'historical_blobs_checked': len(blobs), 'issues': sorted(set(forbidden))}
+          print(json.dumps(report, indent=2))
+          if forbidden:
+              raise SystemExit('Repository privacy check failed')
+          PYTHON
