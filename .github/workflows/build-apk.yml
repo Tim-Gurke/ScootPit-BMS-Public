@@ -1,0 +1,94 @@
+name: Build ScootPit BMS APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+      - name: Install Android SDK 35
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Test and build APK
+        run: |
+          javac -d /tmp/joyor-tests app/src/main/java/de/wortmonster/jbdtrigger/BmsPacket.java app/src/main/java/de/wortmonster/jbdtrigger/BmsExtras.java app/src/main/java/de/wortmonster/jbdtrigger/JbdControl.java app/src/main/java/de/wortmonster/jbdtrigger/RangeEstimator.java app/src/main/java/de/wortmonster/jbdtrigger/RecentConsumption.java app/src/main/java/de/wortmonster/jbdtrigger/GridPacking.java app/src/main/java/de/wortmonster/jbdtrigger/GpsPlausibility.java app/src/main/java/de/wortmonster/jbdtrigger/ConnectionPolicy.java tests/*.java
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.JbdControlTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.BmsExtrasTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.BmsPacketTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.RangeEstimatorTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.RecentConsumptionTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.ConnectionPolicyTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.GpsPlausibilityTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.GridPackingTest
+          gradle assembleDebug lintDebug
+      - name: Android analysis report
+        if: always()
+        run: |
+          if [ -f app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt ]; then
+            cat app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          fi
+      - name: Select signing mode
+        id: signing
+        env:
+          APP_KEYSTORE_BASE64: ${{ secrets.APP_KEYSTORE_BASE64 }}
+          APP_KEYSTORE_PASSWORD: ${{ secrets.APP_KEYSTORE_PASSWORD }}
+          APP_KEY_ALIAS: ${{ secrets.APP_KEY_ALIAS }}
+          APP_KEY_PASSWORD: ${{ secrets.APP_KEY_PASSWORD }}
+        run: |
+          python3 - <<'PYTHON'
+          import os, base64
+          from pathlib import Path
+          keys = ['APP_KEYSTORE_BASE64', 'APP_KEYSTORE_PASSWORD', 'APP_KEY_ALIAS', 'APP_KEY_PASSWORD']
+          present = [bool(os.environ.get(k)) for k in keys]
+          if any(present) and not all(present):
+              raise SystemExit('Signing configuration incomplete: provide all four APP signing secrets.')
+          signed = all(present)
+          if signed:
+              path = Path(os.environ['RUNNER_TEMP']) / 'scootpit-release.keystore'
+              path.write_bytes(base64.b64decode(os.environ['APP_KEYSTORE_BASE64'], validate=True))
+              path.chmod(0o600)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('signed=' + str(signed).lower() + '\n')
+          PYTHON
+      - name: Build signed release APK
+        if: steps.signing.outputs.signed == 'true'
+        env:
+          APP_KEYSTORE_FILE: ${{ runner.temp }}/scootpit-release.keystore
+          APP_KEYSTORE_PASSWORD: ${{ secrets.APP_KEYSTORE_PASSWORD }}
+          APP_KEY_ALIAS: ${{ secrets.APP_KEY_ALIAS }}
+          APP_KEY_PASSWORD: ${{ secrets.APP_KEY_PASSWORD }}
+        run: gradle assembleRelease
+      - name: Prepare APK artifact
+        env:
+          SIGNED: ${{ steps.signing.outputs.signed }}
+        run: |
+          mkdir -p dist
+          if [ "$SIGNED" = "true" ]; then
+            cp app/build/outputs/apk/release/app-release.apk dist/ScootPit-BMS.apk
+            echo 'signed-release' > dist/signing-mode.txt
+          else
+            cp app/build/outputs/apk/debug/app-debug.apk dist/ScootPit-BMS.apk
+            echo 'temporary-debug' > dist/signing-mode.txt
+          fi
+      - name: Remove temporary signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/scootpit-release.keystore"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ScootPit-BMS-APK
+          path: dist/
+
