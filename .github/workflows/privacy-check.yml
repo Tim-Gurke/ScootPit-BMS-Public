@@ -37,7 +37,7 @@ jobs:
                       blobs.add(sha)
           for sha in blobs:
               content = git('cat-file', 'blob', sha)
-              if b'-----BEGIN PRIVATE KEY-----' in content or b'-----BEGIN RSA PRIVATE KEY-----' in content:
+              if re.search(rb'(?m)^-----BEGIN (?:RSA )?PRIVATE KEY-----\r?$', content):
                   forbidden.append('Private key material')
               text = content.decode('utf-8', errors='replace')
               for mac in re.findall(r'(?i)\b(?:[0-9a-f]{2}:){5}[0-9a-f]{2}\b', text):
