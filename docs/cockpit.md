@@ -1,5 +1,7 @@
 # Cockpit, Layout und Messwerte
 
+Ab Version 6.3.1 bleiben Appkopf und Bedienelemente außerhalb von Statusleiste, Navigationsleiste und Kameraausschnitten. Das gilt auch unter Android 15 und bei gedrehtem Bildschirm.
+
 [← Übersicht](../README.md)
 
 ## Cockpit und visueller Editor
