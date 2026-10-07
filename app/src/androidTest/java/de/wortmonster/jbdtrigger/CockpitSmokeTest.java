@@ -79,6 +79,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 }catch(Exception e){throw new RuntimeException(e);}
             });
             profileCheck(prefs);
+            officialVersionCheck(activity,prefs);
             checked(()->{
                 boolean old=BmsMonitorService.running;
                 try{invoke(activity,"addTile",new Class[]{String.class},new Object[]{"bms_cell_delta"});
@@ -100,7 +101,7 @@ public class CockpitSmokeTest extends Instrumentation {
                     MetricTile soc=findMetric(activity.getWindow().getDecorView(),"soc"),power=findMetric(activity.getWindow().getDecorView(),"power");
                     if(soc.getContentDescription().toString().contains("nicht aktuell")||power.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Fresh zero is active");
                     if(tileBackground(soc)!=android.graphics.Color.parseColor("#64B966"))throw new AssertionError("Fresh custom background");
-                    Intent stale=new Intent(fresh).putExtra("bms_at",System.currentTimeMillis()-9000).putExtra("gps_at",System.currentTimeMillis()-6000).putExtra("weather_at",System.currentTimeMillis()-1801000);
+                    Intent stale=new Intent(fresh).putExtra("bms_at",System.currentTimeMillis()-9000).putExtra("gps_at",System.currentTimeMillis()-9000).putExtra("weather_at",System.currentTimeMillis()-1801000);
                     invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{stale});
                     if(!soc.getText().toString().equals("75 %")||!soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Stale reading retained and marked");
                     int bg=tileBackground(soc);if(android.graphics.Color.red(bg)!=android.graphics.Color.green(bg)||android.graphics.Color.green(bg)!=android.graphics.Color.blue(bg))throw new AssertionError("Inactive custom background remains coloured");
@@ -167,6 +168,7 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->invoke(activity,"startMonitoring",new Class[0],new Object[0]));
             Thread.sleep(1200);
             if(!BmsMonitorService.running || BmsMonitorService.latestStatus==null)throw new AssertionError("Readiness service");
+            coastingAndStopCheck(prefs);
             long stamp=BmsMonitorService.latestStatus.getLongExtra("timestamp",0);
             getUiAutomation().executeShellCommand("input keyevent 223").close();
             Thread.sleep(6200);
@@ -209,10 +211,8 @@ public class CockpitSmokeTest extends Instrumentation {
             if(!menu.isShowing())throw new AssertionError("Settings parent was dismissed");
         });
         waitForIdleSync();
-        boolean batteryDefault=false;long deadline=System.currentTimeMillis()+4000;
-        while(System.currentTimeMillis()<deadline){android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
-            if(root!=null&&!root.findAccessibilityNodeInfosByText("20").isEmpty()){batteryDefault=true;break;}if(root!=null)scrollAccessible(root);Thread.sleep(100);}
-        if(!batteryDefault)throw new AssertionError("20 Wh/km battery default");
+        checked(()->{android.app.AlertDialog battery=(android.app.AlertDialog)member(activity,"batteryConfigDialog");
+            if(!battery.isShowing()||!inputAfterLabel(battery.getWindow().getDecorView(),"Startwert Verbrauch (Wh/km)").getText().toString().equals("20"))throw new AssertionError("20 Wh/km battery default");});
         sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
         android.view.accessibility.AccessibilityNodeInfo returned=getUiAutomation().getRootInActiveWindow();
         if(returned==null||returned.findAccessibilityNodeInfosByText("App-Farben").isEmpty())throw new AssertionError("Settings menu not in foreground after back");
@@ -410,6 +410,66 @@ public class CockpitSmokeTest extends Instrumentation {
             });
             if(monitor.getHits()!=1)throw new AssertionError("Battery settings action missing: "+action);
         } finally {removeMonitor(monitor);}
+    }
+    private void coastingAndStopCheck(SharedPreferences prefs)throws Throwable {
+        checked(()->{
+            BmsMonitorService service=BmsMonitorService.liveService;if(service==null)throw new AssertionError("Live service missing");
+            boolean weather=prefs.getBoolean("weather_enabled",true);String total=prefs.getString("total_km","0");
+            long start=System.currentTimeMillis();
+            try{
+                prefs.edit().putBoolean("weather_enabled",false).commit();
+                TripRecorder recorder=new TripRecorder(getTargetContext(),start);
+                setMember(service,"recorder",recorder);setMember(service,"tripStartedAt",start);setMember(service,"lastPacket",start);
+                setMember(service,"active",false);setMember(service,"current",0.0);setMember(service,"lastLocation",null);
+                android.location.Location one=new android.location.Location("gps");one.setLatitude(49);one.setLongitude(8);one.setAccuracy(3);one.setSpeed(3);one.setSpeedAccuracyMetersPerSecond(.3f);one.setTime(start);one.setElapsedRealtimeNanos(android.os.SystemClock.elapsedRealtimeNanos());
+                service.onLocationChanged(one);
+                android.location.Location two=new android.location.Location(one);two.setLatitude(49.000025);two.setSpeed(2);two.setTime(start+1000);two.setElapsedRealtimeNanos(one.getElapsedRealtimeNanos()+1000000000L);
+                service.onLocationChanged(two);
+                Intent status=BmsMonitorService.latestStatus;
+                if(Math.abs(status.getDoubleExtra("speed_kmh",0)-7.2)>.01||status.getDoubleExtra("distance_m",0)<2)throw new AssertionError("Coasting lost speed/distance without current");
+                RideMotion motion=(RideMotion)member(service,"motion");long now=android.os.SystemClock.elapsedRealtime();motion.reset();for(long at=now-45000;at<=now;at+=1000)motion.fix(at,0,true);
+                ((Runnable)member(service,"clock")).run();
+                if(BmsMonitorService.latestStatus.getBooleanExtra("trip_active",true)||!BmsMonitorService.running)throw new AssertionError("Stillstand must finish trip and retain readiness");
+                java.util.List<TripJournal.Ride> rides=TripJournal.list(getTargetContext(),prefs,7);TripJournal.Ride found=null;for(TripJournal.Ride r:rides)if(r.start==start)found=r;
+                if(found==null)throw new AssertionError("Auto-ended ride missing");
+                found.csv.delete();found.gpx.delete();new File(found.csv.getParent(),found.csv.getName().replace(".csv",".json")).delete();
+            }catch(Exception e){throw new RuntimeException(e);}finally{prefs.edit().putBoolean("weather_enabled",weather).putString("total_km",total).apply();}
+        });
+    }
+    private static void setMember(Object target,String name,Object value)throws Exception{java.lang.reflect.Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);f.set(target,value);}
+    private void officialVersionCheck(Activity activity,SharedPreferences prefs)throws Throwable {
+        SharedPreferences test=getTargetContext().getSharedPreferences("v100-test",0);test.edit().clear().commit();
+        checked(()->{
+            try{
+                ScooterProfiles.install(test);test.edit().putString("device_address","02:00:00:00:02:01").putString("routine_start_title","Tour beginnt").commit();
+                String first=test.getString(ScooterProfiles.ACTIVE,"");DistanceCounters.add(test,1200,System.currentTimeMillis());
+                if(Math.abs(DistanceCounters.daily(test,System.currentTimeMillis())-1.2)>.001||DistanceCounters.number(test,"tour_km")!=1.2)throw new AssertionError("Independent counters");
+                if(DistanceCounters.daily(test,System.currentTimeMillis()+2*86400000L)!=0)throw new AssertionError("Day counter reset");
+                ScooterProfiles.add(test,"Zweiter Scooter",true);test.edit().putString("device_address","02:00:00:00:02:02").commit();
+                if(DistanceCounters.number(test,"tour_km")!=0||DistanceCounters.number(test,"daily_km")!=0)throw new AssertionError("Copied distances");
+                boolean old=BmsMonitorService.running;BmsMonitorService.running=true;
+                try{ScooterProfiles.switchForService(test,first);}finally{BmsMonitorService.running=old;}
+                if(DistanceCounters.number(test,"tour_km")!=1.2||!test.getString("routine_start_title","").equals("Tour beginnt"))throw new AssertionError("Automatic profile restore");
+                if(ScooterProfiles.knownBms(test).size()!=2)throw new AssertionError("Known BMS selection");
+                ScooterProfiles.add(test,"Doppelte Adresse",false);test.edit().putString("device_address","02:00:00:00:02:01").commit();
+                if(ScooterProfiles.knownBms(test).containsKey("02:00:00:00:02:01"))throw new AssertionError("Ambiguous identity allowed");
+                test.edit().putString("daily_day",DistanceCounters.day(System.currentTimeMillis())).putString("journal_stats","[\"speed_chart\"]").commit();
+                StorageFolders.validateProfiles(ScooterProfiles.export(test),test.getString(ScooterProfiles.ACTIVE,""));
+                if(!contains(activity.getWindow().getDecorView(),"Fahrtenbuch · Karte und Statistiken"))throw new AssertionError("Journal entry missing");
+                long start=System.currentTimeMillis()-10000;TripRecorder recorder=new TripRecorder(getTargetContext(),start);
+                android.location.Location one=new android.location.Location("gps");one.setLatitude(49);one.setLongitude(8);one.setAccuracy(3);one.setSpeed(3);one.setAltitude(100);one.setTime(start);
+                recorder.add(one,80,48,-2,96,0,96,20,new double[]{25,30});
+                android.location.Location two=new android.location.Location(one);two.setLatitude(49.001);two.setTime(start+1000);two.setSpeed(4);
+                recorder.add(two,80,48,-2,96,.026,96,20,new double[]{25,30});
+                TripRecorder.Summary summary=recorder.finish(start+2000,111,14.4,0,.026,96,20,25,30,2000,0);
+                TripJournal.Ride found=null;for(TripJournal.Ride ride:TripJournal.list(getTargetContext(),prefs,7))if(ride.start==start)found=ride;
+                if(found==null)throw new AssertionError("Saved ride not listed");TripJournal.loadPoints(found);
+                if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
+                summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
+                String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
+                if(!"1.0.0".equals(version))throw new AssertionError("Official version");
+            }catch(Exception e){throw new RuntimeException(e);}
+        });test.edit().clear().commit();
     }
     private static void invoke(Object target,String name,Class[] types,Object[] args){try{Method m=target.getClass().getDeclaredMethod(name,types);m.setAccessible(true);m.invoke(target,args);}catch(Exception e){throw new RuntimeException(e);}}
     private static void findSliders(View view,java.util.List<android.widget.SeekBar> result){if(view instanceof android.widget.SeekBar)result.add((android.widget.SeekBar)view);if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)findSliders(((ViewGroup)view).getChildAt(i),result);}
