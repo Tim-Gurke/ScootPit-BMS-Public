@@ -30,6 +30,9 @@ import android.view.View;
 import android.widget.*;
 import androidx.core.content.FileProvider;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
@@ -72,6 +75,7 @@ public class MainActivity extends Activity {
     private JSONArray loadBoard(){return CockpitBoard.load(prefs,boardKey());}
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
         prefs=getSharedPreferences("settings",MODE_PRIVATE);
         ScooterProfiles.install(prefs);
         boardTiles=loadBoard();
@@ -133,7 +137,13 @@ public class MainActivity extends Activity {
             add.setOnClickListener(v->addTileMenu());
         }
         dashboard=column();root.addView(dashboard);buildTiles();
-        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.addView(root);setContentView(scroll);
+        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(true);scroll.setBackgroundColor(color(prefs.getString("app_background","#0C1014"),0xff0c1014));scroll.addView(root);
+        ViewCompat.setOnApplyWindowInsetsListener(scroll,(view,insets)->{
+            androidx.core.graphics.Insets safe=insets.getInsets(WindowInsetsCompat.Type.systemBars()|WindowInsetsCompat.Type.displayCutout());
+            view.setPadding(safe.left,safe.top,safe.right,safe.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+        setContentView(scroll);ViewCompat.requestApplyInsets(scroll);
         if(lastStatus!=null)renderStatus(lastStatus);
         else renderStatus(new Intent().putExtra("outside_temperature",prefs.getBoolean("weather_enabled",true)&&prefs.contains("outside_temperature")?numberPref("outside_temperature"):Double.NaN).putExtra("weather_at",prefs.getLong("weather_at",0)));
     }
