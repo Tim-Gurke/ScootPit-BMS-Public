@@ -4,7 +4,13 @@
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
-Das Highlight von ScootPit BMS ist die **automatische Fahrt-Erkennung**: Du startest einmal die Bereitschaft, und die App erkennt über ein kompatibles Bluetooth-BMS, wann dein Roller Strom entnimmt. Sie startet die Aufzeichnung, berücksichtigt Fahrtpausen und schließt die Fahrt beim bestätigten Entfernen vom Roller ab. Du musst nicht vor jeder Fahrt an einen Start- oder Stoppknopf denken.
+Das Highlight von ScootPit BMS ist die **automatische Verbindung mit deinem Scooter und die automatische Fahrt-Erkennung**. Nach der Einrichtung läuft die Automatik in drei Schritten:
+
+1. **Bereitschaft aktivieren:** Das gewünschte Scooter-Profil auswählen und die Bereitschaft starten. Die App sucht im Hintergrund nach dessen gespeichertem Bluetooth-BMS.
+2. **Zum Scooter gehen:** Sobald das BMS erreichbar ist und der Empfang ausreichend stark und stabil ist, verbindet sich die App automatisch. Du musst die Verbindung nicht von Hand herstellen.
+3. **Losfahren:** ScootPit erkennt die Stromentnahme über das BMS und startet automatisch die Fahrtaufzeichnung, sobald die eingestellten Startbedingungen erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
+
+Fahrtpausen werden berücksichtigt; beim bestätigten Entfernen vom Roller wird die Fahrt abgeschlossen. Solange die Bereitschaft aktiv bleibt, musst du nicht vor jeder Fahrt an einen Start- oder Stoppknopf denken.
 
 **Die Aufzeichnung läuft auch mit ausgeschaltetem Bildschirm und gesperrtem Handy in der Hosentasche.** Bluetooth und Standort bleiben aktiv; Berechtigungen und Hintergrundbetrieb müssen eingerichtet sein. So entsteht dein Fahrtenbuch im Alltag, während du dich auf die Fahrt konzentrierst.
 
@@ -17,7 +23,7 @@ Wenn du das Handy am Lenker nutzt, wird ScootPit zusätzlich zum **persönlichen
 - **Restreichweite besser einschätzen:** Die Schätzung berücksichtigt Akkureserve und Verbrauch. Während der Fahrt fließt der aktuelle Verbrauch ein; passende frühere Fahrten helfen bei der Startschätzung.
 - **Das Cockpit selbst gestalten:** Kacheln verschieben und vergrößern, Zahlen, Balken oder Rundinstrumente wählen sowie Farben, Transparenz und Schriftgrößen anpassen. Separate Hoch- und Querformatlayouts, ein eigenes Rollerfoto und Freitext machen daraus dein persönliches Cockpit.
 - **Fahrten behalten und weiterverwenden:** Das Fahrtenbuch wird lokal gespeichert. GPX-, CSV- und JSON-Dateien lassen sich in einen gewählten Ordner exportieren; GPX und CSV kannst du auch teilen.
-- **Mehrere Scooter und Samsung-Routinen nutzen:** Eigene Profile trennen Roller, Einstellungen und Fahrtdaten. Auf Samsung-Handys können eingerichtete Routinen die Fahrtstart- und Fahrtende-Nachrichten nutzen, um den Energiesparmodus aus- und wieder einzuschalten.
+- **Mehrere Scooter und Samsung-Routinen nutzen:** Eigene Profile trennen Roller, Einstellungen und Fahrtdaten. Vor dem Bereitschaftsstart wählst du das gewünschte Profil; ein automatischer Wechsel zwischen Scootern ist derzeit nicht enthalten. Auf Samsung-Handys können eingerichtete Routinen die Fahrtstart- und Fahrtende-Nachrichten nutzen, um den Energiesparmodus aus- und wieder einzuschalten.
 
 ## Was brauchst du dafür?
 
