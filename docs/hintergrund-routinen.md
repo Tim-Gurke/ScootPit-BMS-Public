@@ -33,6 +33,8 @@ In Samsung **Modi und Routinen → Routinen** zwei Routinen anlegen. Als Wenn-Be
 
 Die Ausnahme von der **Akkuoptimierung für ScootPit** ist eine andere Einstellung als der globale Energiesparmodus. Beides kann den Hintergrundbetrieb beeinflussen; das Verhalten muss auf dem eigenen Handy geprüft werden.
 
+**Einstellungen → Akkuoptimierung** zeigt, ob ScootPit BMS bereits von der Android-Akkuoptimierung ausgenommen ist. Wenn sie noch aktiv ist, öffnet **Freigabe anfragen** den Android-Dialog. Bei vorhandener Ausnahme öffnet **Android-Einstellungen** die Übersicht. **App-Info** führt zu ScootPit BMS in den Systemeinstellungen; dort kannst du zusätzliche Beschränkungen unter **Akku** prüfen. **Zurück** führt wieder ins Einstellungs-Hauptmenü.
+
 Quellen: [Android: privilegierte POWER_SAVER-Berechtigung](https://source.android.com/docs/core/power/routine-battery-saver), [Samsung: Modi und Routinen](https://www.samsung.com/de/support/mobile-devices/modi-und-routinen/).
 
 ## Erstverbindung und laufende Fahrt ab 6.3
