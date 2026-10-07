@@ -31,6 +31,13 @@ public class CockpitSmokeTest extends Instrumentation {
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
                     if(board.tiles.length()!=17||board.tiles.getJSONObject(1).getInt("x")!=8||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
                     if(board.tiles.getJSONObject(0).getInt("w")!=8||board.tiles.getJSONObject(0).getInt("h")!=6||board.tiles.getJSONObject(3).getInt("x")!=8||board.tiles.getJSONObject(3).getInt("y")!=4||board.tiles.getJSONObject(4).getInt("y")!=6)throw new AssertionError("Large transparent gauge and three stacked readings");
+                    if(board.tiles.getJSONObject(0).getDouble("scale_max")!=22)throw new AssertionError("22 km/h default gauge scale");
+                    org.json.JSONObject legacyGauge=new org.json.JSONObject().put("key","speed");
+                    MetricTile probe=new MetricTile(activity,legacyGauge,0xffffffff,0xffffb300,0xff222222,0);
+                    Method progress=MetricTile.class.getDeclaredMethod("progress",String.class);progress.setAccessible(true);
+                    if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.5)>.001)throw new AssertionError("Legacy gauge fallback is not 22 km/h");
+                    legacyGauge.put("scale_max",40);
+                    if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.275)>.001)throw new AssertionError("Custom gauge scale overwritten");
                     CockpitBoard.validate(board.tiles);
                     if(!contains(activity.getWindow().getDecorView(),"An")||!contains(activity.getWindow().getDecorView(),"Aus"))throw new AssertionError("Default readiness labels");
                 }catch(Exception e){throw new RuntimeException(e);}
@@ -62,6 +69,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(!prefs.getString("device_address","").equals("02:00:00:00:00:01")||contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Selected BMS not applied");
             });
             customizationCheck(activity,prefs);
+            batterySettingsCheck(activity);
             checked(()->{
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());for(int i=0;i<board.tiles.length();i++){org.json.JSONObject t=board.tiles.getJSONObject(i);if(t.getString("key").equals("soc"))t.put("h",2);if(t.getString("key").equals("ready_start"))t.put("caption","Los geht’s");}prefs.edit().putString("header_name","Mein Joyor").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS")||!contains(activity.getWindow().getDecorView(),"Los geht’s"))throw new AssertionError("Custom header/button labels");
                 org.json.JSONArray rides=new org.json.JSONArray();for(int i=0;i<3;i++)rides.put(new org.json.JSONObject().put("temperature",10+i).put("km",5).put("wh",100));TemperatureHistory.validate(rides);if(Math.abs(TemperatureHistory.estimate(rides,11,15)-20)>.01)throw new AssertionError("Temperature start estimate");if(TemperatureHistory.estimate(rides,30,15)!=15)throw new AssertionError("No unsupported extrapolation");
@@ -212,6 +220,7 @@ public class CockpitSmokeTest extends Instrumentation {
             invoke(activity,"editLayout",new Class[0],new Object[0]);
             invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{0});
             android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"tileDialog");
+            if(Double.parseDouble(inputAfterLabel(dialog.getWindow().getDecorView(),"Skalenmaximum (Balken / Rundinstrument)").getText().toString())!=22)throw new AssertionError("Gauge editor default scale");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Instrument / Balken: Farbe (#RRGGBB)").setText("#26C6DA");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");
@@ -317,6 +326,40 @@ public class CockpitSmokeTest extends Instrumentation {
         AtomicReference<Throwable> error=new AtomicReference<>();
         runOnMainSync(()->{try{task.run();}catch(Throwable t){error.set(t);}});
         if(error.get()!=null)throw error.get();waitForIdleSync();
+    }
+    private void batterySettingsCheck(Activity activity)throws Throwable {
+        checked(()->invoke(activity,"showSettings",new Class[0],new Object[0]));
+        checked(()->{
+            android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
+            menu.getListView().performItemClick(menu.getListView().getChildAt(8),8,8);
+            android.app.AlertDialog status=(android.app.AlertDialog)member(activity,"batteryDialog");
+            boolean exempt=activity.getSystemService(android.os.PowerManager.class).isIgnoringBatteryOptimizations(activity.getPackageName());
+            TextView message=status.findViewById(android.R.id.message);
+            if(!status.isShowing()||message==null||!message.getText().toString().contains(exempt?"bereits von":"ist für ScootPit BMS aktiv"))throw new AssertionError("Battery menu did not show current status");
+        });
+        sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
+        checked(()->{
+            android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
+            if(!menu.isShowing())throw new AssertionError("Battery back lost settings menu");menu.dismiss();
+        });
+        batteryActionCheck(activity,false,android.app.AlertDialog.BUTTON_POSITIVE,android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        batteryActionCheck(activity,true,android.app.AlertDialog.BUTTON_POSITIVE,android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        batteryActionCheck(activity,true,android.app.AlertDialog.BUTTON_NEUTRAL,android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+    }
+    private void batteryActionCheck(Activity activity,boolean exempt,int button,String action)throws Throwable {
+        android.content.IntentFilter filter=new android.content.IntentFilter(action);
+        if(!action.equals(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))filter.addDataScheme("package");
+        ActivityMonitor monitor=addMonitor(filter,new ActivityResult(Activity.RESULT_CANCELED,null),true);
+        try {
+            checked(()->invoke(activity,"showBatterySettings",new Class[]{boolean.class},new Object[]{exempt}));
+            checked(()->{
+                android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"batteryDialog");
+                TextView message=dialog.findViewById(android.R.id.message);
+                if(message==null||!message.getText().toString().contains(exempt?"bereits von":"ist für ScootPit BMS aktiv"))throw new AssertionError("Battery status branch");
+                dialog.getButton(button).performClick();
+            });
+            if(monitor.getHits()!=1)throw new AssertionError("Battery settings action missing: "+action);
+        } finally {removeMonitor(monitor);}
     }
     private static void invoke(Object target,String name,Class[] types,Object[] args){try{Method m=target.getClass().getDeclaredMethod(name,types);m.setAccessible(true);m.invoke(target,args);}catch(Exception e){throw new RuntimeException(e);}}
     private static void findSliders(View view,java.util.List<android.widget.SeekBar> result){if(view instanceof android.widget.SeekBar)result.add((android.widget.SeekBar)view);if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)findSliders(((ViewGroup)view).getChildAt(i),result);}
