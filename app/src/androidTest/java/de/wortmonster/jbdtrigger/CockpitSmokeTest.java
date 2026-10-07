@@ -29,10 +29,10 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(!contains(activity.getWindow().getDecorView(),"123,45 km"))throw new AssertionError("Saved odometer before readiness");
                 if(prefs.contains("device_address")||!contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Fresh installation must require BMS selection");
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
-                    if(board.tiles.length()!=17||board.tiles.getJSONObject(1).getInt("x")!=6||!board.tiles.getJSONObject(4).getString("background").equals("#64B966"))throw new AssertionError("Screenshot default layout");
-                    if(board.tiles.getJSONObject(4).getInt("w")!=6||board.tiles.getJSONObject(4).getInt("h")!=4||board.tiles.getJSONObject(5).getInt("x")!=6||board.tiles.getJSONObject(5).getInt("y")!=4||board.tiles.getJSONObject(6).getInt("y")!=6)throw new AssertionError("Half-width gauge with stacked power and odometer");
+                    if(board.tiles.length()!=17||board.tiles.getJSONObject(1).getInt("x")!=8||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
+                    if(board.tiles.getJSONObject(0).getInt("w")!=8||board.tiles.getJSONObject(0).getInt("h")!=6||board.tiles.getJSONObject(3).getInt("x")!=8||board.tiles.getJSONObject(3).getInt("y")!=4||board.tiles.getJSONObject(4).getInt("y")!=6)throw new AssertionError("Large transparent gauge and three stacked readings");
                     CockpitBoard.validate(board.tiles);
-                    if(!contains(activity.getWindow().getDecorView(),"AN")||!contains(activity.getWindow().getDecorView(),"AUS"))throw new AssertionError("Default readiness labels");
+                    if(!contains(activity.getWindow().getDecorView(),"An")||!contains(activity.getWindow().getDecorView(),"Aus"))throw new AssertionError("Default readiness labels");
                 }catch(Exception e){throw new RuntimeException(e);}
                 invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()
                     .putExtra("soc",75).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true)
@@ -61,10 +61,11 @@ public class CockpitSmokeTest extends Instrumentation {
                 invoke(activity,"selectBms",new Class[]{String.class,String.class},new Object[]{"02:00:00:00:00:01","Test-BMS"});
                 if(!prefs.getString("device_address","").equals("02:00:00:00:00:01")||contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Selected BMS not applied");
             });
+            customizationCheck(activity,prefs);
             checked(()->{
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());for(int i=0;i<board.tiles.length();i++){org.json.JSONObject t=board.tiles.getJSONObject(i);if(t.getString("key").equals("soc"))t.put("h",2);if(t.getString("key").equals("ready_start"))t.put("caption","Los geht’s");}prefs.edit().putString("header_name","Mein Joyor").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS")||!contains(activity.getWindow().getDecorView(),"Los geht’s"))throw new AssertionError("Custom header/button labels");
                 org.json.JSONArray rides=new org.json.JSONArray();for(int i=0;i<3;i++)rides.put(new org.json.JSONObject().put("temperature",10+i).put("km",5).put("wh",100));TemperatureHistory.validate(rides);if(Math.abs(TemperatureHistory.estimate(rides,11,15)-20)>.01)throw new AssertionError("Temperature start estimate");if(TemperatureHistory.estimate(rides,30,15)!=15)throw new AssertionError("No unsupported extrapolation");
-                CockpitBoard b=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject top=b.tiles.getJSONObject(0);top.put("h",4);b.push(top);CockpitBoard.validate(b.tiles);if(b.tiles.getJSONObject(2).getInt("y")<4)throw new AssertionError("Automatic displacement");top.put("h",3);b.compact();
+                CockpitBoard b=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject top=b.tiles.getJSONObject(0);top.put("h",8);b.push(top);CockpitBoard.validate(b.tiles);if(b.tiles.getJSONObject(4).getInt("y")<8)throw new AssertionError("Automatic displacement");top.put("h",6);b.compact();
                 }catch(Exception e){throw new RuntimeException(e);}
             });
             profileCheck(prefs);
@@ -93,7 +94,7 @@ public class CockpitSmokeTest extends Instrumentation {
                     invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{stale});
                     if(!soc.getText().toString().equals("75 %")||!soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Stale reading retained and marked");
                     int bg=tileBackground(soc);if(android.graphics.Color.red(bg)!=android.graphics.Color.green(bg)||android.graphics.Color.green(bg)!=android.graphics.Color.blue(bg))throw new AssertionError("Inactive custom background remains coloured");
-                    soc.layout(0,0,320,160);Bitmap pixels=Bitmap.createBitmap(320,160,Bitmap.Config.ARGB_8888);soc.draw(new android.graphics.Canvas(pixels));
+                    MetricTile staleGauge=findMetric(activity.getWindow().getDecorView(),"speed");staleGauge.layout(0,0,320,160);Bitmap pixels=Bitmap.createBitmap(320,160,Bitmap.Config.ARGB_8888);staleGauge.draw(new android.graphics.Canvas(pixels));
                     for(int y=0;y<pixels.getHeight();y++)for(int x=0;x<pixels.getWidth();x++){int p=pixels.getPixel(x,y);if(android.graphics.Color.alpha(p)>0&&(android.graphics.Color.red(p)!=android.graphics.Color.green(p)||android.graphics.Color.green(p)!=android.graphics.Color.blue(p)))throw new AssertionError("Inactive text/bar remains coloured");}pixels.recycle();
                     if(!findMetric(activity.getWindow().getDecorView(),"speed").getContentDescription().toString().contains("nicht aktuell")||!findMetric(activity.getWindow().getDecorView(),"outside").getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("GPS/weather freshness");
                     invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{fresh});if(tileBackground(soc)!=android.graphics.Color.parseColor("#64B966")||soc.getContentDescription().toString().contains("nicht aktuell"))throw new AssertionError("Fresh colour restoration");
@@ -183,8 +184,83 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->{try{if(!((CockpitBoard)findBoard(portrait.getWindow().getDecorView())).tiles.getJSONObject(0).getString("caption").equals("Portrait draft"))throw new AssertionError("Portrait draft lost on rotation");if(!clickText(portrait.getWindow().getDecorView(),"Speichern"))throw new AssertionError("Save orientation drafts");if(!new org.json.JSONArray(prefs.getString("cockpit_board_landscape","")).getJSONObject(0).getString("caption").equals("Landscape draft"))throw new AssertionError("Landscape draft lost on save");}catch(Exception e){throw new RuntimeException(e);}});
             result.putString("stream","Cockpit launch, battery/range display, persisted odometer layout editor and screen-off readiness: OK\n");
             finish(Activity.RESULT_OK,result);
-        } catch(Throwable e){result.putString("stream", "FAIL: "+android.util.Log.getStackTraceString(e));finish(Activity.RESULT_CANCELED,result);}
+        } catch(Throwable e){try{screenshot("failure.png");}catch(Exception ignored){}result.putString("stream", "FAIL: "+android.util.Log.getStackTraceString(e));finish(Activity.RESULT_CANCELED,result);}
     }
+    private void customizationCheck(Activity activity,SharedPreferences prefs)throws Throwable{
+        getUiAutomation();
+        checked(()->{
+            TextView profile=findText(activity.getWindow().getDecorView(),"Scooter: Mein Scooter ▾");
+            if(profile==null || (profile.getTransformationMethod()!=null&&profile.getTransformationMethod().getClass().getSimpleName().contains("AllCaps")))throw new AssertionError("Profile label forced to uppercase");
+            invoke(activity,"showSettings",new Class[0],new Object[0]);
+        });
+        checked(()->{
+            android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
+            menu.getListView().performItemClick(menu.getListView().getChildAt(4),4,4);
+            if(!menu.isShowing())throw new AssertionError("Settings parent was dismissed");
+        });
+        waitForIdleSync();
+        boolean batteryDefault=false;long deadline=System.currentTimeMillis()+4000;
+        while(System.currentTimeMillis()<deadline){android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
+            if(root!=null&&!root.findAccessibilityNodeInfosByText("20").isEmpty()){batteryDefault=true;break;}if(root!=null)scrollAccessible(root);Thread.sleep(100);}
+        if(!batteryDefault)throw new AssertionError("20 Wh/km battery default");
+        sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
+        android.view.accessibility.AccessibilityNodeInfo returned=getUiAutomation().getRootInActiveWindow();
+        if(returned==null||returned.findAccessibilityNodeInfosByText("App-Farben").isEmpty())throw new AssertionError("Settings menu not in foreground after back");
+        checked(()->{
+            android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
+            if(!menu.isShowing())throw new AssertionError("Back did not return to settings");menu.dismiss();
+            invoke(activity,"editLayout",new Class[0],new Object[0]);
+            invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{0});
+            android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"tileDialog");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Instrument / Balken: Farbe (#RRGGBB)").setText("#26C6DA");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
+            clickText(dialog.getWindow().getDecorView(),"Übernehmen");
+            MetricTile gauge=findMetric(activity.getWindow().getDecorView(),"speed");gauge.reading("20","km/h",false);gauge.layout(0,0,320,360);
+            Bitmap rendered=Bitmap.createBitmap(320,360,Bitmap.Config.ARGB_8888);gauge.draw(new android.graphics.Canvas(rendered));
+            int fill=0,track=0;for(int y=0;y<360;y++)for(int x=0;x<320;x++){int pixel=rendered.getPixel(x,y);if(pixel==android.graphics.Color.parseColor("#26C6DA"))fill++;if(pixel==android.graphics.Color.parseColor("#AB47BC"))track++;}rendered.recycle();
+            if(fill<10||track<10)throw new AssertionError("Independent instrument/scale colours not drawn");
+            invoke(activity,"addTile",new Class[]{String.class},new Object[]{"free_text"});
+            CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());int index=board.tiles.length()-1;
+            invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{index});dialog=(android.app.AlertDialog)member(activity,"tileDialog");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Freitext (max. 4000 Zeichen)").setText("Mein Roller\nT6e – Los geht’s!");
+            clickText(dialog.getWindow().getDecorView(),"Übernehmen");
+            if(!contains(activity.getWindow().getDecorView(),"Mein Roller\nT6e – Los geht’s!"))throw new AssertionError("Free text lost casing or line breaks");
+            invoke(activity,"addTile",new Class[]{String.class},new Object[]{"image"});
+        });
+        String data;
+        File source=new File(getTargetContext().getFilesDir(),"test-photo.png");
+        Bitmap photo=Bitmap.createBitmap(1200,600,Bitmap.Config.ARGB_8888);photo.eraseColor(android.graphics.Color.GREEN);
+        try(FileOutputStream out=new FileOutputStream(source)){photo.compress(Bitmap.CompressFormat.PNG,100,out);}photo.recycle();
+        data=TileImage.importPhoto(getTargetContext(),android.net.Uri.fromFile(source));TileImage.validate(data);
+        final String portablePhoto=data;
+        checked(()->{
+            try{
+                CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject image=board.tiles.getJSONObject(board.tiles.length()-1);
+                image.put("image_data",portablePhoto).put("image_mode",1).put("caption","Mein Rollerfoto");invoke(activity,"rebuild",new Class[0],new Object[0]);
+                if(!hasPhoto(activity.getWindow().getDecorView(),"Mein Rollerfoto"))throw new AssertionError("Image tile did not render");
+                clickText(activity.getWindow().getDecorView(),"Speichern");
+                org.json.JSONObject exported=StorageFolders.install(getTargetContext()).snapshot();StorageFolders.validateValues(exported.getJSONObject("settings"),false);
+                org.json.JSONArray saved=new org.json.JSONArray(exported.getJSONObject("settings").getString("cockpit_board"));
+                if(!saved.getJSONObject(saved.length()-1).getString("image_data").equals(portablePhoto)||!saved.getJSONObject(saved.length()-2).getString("free_text").contains("T6e"))throw new AssertionError("Personal tiles absent from backup");
+                ScooterProfiles.add(prefs,"Foto-Kopie",true);
+                if(!prefs.getString("cockpit_board","").equals(saved.toString()))throw new AssertionError("Photo/text design not copied across profiles");
+                ScooterProfiles.deleteActive(prefs);prefs.edit().remove("cockpit_board").commit();
+                java.lang.reflect.Field tiles=MainActivity.class.getDeclaredField("boardTiles");tiles.setAccessible(true);tiles.set(activity,CockpitBoard.defaults());invoke(activity,"rebuild",new Class[0],new Object[0]);
+            }catch(Exception e){throw new RuntimeException(e);}
+        });
+    }
+    private static boolean scrollAccessible(android.view.accessibility.AccessibilityNodeInfo node){
+        if(node.isScrollable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))return true;
+        for(int i=0;i<node.getChildCount();i++){android.view.accessibility.AccessibilityNodeInfo child=node.getChild(i);if(child!=null&&scrollAccessible(child))return true;}return false;
+    }
+    private static Object member(Object object,String name){try{java.lang.reflect.Field f=object.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(object);}catch(Exception e){throw new RuntimeException(e);}}
+    private static android.widget.EditText inputAfterLabel(View view,String label){
+        if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){
+            View child=group.getChildAt(i);if(child instanceof TextView&&((TextView)child).getText().toString().equals(label)&&i+1<group.getChildCount()&&group.getChildAt(i+1) instanceof android.widget.EditText)return (android.widget.EditText)group.getChildAt(i+1);
+            android.widget.EditText found=inputAfterLabel(child,label);if(found!=null)return found;
+        }}return null;
+    }
+    private static boolean hasPhoto(View view,String description){if(view instanceof android.widget.ImageView&&description.contentEquals(view.getContentDescription())&&((android.widget.ImageView)view).getDrawable()!=null)return true;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(hasPhoto(group.getChildAt(i),description))return true;}return false;}
     private void profileCheck(SharedPreferences prefs)throws Exception{
         String first=prefs.getString(ScooterProfiles.ACTIVE,"");String board=CockpitBoard.defaults().toString();
         prefs.edit().putString("total_km","123.45").putString("header_color","#42A5F5").putString("temp1_label","BMS (vermutet)").putString("cockpit_board",board).putString("temperature_history","[]").putLong("last_started_at",123456).putString("trips_tree","content://first").commit();
@@ -204,6 +280,11 @@ public class CockpitSmokeTest extends Instrumentation {
         getTargetContext().startActivity(new Intent().setComponent(new android.content.ComponentName(getContext(),TestGrantActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         Thread.sleep(1000);
         getTargetContext().getContentResolver().takePersistableUriPermission(android.net.Uri.parse(tree),Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        org.json.JSONArray portable=CockpitBoard.load(prefs);int bottom=0;for(int i=0;i<portable.length();i++)bottom=Math.max(bottom,portable.getJSONObject(i).getInt("y")+portable.getJSONObject(i).getInt("h"));
+        String photo=TileImage.importPhoto(getTargetContext(),android.net.Uri.fromFile(new File(getTargetContext().getFilesDir(),"test-photo.png")));
+        portable.put(CockpitBoard.position(CockpitLayout.tile("image").put("image_data",photo),0,bottom,6,3));
+        portable.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Mein Roller – T6e"),6,bottom,6,3));
+        CockpitBoard.validate(portable);prefs.edit().putString("cockpit_board",portable.toString()).commit();
         storage.choose(StorageFolders.SETTINGS,tree,false);
         android.net.Uri uri=StorageFolders.document(getTargetContext(),tree,StorageFolders.NAME,false,"application/json");
         if(uri==null)throw new AssertionError("SAF settings snapshot missing");
