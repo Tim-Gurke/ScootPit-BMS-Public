@@ -3,7 +3,7 @@ name: Build ScootPit BMS APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ main, update-6.3 ]
 
 jobs:
   build:
