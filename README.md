@@ -4,7 +4,7 @@
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
-**Version 1.1.0 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.1.1 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
@@ -26,11 +26,13 @@ Am Lenker wird ScootPit zum **persönlichen Cockpit**: Geschwindigkeit, Strecke,
 - **Samsung-Routinen nutzen:** Editierbare Fahrtstart-/Fahrtende-Nachrichten können eingerichtete Routinen zum Umschalten des Energiesparmodus auslösen. Die App richtet die Routinen nicht selbst ein.
 - **Daten behalten:** Fahrten und Einstellungen lokal speichern, zusätzliche Sicherungsordner auswählen. Keine Anmeldung erforderlich.
 
-## Neues Design in 1.1.0
+## Neues Cockpit in 1.1.1
 
-Kompakter Appkopf mit integriertem Scooter-Profil, Fahrtenbuch-Symbol und Zahnrad mit Blitz. Alle Kacheln bieten moderne Liniensymbole; je Kachel sind Symbol, Beschriftung, beides oder keines wählbar. Zwei anpassbare Farbschemata: **Dunkel · Schwarz/Orange** und **Hell · Weiß/Blau**. Das neue Scooter-Logo bleibt in beiden Schemata gleich. Antippen des Tourenzählers setzt ihn nach Bestätigung zurück; Tages- und Gesamtkilometer bleiben erhalten.
+Die Anordnung folgt dem gewünschten Cockpit: großer transparenter Tacho links, Akku, Restreichweite und Leistung rechts; darunter drei Spalten mit Fahrwerten, Tages-/Tourenzähler, Scooterfoto und Temperaturen. Der Tacho hat feine Teilstriche, Zahlen und eine Fortschrittsmarkierung. Die Skala richtet sich nach deinem einstellbaren Maximum (Standard 22 km/h); die Einheit steht standardmäßig im Instrument unter dem Wert.
 
-Unter **Einstellungen → App-Farben** ein Schema wählen. Eigene Kachelfarben können erhalten oder ausdrücklich ersetzt werden; Layouts und Bilder bleiben erhalten. Die Symbolauswahl findest du unter **Cockpit bearbeiten → Kachel antippen**. [Gestaltung anpassen](docs/design.md).
+Der Appkopf integriert Profil, Fahrtenbuch und Zahnrad mit Blitz. Ein grüner Punkt zeigt die aktive Bereitschaft. Die grünen und roten Schaltflächen heißen **Bereit** und tragen schwarze Symbole. Kachelsymbole erhalten passende, einzeln anpassbare Farben; Symbol, Beschriftung, beides oder keines bleiben wählbar. Die anpassbaren Farbschemata **Schwarz/Orange** und **Weiß/Blau** sowie das feste App-Logo bleiben erhalten.
+
+Beim ersten Öffnen je vorhandenem Profil wird das Hochformat neu angeordnet. Fotos, zusätzliche Kacheln, Messwerte und persönliche Kacheleinstellungen werden übernommen; die vorherige Anordnung wird als Sicherung in den Einstellungen gespeichert. Ein separat gespeichertes Querformat bleibt erhalten. [Gestaltung anpassen](docs/design.md).
 
 ## Was brauchst du?
 
