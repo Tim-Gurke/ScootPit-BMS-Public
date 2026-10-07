@@ -5,6 +5,10 @@ on:
   workflow_dispatch:
 jobs:
   ui:
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [33, 35]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -28,7 +32,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
           profile: pixel_2
           disk-size: 2048M
@@ -47,5 +51,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ScootPit-BMS-UI
+          name: ScootPit-BMS-UI-${{ matrix.api-level }}
           path: ui-screenshots/*.png
