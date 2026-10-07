@@ -37,6 +37,28 @@ final class MetricTile extends TextView {
         }
         if(result.size()>limit){StringBuilder tail=new StringBuilder(result.get(limit-1));for(int i=limit;i<result.size();i++)tail.append(" ").append(result.get(i));result=new ArrayList<>(result.subList(0,limit));result.set(limit-1,tail.toString());}return result;
     }
+    private void readingText(Canvas canvas,String value,String prefix,float centerX,float centerY,float maxWidth,float size,float maxUnitSize,int color){
+        String[] parts=value.trim().split("\\s+",2);
+        int position=Math.max(0,Math.min(2,config.optInt("unit_position",0)));
+        if((!config.has("unit_font")&&position==0)||parts.length!=2||!parts[0].matches("[-+]?\\d[\\d.,]*")){
+            text(canvas,prefix+value,centerX,centerY+size*.34f,maxWidth,size,true,color);return;
+        }
+        float unitSize=config.has("unit_font")?Math.min(maxUnitSize,sp(Math.max(8,Math.min(80,config.optInt("unit_font",28))))):size;
+        paint.setStyle(Paint.Style.FILL);paint.setColor(color);paint.setTypeface(Typeface.DEFAULT_BOLD);
+        String number=prefix+parts[0];paint.setTextSize(size);float numberWidth=paint.measureText(number);
+        paint.setTextSize(unitSize);float unitWidth=paint.measureText(parts[1]),gap=dp(3);
+        float total=position==2?Math.max(numberWidth,unitWidth):numberWidth+gap+unitWidth;
+        float textHeight=position==2?size+gap+unitSize:Math.max(size,unitSize+(position==1?size*.4f:0));
+        float fit=Math.min(1,Math.min(maxWidth/Math.max(1,total),maxUnitSize/Math.max(1,textHeight)));
+        size*=fit;unitSize*=fit;numberWidth*=fit;unitWidth*=fit;gap*=fit;total*=fit;
+        if(position==2){
+            paint.setTextSize(unitSize);canvas.drawText(parts[1],centerX-unitWidth/2,centerY-(size+gap)/2+unitSize*.34f,paint);
+            paint.setTextSize(size);canvas.drawText(number,centerX-numberWidth/2,centerY+(unitSize+gap)/2+size*.34f,paint);return;
+        }
+        float left=centerX-total/2,baseline=centerY+Math.max(size,unitSize)*.34f;
+        paint.setTextSize(size);canvas.drawText(number,left,baseline,paint);
+        paint.setTextSize(unitSize);canvas.drawText(parts[1],left+numberWidth+gap,baseline-(position==1?size*.4f:0),paint);
+    }
     @Override protected void onDraw(Canvas c){
         int foreground=inactive?Color.argb(Color.alpha(this.foreground),120,120,120):this.foreground,accent=inactive?0xff606060:this.accent;
         float width=getWidth()-dp(12),height=getHeight(),cx=getWidth()/2f;
@@ -46,8 +68,8 @@ final class MetricTile extends TextView {
         boolean single=layout==1||(layout==0&&height<dp(95));
         float valueSize=sp(Math.max(12,Math.min(80,config.optInt("font",28))));
         if(single){
-            String combined=(caption.isEmpty()?"":caption.replace('\n',' ')+"  ")+value;
-            text(c,combined,cx,height/2+Math.min(valueSize,height*.45f)*.34f,width,Math.min(valueSize,height*.45f),true,foreground);
+            String prefix=caption.isEmpty()?"":caption.replace('\n',' ')+"  ";
+            readingText(c,value,prefix,cx,height/2,width,Math.min(valueSize,height*.45f),height*.7f,foreground);
             if(style!=0)bar(c,dp(8),height-dp(10),getWidth()-dp(16),progress(value));return;
         }
         List<String> headings=caption.isEmpty()?Collections.emptyList():lines(caption,Math.max(1,Math.min(3,config.optInt("lines",2))),width);
@@ -64,7 +86,7 @@ final class MetricTile extends TextView {
             valueWidth=radius*1.55f;valueSize=Math.min(valueSize,radius*.60f);
         }else if(style!=0){bar(c,dp(8),bottom-dp(5),getWidth()-dp(16),progress(value));bottom-=dp(12);middle=(top+bottom)/2;}
         float available=Math.max(dp(12),bottom-top);valueSize=Math.min(valueSize,available*.65f);
-        text(c,value,cx,middle+valueSize*.34f,valueWidth,valueSize,true,foreground);
+        readingText(c,value,"",cx,middle,valueWidth,valueSize,available*.65f,foreground);
         if(showNote)text(c,note.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
     private double progress(String value){

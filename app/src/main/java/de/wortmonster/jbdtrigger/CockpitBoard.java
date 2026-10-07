@@ -140,6 +140,8 @@ final class CockpitBoard extends FrameLayout {
     }
     static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x).put("y",y).put("w",w).put("h",h);}
     private static void validateAppearance(JSONObject tile)throws Exception{
+        if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
+        if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>2))throw new Exception("Ungültige Einheit-Position");
         for(String field:new String[]{"background","text","instrument_color","scale_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
         if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");
