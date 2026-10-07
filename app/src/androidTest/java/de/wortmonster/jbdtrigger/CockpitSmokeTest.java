@@ -30,7 +30,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(!contains(activity.getWindow().getDecorView(),"123,45 km"))throw new AssertionError("Saved odometer before readiness");
                 if(prefs.contains("device_address")||!contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Fresh installation must require BMS selection");
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
-                    if(board.tiles.length()!=17||board.tiles.getJSONObject(1).getInt("x")!=8||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
+                    if(board.tiles.length()!=20||board.tiles.getJSONObject(1).getInt("x")!=8||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
                     if(board.tiles.getJSONObject(0).getInt("w")!=8||board.tiles.getJSONObject(0).getInt("h")!=6||board.tiles.getJSONObject(3).getInt("x")!=8||board.tiles.getJSONObject(3).getInt("y")!=4||board.tiles.getJSONObject(4).getInt("y")!=6)throw new AssertionError("Large transparent gauge and three stacked readings");
                     if(board.tiles.getJSONObject(0).getDouble("scale_max")!=22)throw new AssertionError("22 km/h default gauge scale");
                     org.json.JSONObject legacyGauge=new org.json.JSONObject().put("key","speed");
@@ -39,8 +39,15 @@ public class CockpitSmokeTest extends Instrumentation {
                     if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.5)>.001)throw new AssertionError("Legacy gauge fallback is not 22 km/h");
                     legacyGauge.put("scale_max",40);
                     if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.275)>.001)throw new AssertionError("Custom gauge scale overwritten");
+                    org.json.JSONArray previous=new org.json.JSONArray(board.tiles.toString());
+                    previous.getJSONObject(12).put("image_data","test-preserved-marker");
+                    previous.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Meine Notiz"),0,20,12,2));
+                    org.json.JSONArray migrated=CockpitBoard.arrange111(previous);
+                    if(!migrated.getJSONObject(12).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(20).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
+                    String[][] expected={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
+                    for(int row=0;row<5;row++)for(int col=0;col<3;col++){org.json.JSONObject t=board.tiles.getJSONObject(4+row*3+col);if(!t.getString("key").equals(expected[row][col])||t.getInt("x")!=col*4||t.getInt("y")!=6+row*2||t.getInt("w")!=4)throw new AssertionError("Reference arrangement");}
                     CockpitBoard.validate(board.tiles);
-                    if(!contains(activity.getWindow().getDecorView(),"An")||!contains(activity.getWindow().getDecorView(),"Aus"))throw new AssertionError("Default readiness labels");
+                    if(!contains(activity.getWindow().getDecorView(),"Bereit"))throw new AssertionError("Default readiness labels");
                 }catch(Exception e){throw new RuntimeException(e);}
                 invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()
                     .putExtra("soc",75).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true)
@@ -226,7 +233,7 @@ public class CockpitSmokeTest extends Instrumentation {
             android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"tileDialog");
             if(Double.parseDouble(inputAfterLabel(dialog.getWindow().getDecorView(),"Skalenmaximum (Balken / Rundinstrument)").getText().toString())!=22)throw new AssertionError("Gauge editor default scale");
             android.widget.EditText unitSize=inputAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Schriftgröße (8–80, leer = wie Wert)");
-            if(!unitSize.getText().toString().isEmpty())throw new AssertionError("Legacy unit size should follow the value");
+            if(!unitSize.getText().toString().equals("18"))throw new AssertionError("Default gauge unit size");
             unitSize.setText("7");clickText(dialog.getWindow().getDecorView(),"Übernehmen");
             if(!dialog.isShowing())throw new AssertionError("Invalid unit font accepted");unitSize.setText("16");
             spinnerAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Position").setSelection(2);
@@ -259,7 +266,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 clickText(activity.getWindow().getDecorView(),"Speichern");
                 org.json.JSONObject exported=StorageFolders.install(getTargetContext()).snapshot();StorageFolders.validateValues(exported.getJSONObject("settings"),false);
                 org.json.JSONArray saved=new org.json.JSONArray(exported.getJSONObject("settings").getString("cockpit_board"));
-                if(saved.getJSONObject(0).getInt("unit_font")!=16||saved.getJSONObject(0).getInt("font")!=56||saved.getJSONObject(0).getInt("unit_position")!=2)throw new AssertionError("Unit size/position missing from backup");
+                if(saved.getJSONObject(0).getInt("unit_font")!=16||saved.getJSONObject(0).getInt("font")!=72||saved.getJSONObject(0).getInt("unit_position")!=2)throw new AssertionError("Unit size/position missing from backup");
                 if(!saved.getJSONObject(saved.length()-1).getString("image_data").equals(portablePhoto)||!saved.getJSONObject(saved.length()-2).getString("free_text").contains("T6e"))throw new AssertionError("Personal tiles absent from backup");
                 ScooterProfiles.add(prefs,"Foto-Kopie",true);
                 if(!prefs.getString("cockpit_board","").equals(saved.toString()))throw new AssertionError("Photo/text design not copied across profiles");
@@ -303,8 +310,11 @@ public class CockpitSmokeTest extends Instrumentation {
     private void storageCheck(SharedPreferences prefs)throws Exception{
         StorageFolders storage=StorageFolders.install(getTargetContext());String tree="content://de.wortmonster.jbdtrigger.test.documents/tree/root";
         getTargetContext().startActivity(new Intent().setComponent(new android.content.ComponentName(getContext(),TestGrantActivity.class)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        Thread.sleep(1000);
-        getTargetContext().getContentResolver().takePersistableUriPermission(android.net.Uri.parse(tree),Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        SecurityException grantFailure=null;
+        for(int attempt=0;attempt<80;attempt++){
+            try{getTargetContext().getContentResolver().takePersistableUriPermission(android.net.Uri.parse(tree),Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);grantFailure=null;break;}
+            catch(SecurityException e){grantFailure=e;Thread.sleep(100);}
+        }if(grantFailure!=null)throw grantFailure;
         org.json.JSONArray portable=CockpitBoard.load(prefs);int bottom=0;for(int i=0;i<portable.length();i++)bottom=Math.max(bottom,portable.getJSONObject(i).getInt("y")+portable.getJSONObject(i).getInt("h"));
         String photo=TileImage.importPhoto(getTargetContext(),android.net.Uri.fromFile(new File(getTargetContext().getFilesDir(),"test-photo.png")));
         portable.put(CockpitBoard.position(CockpitLayout.tile("image").put("image_data",photo),0,bottom,6,3));
@@ -363,7 +373,7 @@ public class CockpitSmokeTest extends Instrumentation {
     }
     private void unitFontRenderCheck(Activity activity) {
         try {
-            for(int arrangement:new int[]{1,2})for(int display:new int[]{0,1,2})for(int position:new int[]{0,1,2}){
+            for(int arrangement:new int[]{1,2})for(int display:new int[]{0,1,2})for(int position:new int[]{0,1,2,3}){
                 org.json.JSONObject config=new org.json.JSONObject().put("key","speed").put("font",40).put("unit_font",10).put("unit_position",position).put("display",display).put("arrangement",arrangement).put("show_title",false).put("show_note",false);
                 MetricTile metric=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);metric.layout(0,0,640,320);metric.reading("18,2","km/h",false);
                 Bitmap small=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888),large=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);
@@ -374,7 +384,7 @@ public class CockpitSmokeTest extends Instrumentation {
             org.json.JSONArray invalid=CockpitBoard.defaults();invalid.getJSONObject(0).put("unit_font",81);
             boolean rejected=false;try{CockpitBoard.validate(invalid);}catch(Exception expected){rejected=true;}
             if(!rejected)throw new AssertionError("Invalid imported unit font accepted");
-            invalid.getJSONObject(0).put("unit_font",16).put("unit_position",3);rejected=false;
+            invalid.getJSONObject(0).put("unit_font",16).put("unit_position",4);rejected=false;
             try{CockpitBoard.validate(invalid);}catch(Exception expected){rejected=true;}
             if(!rejected)throw new AssertionError("Invalid imported unit position accepted");
         }catch(Exception e){throw new RuntimeException(e);}
@@ -469,7 +479,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.1.0".equals(version))throw new AssertionError("Official version");
+                if(!"1.1.1".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
