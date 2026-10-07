@@ -44,6 +44,8 @@ public class CockpitSmokeTest extends Instrumentation {
                     previous.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Meine Notiz"),0,20,12,2));
                     org.json.JSONArray migrated=CockpitBoard.arrange111(previous);
                     if(!migrated.getJSONObject(11).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(20).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
+                    org.json.JSONArray full=new org.json.JSONArray();for(int i=0;i<100;i++)full.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Notiz "+i),0,i*2,12,2));
+                    if(!CockpitBoard.arrange111(full).toString().equals(full.toString()))throw new AssertionError("Full custom board must remain intact when migration cannot fit");
                     String[][] expected={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
                     for(int row=0;row<5;row++)for(int col=0;col<3;col++){org.json.JSONObject t=board.tiles.getJSONObject(4+row*3+col);if(!t.getString("key").equals(expected[row][col])||t.getInt("x")!=col*4||t.getInt("y")!=6+row*2||t.getInt("w")!=4)throw new AssertionError("Reference arrangement");}
                     CockpitBoard.validate(board.tiles);
@@ -52,7 +54,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 invoke(activity,"renderStatus",new Class[]{Intent.class},new Object[]{new Intent()
                     .putExtra("soc",75).putExtra("bms_at",System.currentTimeMillis()).putExtra("bms_connected",true)
                     .putExtra("discharge_enabled",true).putExtra("range_km",24.5).putExtra("speed_kmh",18.2).putExtra("temperatures",new double[]{25,30}).putExtra("max_power_w",980.0)});
-                if(!contains(activity.getWindow().getDecorView(),"BMS-Lastausgang"))throw new AssertionError("No control without readiness");
+                View output=findDescription(activity.getWindow().getDecorView(),"BMS-Lastausgang");if(output==null||output.isEnabled())throw new AssertionError("No enabled BMS control without readiness");
                 if(!contains(activity.getWindow().getDecorView(),"25,0 °C")||!contains(activity.getWindow().getDecorView(),"30,0 °C"))throw new AssertionError("Independent temperatures");
                 if(!contains(activity.getWindow().getDecorView(),"980 W"))throw new AssertionError("Maximum power");
                 if(!contains(activity.getWindow().getDecorView(),"75 %"))throw new AssertionError("SOC");
