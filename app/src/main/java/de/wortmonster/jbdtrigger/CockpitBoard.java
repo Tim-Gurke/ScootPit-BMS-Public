@@ -102,23 +102,23 @@ final class CockpitBoard extends FrameLayout {
     static JSONArray defaults(){
         JSONArray tiles=new JSONArray();
         try{
-            tiles.put(position(standardTile("bms_output"),0,0,6,2));
-            tiles.put(position(standardTile("soc").put("arrangement",1).put("display",1).put("show_note",false),6,0,6,2));
-            tiles.put(position(standardTile("distance"),0,2,6,2));
-            tiles.put(position(standardTile("range").put("show_note",false),6,2,6,2));
-            tiles.put(position(standardTile("speed").put("display",2).put("custom_colors",true).put("background","#64B966").put("font",32),0,4,6,4));
-            tiles.put(position(standardTile("power"),6,4,6,2));
-            tiles.put(position(standardTile("total"),6,6,6,2));
-            tiles.put(position(standardTile("moving"),0,8,6,2));
-            tiles.put(position(standardTile("standing"),6,8,6,2));
-            tiles.put(position(standardTile("temp1").put("show_note",false),0,10,4,2));
-            tiles.put(position(standardTile("temp2").put("show_note",false),4,10,4,2));
-            tiles.put(position(standardTile("outside").put("show_note",false),8,10,4,2));
-            tiles.put(position(standardTile("ready_start").put("caption","AN").put("font",30),0,12,4,2));
-            tiles.put(position(standardTile("max_power"),4,12,4,2));
-            tiles.put(position(standardTile("ready_end").put("caption","AUS").put("font",30),8,12,4,2));
-            tiles.put(position(standardTile("trip_end"),0,14,6,3));
-            tiles.put(position(standardTile("log"),6,14,6,4));
+            tiles.put(position(standardTile("speed").put("display",2).put("custom_colors",true).put("background","#00000000").put("font",56).put("show_title",false),0,0,8,6));
+            tiles.put(position(standardTile("soc").put("caption","🔋").put("arrangement",1).put("display",1).put("show_note",false),8,0,4,2));
+            tiles.put(position(standardTile("range").put("show_note",false),8,2,4,2));
+            tiles.put(position(standardTile("power"),8,4,4,2));
+            tiles.put(position(standardTile("moving"),0,6,6,2));
+            tiles.put(position(standardTile("distance"),6,6,6,2));
+            tiles.put(position(standardTile("standing"),0,8,6,2));
+            tiles.put(position(standardTile("total"),6,8,6,2));
+            tiles.put(position(standardTile("max_power"),0,10,6,2));
+            tiles.put(position(standardTile("bms_output"),6,10,6,2));
+            tiles.put(position(standardTile("outside").put("caption","🌞🌧️🌤️").put("show_note",false),0,12,4,2));
+            tiles.put(position(standardTile("temp2").put("caption","Akku-Temp").put("show_note",false),4,12,4,2));
+            tiles.put(position(standardTile("temp1").put("caption","BMS-Temp").put("show_note",false),8,12,4,2));
+            tiles.put(position(standardTile("ready_start").put("caption","An").put("font",30),0,14,4,2));
+            tiles.put(position(standardTile("trip_end"),4,14,4,2));
+            tiles.put(position(standardTile("ready_end").put("caption","Aus").put("font",30),8,14,4,2));
+            tiles.put(position(standardTile("log"),0,16,12,4));
         }catch(Exception e){throw new IllegalStateException(e);}
         return tiles;
     }
@@ -139,10 +139,17 @@ final class CockpitBoard extends FrameLayout {
         }catch(Exception ignored){}return result;
     }
     static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x).put("y",y).put("w",w).put("h",h);}
+    private static void validateAppearance(JSONObject tile)throws Exception{
+        for(String field:new String[]{"background","text","instrument_color","scale_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
+        if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
+        if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");
+        if(tile.has("image_data")&&!tile.getString("image_data").isEmpty())TileImage.validate(tile.getString("image_data"));
+        if(tile.has("image_mode")&&(tile.getInt("image_mode")<0||tile.getInt("image_mode")>1))throw new Exception("Ungültige Bilddarstellung");
+    }
     static void validate(JSONArray tiles)throws Exception{
         if(tiles.length()<1||tiles.length()>100)throw new Exception("1–100 Kacheln erforderlich");
         java.util.HashSet<String> single=new java.util.HashSet<>();
-        for(int i=0;i<tiles.length();i++){JSONObject t=tiles.getJSONObject(i);String key=t.getString("key");if((key.equals("bms_output")||key.equals("log"))&&!single.add(key))throw new Exception("Doppelte Steuerkachel");int x=t.getInt("x"),y=t.getInt("y"),w=t.getInt("w"),h=t.getInt("h");if(x<0||y<0||y>300||w<1||w>12||x+w>12||h<2||h>12||(!java.util.Arrays.asList(CockpitLayout.KEYS).contains(t.getString("key"))&&!BmsExtras.known(key)))throw new Exception("Ungültige Kachel");}
+        for(int i=0;i<tiles.length();i++){JSONObject t=tiles.getJSONObject(i);String key=t.getString("key");if((key.equals("bms_output")||key.equals("log"))&&!single.add(key))throw new Exception("Doppelte Steuerkachel");validateAppearance(t);int x=t.getInt("x"),y=t.getInt("y"),w=t.getInt("w"),h=t.getInt("h");if(x<0||y<0||y>300||w<1||w>12||x+w>12||h<2||h>12||(!java.util.Arrays.asList(CockpitLayout.KEYS).contains(t.getString("key"))&&!BmsExtras.known(key)))throw new Exception("Ungültige Kachel");}
         for(int i=0;i<tiles.length();i++)for(int j=i+1;j<tiles.length();j++){JSONObject a=tiles.getJSONObject(i),b=tiles.getJSONObject(j);if(a.getInt("x")<b.getInt("x")+b.getInt("w")&&a.getInt("x")+a.getInt("w")>b.getInt("x")&&a.getInt("y")<b.getInt("y")+b.getInt("h")&&a.getInt("y")+a.getInt("h")>b.getInt("y"))throw new Exception("Kacheln überlappen");}
     }
 }

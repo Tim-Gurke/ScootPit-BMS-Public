@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 /** Local working data is retained. Completed trips and settings snapshots use independently selected SAF trees. */
 final class StorageFolders {
     static final String SETTINGS="settings_tree",TRIPS="trips_tree",NAME="Joyor-Cockpit-settings.json";
-    private static final Set<String> KEYS=new HashSet<>(Arrays.asList("header_name","header_color","temp1_label","temp2_label","bms_available","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled"));
+    private static final Set<String> KEYS=new HashSet<>(Arrays.asList("header_name","header_color","temp1_label","temp2_label","bms_available","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","connect_confirm_seconds","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled"));
     private static StorageFolders instance;
     private final Context context;
     private final SharedPreferences prefs;
@@ -48,7 +48,7 @@ final class StorageFolders {
     }
     static String read(Context c,Uri uri)throws Exception{
         try(InputStream input=c.getContentResolver().openInputStream(uri);ByteArrayOutputStream out=new ByteArrayOutputStream()){
-            if(input==null)throw new IOException("Datei nicht lesbar");byte[] buffer=new byte[8192];int count,total=0;while((count=input.read(buffer))>=0){total+=count;if(total>1024*1024)throw new IOException("Einstellungsdatei zu groß");out.write(buffer,0,count);}return out.toString("UTF-8");
+            if(input==null)throw new IOException("Datei nicht lesbar");byte[] buffer=new byte[8192];int count,total=0;while((count=input.read(buffer))>=0){total+=count;if(total>32*1024*1024)throw new IOException("Einstellungsdatei zu groß");out.write(buffer,0,count);}return out.toString("UTF-8");
         }
     }
     static void write(Context c,Uri uri,byte[] bytes)throws Exception{

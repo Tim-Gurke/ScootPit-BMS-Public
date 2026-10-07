@@ -12,9 +12,9 @@ final class MetricTile extends TextView {
     final String key;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private String note="";
-    private final int foreground,accent,background;
+    private final int foreground,accent,scale,background;
     private boolean inactive=true;
-    MetricTile(Context context,JSONObject config,int foreground,int accent,int background){super(context);this.config=config;this.key=config.optString("key");this.foreground=foreground;this.accent=accent;this.background=background;setText("–");setPadding(0,0,0,0);}
+    MetricTile(Context context,JSONObject config,int foreground,int accent,int scale,int background){super(context);this.config=config;this.key=config.optString("key");this.foreground=foreground;this.accent=accent;this.scale=scale;this.background=background;setText("–");setPadding(0,0,0,0);}
     void reading(String value,String note,boolean inactive){
         setText(value);this.note=note;this.inactive=inactive;
         setContentDescription(config.optString("caption",CockpitLayout.title(key))+": "+value+(note.isEmpty()?"":" · "+note)+(inactive?" · nicht aktuell":""));
@@ -59,8 +59,7 @@ final class MetricTile extends TextView {
         float bottom=height-(showNote?sp(23):dp(8)),middle=(top+bottom)/2;
         float valueWidth=width;
         if(style==2&&bottom-top>=dp(85)&&width>=dp(100)){
-            float radius=Math.min(width/2-dp(10),(bottom-top)/2-dp(6));paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(6));paint.setStrokeCap(Paint.Cap.ROUND);paint.setColor(0xff35434d);
-            if(inactive)paint.setColor(0xff292929);
+            float radius=Math.min(width/2-dp(10),(bottom-top)/2-dp(6));paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(6));paint.setStrokeCap(Paint.Cap.ROUND);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);
             RectF arc=new RectF(cx-radius,middle-radius,cx+radius,middle+radius);c.drawArc(arc,140,260,false,paint);paint.setColor(accent);c.drawArc(arc,140,(float)(260*progress(value)),false,paint);
             valueWidth=radius*1.55f;valueSize=Math.min(valueSize,radius*.60f);
         }else if(style!=0){bar(c,dp(8),bottom-dp(5),getWidth()-dp(16),progress(value));bottom-=dp(12);middle=(top+bottom)/2;}
@@ -72,5 +71,5 @@ final class MetricTile extends TextView {
         try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?40:key.equals("soc")?100:key.contains("power")?1200:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
             double max=config.optDouble("scale_max",defaultMax);return Math.max(0,Math.min(1,n/Math.max(.1,max)));}catch(Exception e){return 0;}
     }
-    private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?0xff292929:0xff35434d);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?0xff606060:accent);c.drawRoundRect(x,y,x+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
+    private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?Color.argb(Color.alpha(accent),96,96,96):accent);c.drawRoundRect(x,y,x+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
 }

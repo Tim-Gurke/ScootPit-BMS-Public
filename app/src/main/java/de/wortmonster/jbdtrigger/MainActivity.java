@@ -62,7 +62,10 @@ public class MainActivity extends Activity {
             if(BmsMonitorService.ACTION_STATUS.equals(intent.getAction()))renderStatus(intent);
         }
     };
-    private AlertDialog tileDialog;
+    private AlertDialog tileDialog, settingsDialog;
+    private boolean editorFromSettings;
+    private String pendingImageTile="", pendingImageLayout="", draftCacheFile="";
+
     private final java.util.HashMap<String,String> orientationDrafts=new java.util.HashMap<>(),orientationSaved=new java.util.HashMap<>();
     private String boardKey(){return getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE?"cockpit_board_landscape":"cockpit_board";}
     private JSONArray loadBoard(){return CockpitBoard.load(prefs,boardKey());}
@@ -72,7 +75,18 @@ public class MainActivity extends Activity {
         ScooterProfiles.install(prefs);
         boardTiles=loadBoard();
         if(state!=null){
+            pendingImageTile=state.getString("pending_image_tile","");pendingImageLayout=state.getString("pending_image_layout","");editorFromSettings=state.getBoolean("editor_from_settings",false);
             logExpanded=state.getBoolean("log_expanded",false);
+            String cache=state.getString("editor_cache","");
+            if(cache.matches("cockpit-draft-[A-Za-z0-9-]+\\.json"))try{
+                File file=new File(getCacheDir(),cache);if(file.length()>32*1024*1024)throw new Exception();
+                JSONObject drafts=new JSONObject(new String(java.nio.file.Files.readAllBytes(file.toPath()),java.nio.charset.StandardCharsets.UTF_8));
+                for(String key:new String[]{"cockpit_board","cockpit_board_landscape"}){
+                    if(drafts.getJSONObject("drafts").has(key))orientationDrafts.put(key,drafts.getJSONObject("drafts").getString(key));
+                    if(drafts.getJSONObject("saved").has(key))orientationSaved.put(key,drafts.getJSONObject("saved").getString(key));
+                }draftCacheFile=cache;
+            }catch(Exception ignored){}
+
             for(String key:new String[]{"cockpit_board","cockpit_board_landscape"}){
                 if(state.containsKey("draft_"+key))orientationDrafts.put(key,state.getString("draft_"+key));
                 if(state.containsKey("saved_"+key))orientationSaved.put(key,state.getString("saved_"+key));
@@ -85,6 +99,7 @@ public class MainActivity extends Activity {
         }
         StorageFolders.install(this);
         requestNeededPermissions(); rebuild();
+        if(state!=null&&state.getBoolean("settings_open",false)&&!editingBoard)showSettings();
     }
     private int color(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private int accent(){return color(prefs.getString("accent_color","#FFB300"),0xffffb300);}
@@ -96,7 +111,8 @@ public class MainActivity extends Activity {
         ImageView logo=new ImageView(this);logo.setImageResource(R.mipmap.ic_launcher);logo.setContentDescription("ScootPit BMS Logo");header.addView(logo,new LinearLayout.LayoutParams(dp(40),dp(40)));
         TextView title=label("ScootPit BMS",22,color(prefs.getString("header_color",prefs.getString("accent_color","#FFB300")),accent()));title.setPadding(dp(8),0,0,0);title.setTypeface(null,Typeface.BOLD);
         header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        Button menu=button("⚙");menu.setContentDescription("Einstellungen öffnen");
+        ImageButton menu=new ImageButton(this);menu.setImageResource(R.drawable.settings_bolt);menu.setContentDescription("Einstellungen öffnen");
+        GradientDrawable menuBackground=new GradientDrawable();menuBackground.setColor(0xff302719);menuBackground.setCornerRadius(dp(14));menuBackground.setStroke(dp(1),0xff7b6020);menu.setBackground(menuBackground);menu.setPadding(dp(12),dp(12),dp(12),dp(12));
         menu.setEnabled(!editingBoard);menu.setOnClickListener(v->showSettings());header.addView(menu,new LinearLayout.LayoutParams(dp(64),dp(56)));root.addView(header);
         if(!editingBoard){Button profile=button("Scooter: "+ScooterProfiles.name(prefs)+" ▾");profile.setContentDescription("Scooter-Profil auswählen");profile.setOnClickListener(v->profileMenu());root.addView(profile);}
         stateView=label(BmsMonitorService.running?"Bereitschaft aktiv – wartet auf Fahrt":"Bereitschaft aus",15,Color.LTGRAY);root.addView(stateView);
@@ -111,8 +127,8 @@ public class MainActivity extends Activity {
             tools.addView(save,new LinearLayout.LayoutParams(0,-2,1));tools.addView(cancel,new LinearLayout.LayoutParams(0,-2,1));tools.addView(add,new LinearLayout.LayoutParams(0,-2,1));root.addView(tools);
             Button compact=button("Lücken schließen");root.addView(compact);compact.setOnClickListener(v->{board.compact();rebuild();});
             Button reset=button("Standardlayout");root.addView(reset);reset.setOnClickListener(v->new AlertDialog.Builder(this).setMessage("Layoutentwurf auf Standard zurücksetzen?").setPositiveButton("Zurücksetzen",(d,w)->{boardTiles=CockpitBoard.defaults();rebuild();}).setNegativeButton("Zurück",null).show());
-            save.setOnClickListener(v->{try{CockpitBoard.validate(boardTiles);orientationDrafts.put(boardKey(),boardTiles.toString());SharedPreferences.Editor layouts=prefs.edit();for(java.util.Map.Entry<String,String> draft:orientationDrafts.entrySet()){CockpitBoard.validate(new JSONArray(draft.getValue()));layouts.putString(draft.getKey(),draft.getValue());}layouts.apply();editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}});
-            cancel.setOnClickListener(v->{boardTiles=savedBoard;editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();});
+            save.setOnClickListener(v->{try{CockpitBoard.validate(boardTiles);orientationDrafts.put(boardKey(),boardTiles.toString());SharedPreferences.Editor layouts=prefs.edit();for(java.util.Map.Entry<String,String> draft:orientationDrafts.entrySet()){CockpitBoard.validate(new JSONArray(draft.getValue()));layouts.putString(draft.getKey(),draft.getValue());}layouts.apply();editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();returnAfterEditor();}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}});
+            cancel.setOnClickListener(v->{boardTiles=savedBoard;editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();returnAfterEditor();});
             add.setOnClickListener(v->addTileMenu());
         }
         dashboard=column();root.addView(dashboard);buildTiles();
@@ -146,6 +162,14 @@ public class MainActivity extends Activity {
                 dischargeSwitch=new Switch(this);dischargeSwitch.setText(cell.optString("caption","BMS-Lastausgang"));dischargeSwitch.setTextColor(Color.GRAY);dischargeSwitch.setShowText(false);dischargeSwitch.setEnabled(false);
                 dischargeSwitch.setOnCheckedChangeListener((v,on)->{if(updatingDischarge)return;updatingDischarge=true;dischargeSwitch.setChecked(!on);updatingDischarge=false;requestDischarge(on);});
                 box.addView(dischargeSwitch);dischargeNote=label("Auf frische BMS-Daten warten",10,Color.GRAY);box.addView(dischargeNote);
+            }else if(key.equals("image")){
+                String data=cell.optString("image_data");android.graphics.Bitmap image=data.isEmpty()?null:TileImage.decode(data);
+                if(cell.optBoolean("show_title",false))box.addView(label(cell.optString("caption","Bild"),12,text));
+                if(image!=null){ImageView photo=new ImageView(this);photo.setImageBitmap(image);photo.setScaleType(cell.optInt("image_mode",0)==1?ImageView.ScaleType.CENTER_CROP:ImageView.ScaleType.FIT_CENTER);photo.setContentDescription(cell.optString("caption","Rollerfoto"));box.addView(photo,new LinearLayout.LayoutParams(-1,0,1));}
+                else box.addView(label("Bild auswählen im Kacheleditor",12,text));
+            }else if(key.equals("free_text")){
+                if(cell.optBoolean("show_title",false))box.addView(label(cell.optString("caption","Freitext"),12,text));
+                TextView custom=label(cell.optString("free_text","Dein Text"),Math.max(12,Math.min(80,cell.optInt("font",20))),text);custom.setGravity(Gravity.CENTER);custom.setPadding(dp(4),dp(4),dp(4),dp(4));custom.setContentDescription(custom.getText());ScrollView textScroll=new ScrollView(this);textScroll.setFillViewport(true);textScroll.addView(custom,new ScrollView.LayoutParams(-1,-2));textScroll.setOnTouchListener((view,event)->{if(event.getActionMasked()==android.view.MotionEvent.ACTION_DOWN||event.getActionMasked()==android.view.MotionEvent.ACTION_MOVE)view.getParent().requestDisallowInterceptTouchEvent(true);else view.getParent().requestDisallowInterceptTouchEvent(false);return false;});box.addView(textScroll,new LinearLayout.LayoutParams(-1,0,1));
             }else if(key.equals("log")){
                 TextView toggle=label("Statusdetails / Log "+(logExpanded?"▾":"▸"),12,Color.GRAY);box.addView(toggle);
                 logView=label(String.join("\n",log),11,Color.GRAY);androidx.core.widget.NestedScrollView details=new androidx.core.widget.NestedScrollView(this);details.setNestedScrollingEnabled(false);details.setOnTouchListener((view,event)->{if(event.getActionMasked()==android.view.MotionEvent.ACTION_DOWN||event.getActionMasked()==android.view.MotionEvent.ACTION_MOVE)view.getParent().requestDisallowInterceptTouchEvent(true);else view.getParent().requestDisallowInterceptTouchEvent(false);return false;});details.addView(logView);details.setVisibility(logExpanded?View.VISIBLE:View.GONE);box.addView(details,new LinearLayout.LayoutParams(-1,0,1));
@@ -153,7 +177,7 @@ public class MainActivity extends Activity {
             }else{
                 JSONObject renderCell=cell;
                 if((key.equals("temp1")||key.equals("temp2"))&&!cell.has("caption"))try{renderCell=new JSONObject(cell.toString()).put("caption",prefs.getString(key+"_label",CockpitLayout.title(key)));}catch(Exception ignored){}
-                MetricTile value=new MetricTile(this,renderCell,text,accent(),bg.getColor().getDefaultColor());box.setPadding(0,0,0,0);box.addView(value,new LinearLayout.LayoutParams(-1,-1));tileKeys.add(key);tileValues.add(value);tileNotes.add(new TextView(this));
+                MetricTile value=new MetricTile(this,renderCell,text,color(cell.optString("instrument_color"),accent()),color(cell.optString("scale_color"),0xff35434d),bg.getColor().getDefaultColor());box.setPadding(0,0,0,0);box.addView(value,new LinearLayout.LayoutParams(-1,-1));tileKeys.add(key);tileValues.add(value);tileNotes.add(new TextView(this));
 
             }
             final int index=i;board.addTile(box,cell,()->editBoardTile(index));
@@ -162,11 +186,20 @@ public class MainActivity extends Activity {
     }
     private void editBoardTile(int index){
         JSONObject cell=boardTiles.optJSONObject(index);LinearLayout l=column();
+        String tileKey=cell.optString("key");boolean personal=tileKey.equals("image")||tileKey.equals("free_text");
         EditText caption=textField(l,"Beschriftung",cell.optString("caption",CockpitLayout.title(cell.optString("key"))));
-        caption.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);caption.setMaxLines(3);
+        caption.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);caption.setMaxLines(3);caption.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(300)});
+        EditText freeText=null;Button chooseImage=null;Spinner imageMode=null;
+        if(tileKey.equals("free_text")){freeText=textField(l,"Freitext (max. 4000 Zeichen)",cell.optString("free_text",""));freeText.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);freeText.setMinLines(3);freeText.setMaxLines(12);freeText.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(4000)});}
+        if(tileKey.equals("image")){
+            chooseImage=button(cell.optString("image_data").isEmpty()?"Bild auswählen":"Bild ersetzen");l.addView(chooseImage);
+            imageMode=new Spinner(this);imageMode.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Ganzes Bild einpassen","Kachel füllen (Zuschneiden)"}));imageMode.setSelection(cell.optInt("image_mode",0));l.addView(imageMode);
+        }
+        final EditText customText=freeText;final Spinner photoMode=imageMode;
         Spinner arrangement=new Spinner(this);arrangement.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Automatisch","Einzeilig","Untereinander"}));arrangement.setSelection(Math.max(0,Math.min(2,cell.optInt("arrangement",0))));l.addView(arrangement);
         Spinner display=new Spinner(this);display.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Zahl","Balken","Rundinstrument"}));display.setSelection(Math.max(0,Math.min(2,cell.optInt("display",cell.optString("key").equals("speed")?2:cell.optString("key").equals("soc")?1:0))));l.addView(display);
-        CheckBox showTitle=new CheckBox(this);showTitle.setText("Überschrift anzeigen");showTitle.setTextColor(Color.WHITE);showTitle.setChecked(cell.optBoolean("show_title",true));l.addView(showTitle);
+        if(personal){arrangement.setVisibility(View.GONE);display.setVisibility(View.GONE);}
+        CheckBox showTitle=new CheckBox(this);showTitle.setText("Überschrift anzeigen");showTitle.setTextColor(Color.WHITE);showTitle.setChecked(cell.optBoolean("show_title",!personal));l.addView(showTitle);
         CheckBox showNote=new CheckBox(this);showNote.setText("Zusatztext anzeigen");showNote.setTextColor(Color.WHITE);showNote.setChecked(cell.optBoolean("show_note",true));l.addView(showNote);
         EditText lines=field(l,"Überschrift / Button: maximal 1–3 Zeilen",""+cell.optInt("lines",2));
         EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?40:cell.optString("key").contains("power")?1200:100));
@@ -174,6 +207,9 @@ public class MainActivity extends Activity {
         EditText x=field(l,"Spalte (0–11)",""+cell.optInt("x")),y=field(l,"Zeile im Raster (0–300)",""+cell.optInt("y"));
         EditText w=field(l,"Breite (1–12 Rasterspalten)",""+cell.optInt("w")),h=field(l,"Höhe (2–12, je 40 dp)",""+cell.optInt("h"));
         EditText bg=textField(l,"Hintergrund (#RRGGBB)",cell.optBoolean("custom_colors",false)?cell.optString("background"):prefs.getString("tile_background","#1C2228"));
+        EditText instrument=personal?new EditText(this):textField(l,"Instrument / Balken: Farbe (#RRGGBB)",cell.optString("instrument_color",prefs.getString("accent_color","#FFB300")));
+        EditText track=personal?new EditText(this):textField(l,"Skala / Hintergrundbogen: Farbe (#RRGGBB)",cell.optString("scale_color","#35434D"));
+        if(personal){instrument.setText(cell.optString("instrument_color",prefs.getString("accent_color","#FFB300")));track.setText(cell.optString("scale_color","#35434D"));}
         EditText fg=textField(l,"Textfarbe (#RRGGBB)",cell.optBoolean("custom_colors",false)?cell.optString("text"):prefs.getString("tile_text","#FFFFFF"));
         android.widget.SeekBar bgAlpha=opacity(l,"Hintergrund",bg.getText().toString());
         android.widget.SeekBar fgAlpha=opacity(l,"Text",fg.getText().toString());
@@ -184,11 +220,15 @@ public class MainActivity extends Activity {
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle(CockpitLayout.title(cell.optString("key"))).setView(content).create();
         tileDialog=dialog;
         back.setOnClickListener(v->dialog.dismiss());remove.setOnClickListener(v->{if(boardTiles.length()>1){boardTiles.remove(index);dialog.dismiss();rebuild();}});
-        apply.setOnClickListener(v->{Double ff=valid(font,12,80),xx=valid(x,0,11),yy=valid(y,0,300),ww=valid(w,1,12),hh=valid(h,2,12);Double ll=valid(lines,1,3),ss=valid(scale,.1,10000000);if(ff==null||xx==null||yy==null||ww==null||hh==null||ll==null||ss==null||!validColor(bg)||!validColor(fg))return;
+        apply.setOnClickListener(v->{Double ff=valid(font,12,80),xx=valid(x,0,11),yy=valid(y,0,300),ww=valid(w,1,12),hh=valid(h,2,12);Double ll=valid(lines,1,3),ss=valid(scale,.1,10000000);if(ff==null||xx==null||yy==null||ww==null||hh==null||ll==null||ss==null||!validColor(bg)||!validColor(fg)||!validColor(instrument)||!validColor(track))return;
             JSONArray before;try{before=new JSONArray(boardTiles.toString());cell.put("x",xx.intValue()).put("y",yy.intValue()).put("w",ww.intValue()).put("h",hh.intValue());try{board.push(cell);CockpitBoard.validate(boardTiles);}catch(Exception e){for(int i=0;i<boardTiles.length();i++){JSONObject target=boardTiles.getJSONObject(i),original=before.getJSONObject(i);target.put("x",original.getInt("x")).put("y",original.getInt("y")).put("w",original.getInt("w")).put("h",original.getInt("h"));}Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();return;}
-                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("show_title",showTitle.isChecked()).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true);dialog.dismiss();rebuild();
+                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("show_title",showTitle.isChecked()).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true).put("instrument_color",instrument.getText().toString()).put("scale_color",track.getText().toString());if(customText!=null)cell.put("free_text",customText.getText().toString());if(photoMode!=null)cell.put("image_mode",photoMode.getSelectedItemPosition());dialog.dismiss();rebuild();
             }catch(Exception e){Toast.makeText(this,"Kachel konnte nicht geändert werden",Toast.LENGTH_SHORT).show();}});dialog.show();
         dialog.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*.9f));
+        if(chooseImage!=null)chooseImage.setOnClickListener(v->{apply.performClick();if(dialog.isShowing())return;try{
+            if(!cell.has("tile_id"))cell.put("tile_id",UUID.randomUUID().toString());pendingImageTile=cell.getString("tile_id");pendingImageLayout=boardKey();
+            startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),93);
+        }catch(Exception e){Toast.makeText(this,"Bildauswahl nicht verfügbar",Toast.LENGTH_LONG).show();}});
     }
     private android.widget.SeekBar opacity(LinearLayout parent,String name,String color){
         TextView value=label(name+" – Transparenz",12,Color.LTGRAY);parent.addView(value);
@@ -282,12 +322,16 @@ public class MainActivity extends Activity {
     }
     private void showSettings(){
         String[] items={"Cockpit bearbeiten","App-Farben","Gesamtkilometer korrigieren","BMS und Fahrt-Erkennung","Akku und Restreichweite","Benachrichtigungen","Außentemperatur","Letzte Fahrt / Export","Akkuoptimierung","Speicherorte","Scooter-Profile","Temperatur-Beschriftungen"};
-        new AlertDialog.Builder(this).setTitle("Einstellungen").setItems(items,(d,w)->{
-            switch(w){case 0:editLayout();break;case 1:editColors();break;case 2:editOdometer();break;
+        if(settingsDialog!=null&&settingsDialog.isShowing())return;
+        settingsDialog=new AlertDialog.Builder(this).setTitle("Einstellungen").setItems(items,null).setNegativeButton("Schließen",null).create();
+        settingsDialog.show();
+        settingsDialog.getListView().setOnItemClickListener((parent,view,w,id)->{
+            switch(w){case 0:editorFromSettings=true;settingsDialog.dismiss();editLayout();break;case 1:editColors();break;case 2:editOdometer();break;
                 case 3:editBms();break;case 4:editBattery();break;case 5:notificationSettings();break;
                 case 6:weatherSettings();break;case 7:tripDialog();break;case 8:requestBatteryExemption();break;case 9:storageSettings();break;case 10:profileMenu();break;case 11:editTemperatures();break;}
-        }).setNegativeButton("Schließen",null).show();
+        });
     }
+    private void returnAfterEditor(){if(!draftCacheFile.isEmpty()){new File(getCacheDir(),draftCacheFile).delete();draftCacheFile="";}if(editorFromSettings){editorFromSettings=false;showSettings();}}
     private void changedProfile(){lastStatus=null;log.clear();lastLogState="";logExpanded=false;boardTiles=loadBoard();rebuild();StorageFolders.install(this).saveNow();}
     private void profileMenu(){
         try{JSONArray profiles=ScooterProfiles.export(prefs);String[] names=new String[profiles.length()];for(int i=0;i<names.length;i++)names[i]=profiles.getJSONObject(i).getString("name")+(profiles.getJSONObject(i).getString("id").equals(prefs.getString(ScooterProfiles.ACTIVE,""))?" ✓":"");
@@ -313,7 +357,7 @@ public class MainActivity extends Activity {
     private void addTile(String key){
         if(boardTiles.length()>=100){Toast.makeText(this,"Maximal 100 Kacheln",Toast.LENGTH_LONG).show();return;}
         if(Arrays.asList("bms_output","log").contains(key))for(int i=0;i<boardTiles.length();i++)if(boardTiles.optJSONObject(i).optString("key").equals(key)){Toast.makeText(this,"Diese Kachel ist bereits vorhanden",Toast.LENGTH_SHORT).show();return;}
-        try{boardTiles.put(CockpitBoard.position(CockpitLayout.tile(key),0,board.bottom(),6,3));rebuild();}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
+        try{boardTiles.put(CockpitBoard.position(CockpitLayout.tile(key).put("show_title",!key.equals("image")&&!key.equals("free_text")),0,board.bottom(),6,3));rebuild();}catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
     }
     private void optionalTiles(){
         ArrayList<String> keys=new ArrayList<>();try{JSONArray available=new JSONArray(prefs.getString("bms_available","[]"));for(int i=0;i<available.length();i++){String key=available.getString(i);if(BmsExtras.known(key))keys.add(key);}}catch(Exception ignored){}
@@ -366,19 +410,20 @@ public class MainActivity extends Activity {
         }
         return e;
     }
-    private void editBattery(){LinearLayout l=column();String[] keys={"capacity_ah","nominal_voltage","reserve_percent","reference_wh_km"};String[] titles={"Kapazität (Ah, Ersatzwert ohne BMS-Kapazität)","Nennspannung (V)","Restreserve (%)","Startwert Verbrauch (Wh/km)"};String[] values={"26","48","10","15"};List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++)es.add(field(l,titles[i],prefs.getString(keys[i],values[i])));
+    private void editBattery(){LinearLayout l=column();String[] keys={"capacity_ah","nominal_voltage","reserve_percent","reference_wh_km"};String[] titles={"Kapazität (Ah, Ersatzwert ohne BMS-Kapazität)","Nennspannung (V)","Restreserve (%)","Startwert Verbrauch (Wh/km)"};String[] values={"26","48","10","20"};List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++)es.add(field(l,titles[i],prefs.getString(keys[i],values[i])));
         l.addView(label("Ab 250 m wird der aktuelle Fahrtverbrauch verwendet; die jüngsten ungefähr 800 m werden stärker gewichtet. Reichweite ist eine Schätzung.",12,Color.GRAY));
-        AlertDialog d=new AlertDialog.Builder(this).setTitle("Akku und Restreichweite").setView(l).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{double[] mins={0.1,1,0,1},maxs={1000,100,99,200};SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++){Double n=valid(es.get(i),mins[i],maxs[i]);if(n==null)return;edit.putString(keys[i],n.toString());}edit.apply();d.dismiss();}));d.show();}
+        ScrollView scroll=new ScrollView(this);scroll.addView(l);
+        AlertDialog d=new AlertDialog.Builder(this).setTitle("Akku und Restreichweite").setView(scroll).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{double[] mins={0.1,1,0,1},maxs={1000,100,99,200};SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++){Double n=valid(es.get(i),mins[i],maxs[i]);if(n==null)return;edit.putString(keys[i],n.toString());}edit.apply();d.dismiss();}));d.show();}
     private boolean hasSelectedBms(){return BluetoothAdapter.checkBluetoothAddress(prefs.getString("device_address",""));}
     private void editBms(){LinearLayout l=column();TextView selected=panel(hasSelectedBms()?"Ausgewählt: "+prefs.getString("device_name","BMS")+"\n"+prefs.getString("device_address",""):"Noch kein BMS ausgewählt");l.addView(selected);
         Button scan=button(hasSelectedBms()?"Anderes BMS auswählen":"BMS auswählen");scan.setOnClickListener(v->openBmsPicker());l.addView(scan);
-        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh"};
-        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)"};
-        String[] defs={"0.30","3","5","90","-85","-95","60","15","5","5","30","45"};
+        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","connect_confirm_seconds"};
+        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)","Starken Empfang vor Erstverbindung bestätigen (s)"};
+        String[] defs={"0.30","3","5","90","-70","-95","60","15","5","5","30","45","3"};
         List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++){EditText input=field(l,titles[i],prefs.getString(keys[i],defs[i]));if(i==4||i==5)input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);es.add(input);}
-        l.addView(label("Frische BMS-Daten erhalten die Verbindung auch bei schwachem Empfang. In Pausen wird weiter Strom abgefragt. Fahrtende erst bei bestätigter Entfernung. Ohne Stromentnahme werden GPS-Strecken nach 3 s nicht weiter gezählt. Änderungen gelten nach Neustart der Bereitschaft.",12,Color.GRAY));ScrollView sv=new ScrollView(this);sv.addView(l);
+        l.addView(label("Die Erstverbindung benötigt mindestens drei aufeinanderfolgende starke Empfangsmessungen über die Bestätigungsdauer. Schwacher Empfang setzt diese Prüfung zurück. Frische BMS-Daten erhalten die Verbindung auch bei schwachem Empfang. In Pausen wird weiter Strom abgefragt. Fahrtende erst bei bestätigter Entfernung. Ohne Stromentnahme werden GPS-Strecken nach 3 s nicht weiter gezählt. Änderungen gelten nach Neustart der Bereitschaft.",12,Color.GRAY));ScrollView sv=new ScrollView(this);sv.addView(l);
         AlertDialog d=new AlertDialog.Builder(this).setTitle("BMS und Fahrt-Erkennung").setView(sv).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
-            double[] mins={.01,1,1,1,-110,-120,5,5,5,5,10,10},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150};
+            double[] mins={.01,1,1,1,-110,-120,5,5,5,5,10,10,1},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150,15};
             Double[] values=new Double[keys.length];for(int i=0;i<keys.length;i++){values[i]=valid(es.get(i),mins[i],maxs[i]);if(values[i]==null)return;}
             if(values[5]>values[4]){es.get(5).setError("Entfernungsschwelle muss gleich oder schwächer als Verbindungsschwelle sein");return;}
             SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++)edit.putString(keys[i],values[i].toString());edit.apply();d.dismiss();
@@ -400,7 +445,7 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Separate Speicherorte").setView(l).setNegativeButton("Schließen",null).show();
     }
     private void chooseFolder(int request){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,request);}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==93){receiveTileImage(result,data);return;}if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
         Uri tree=data.getData();int required=Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION;try{if((data.getFlags()&required)!=required)throw new SecurityException("Lese- und Schreibzugriff erforderlich");getContentResolver().takePersistableUriPermission(tree,Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(Exception e){Toast.makeText(this,"Dauerhafter Ordnerzugriff fehlgeschlagen",Toast.LENGTH_LONG).show();return;}
         String key=request==91?StorageFolders.SETTINGS:StorageFolders.TRIPS;
         StorageFolders store=StorageFolders.install(this);
@@ -408,6 +453,17 @@ public class MainActivity extends Activity {
             if("existing".equals(error))new AlertDialog.Builder(this).setTitle("Einstellungsdatei vorhanden").setMessage("Vorhandene Einstellungen laden oder mit den aktuellen Einstellungen überschreiben?").setPositiveButton("Laden",(d,w)->{if(BmsMonitorService.running){Toast.makeText(this,"Zuerst Bereitschaft beenden",Toast.LENGTH_LONG).show();return;}applyFolder(key,tree,true);}).setNeutralButton("Überschreiben",(d,w)->applyFolder(key,tree,false)).setNegativeButton("Zurück",null).show();
             else if(error==null)applyFolder(key,tree,false);else Toast.makeText(this,error,Toast.LENGTH_LONG).show();});
         }else applyFolder(key,tree,false);
+    }
+    private void receiveTileImage(int result,Intent data){
+        final String id=pendingImageTile,key=pendingImageLayout;pendingImageTile="";pendingImageLayout="";
+        if(result!=RESULT_OK||data==null||data.getData()==null||id.isEmpty())return;
+        Uri uri=data.getData();StorageFolders.install(this).run(()->{try{
+            String photo=TileImage.importPhoto(this,uri);
+            handler.post(()->{if(!editingBoard)return;try{
+                JSONArray tiles=key.equals(boardKey())?boardTiles:new JSONArray(orientationDrafts.getOrDefault(key,"[]"));
+                for(int i=0;i<tiles.length();i++)if(id.equals(tiles.getJSONObject(i).optString("tile_id"))){tiles.getJSONObject(i).put("image_data",photo);orientationDrafts.put(key,tiles.toString());if(key.equals(boardKey())){rebuild();editBoardTile(i);}break;}
+            }catch(Exception e){Toast.makeText(this,"Bildkachel nicht mehr vorhanden",Toast.LENGTH_LONG).show();}});
+        }catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{if(error!=null)Toast.makeText(this,error,Toast.LENGTH_LONG).show();});
     }
     private void applyFolder(String key,Uri tree,boolean load){StorageFolders.install(this).run(()->{try{StorageFolders.install(this).choose(key,tree.toString(),load);}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{if(error==null){boardTiles=loadBoard();rebuild();}Toast.makeText(this,error==null?"Speicherort übernommen":error,Toast.LENGTH_LONG).show();});}
     private void editLayout(){try{savedBoard=new JSONArray(boardTiles.toString());editingBoard=true;rebuild();}catch(Exception ignored){}}
@@ -439,6 +495,7 @@ public class MainActivity extends Activity {
     private Button button(String title) {
         Button button = new Button(this);
         button.setText(title);
+        button.setAllCaps(false);
         button.setTextColor(Color.WHITE);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.setMargins(0, dp(5), 0, dp(5));
@@ -569,7 +626,17 @@ public class MainActivity extends Activity {
         else renderStatus(new Intent());
     }
     @Override protected void onPause() {super.onPause();try{unregisterReceiver(statusReceiver);}catch(Exception ignored){}}
-    @Override protected void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);state.putBoolean("log_expanded",logExpanded);state.putBoolean("editing_board",editingBoard);if(editingBoard){orientationDrafts.put(boardKey(),boardTiles.toString());orientationSaved.put(boardKey(),savedBoard.toString());for(String key:orientationDrafts.keySet())state.putString("draft_"+key,orientationDrafts.get(key));for(String key:orientationSaved.keySet())state.putString("saved_"+key,orientationSaved.get(key));}}
-    @Override public void onBackPressed(){if(editingBoard){new AlertDialog.Builder(this).setMessage("Ungespeicherten Layoutentwurf verwerfen?").setPositiveButton("Verwerfen",(d,w)->{boardTiles=savedBoard;editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();}).setNegativeButton("Weiter bearbeiten",null).show();}else super.onBackPressed();}
+    @Override protected void onSaveInstanceState(Bundle state){
+        super.onSaveInstanceState(state);state.putString("pending_image_tile",pendingImageTile);state.putString("pending_image_layout",pendingImageLayout);state.putBoolean("editor_from_settings",editorFromSettings);state.putBoolean("settings_open",settingsDialog!=null&&settingsDialog.isShowing());state.putBoolean("log_expanded",logExpanded);state.putBoolean("editing_board",editingBoard);
+        if(editingBoard){
+            orientationDrafts.put(boardKey(),boardTiles.toString());orientationSaved.put(boardKey(),savedBoard.toString());
+            // Photos can exceed Android's Binder state limit; only a small cache reference enters the Bundle.
+            try{if(draftCacheFile.isEmpty())draftCacheFile="cockpit-draft-"+UUID.randomUUID()+".json";
+                JSONObject content=new JSONObject().put("drafts",new JSONObject(orientationDrafts)).put("saved",new JSONObject(orientationSaved));
+                java.nio.file.Files.write(new File(getCacheDir(),draftCacheFile).toPath(),content.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));state.putString("editor_cache",draftCacheFile);
+            }catch(Exception e){Toast.makeText(this,"Layoutentwurf konnte nicht zwischengesichert werden",Toast.LENGTH_LONG).show();}
+        }
+    }
+    @Override public void onBackPressed(){if(editingBoard){new AlertDialog.Builder(this).setMessage("Ungespeicherten Layoutentwurf verwerfen?").setPositiveButton("Verwerfen",(d,w)->{boardTiles=savedBoard;editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();returnAfterEditor();}).setNegativeButton("Weiter bearbeiten",null).show();}else super.onBackPressed();}
     @Override protected void onDestroy() {super.onDestroy();handler.removeCallbacksAndMessages(null);if(picker!=null)picker.close();}
 }

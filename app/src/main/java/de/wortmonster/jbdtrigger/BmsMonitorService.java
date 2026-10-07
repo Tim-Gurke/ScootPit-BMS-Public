@@ -81,7 +81,9 @@ public class BmsMonitorService extends Service implements LocationListener {
         }
     };
 
-    private int connectRssi = -85;
+    private int connectRssi = -70;
+    private long connectConfirmMs = 3000;
+    private final ConnectionPolicy.InitialSignal initialSignal = new ConnectionPolicy.InitialSignal();
     private int departureRssi = -95;
     private long reconnectMs = 5_000, departureGraceMs = 30_000, missingSince;
     private double gpsMaxKmh = 45;
@@ -175,6 +177,9 @@ public class BmsMonitorService extends Service implements LocationListener {
         if (intent != null && ACTION_END_TRIP.equals(intent.getAction())) {
             active = false; manualHold = true; activeSince = 0;
             finishTrip();
+            closeGatt();
+            near = false;
+            scheduleScan(goodDelayMs);
             emit(ACTION_IDLE);
             setState("Fahrt manuell beendet – wartet auf Ruhe");
             return START_STICKY;
@@ -193,7 +198,8 @@ public class BmsMonitorService extends Service implements LocationListener {
         }
         idleMs = seconds(preferences.getString("idle_seconds", "5"), 5);
         monitorTimeoutMs = seconds(preferences.getString("monitor_timeout", "90"), 90);
-        connectRssi = (int)setting("connect_rssi", -85, -110, -30);
+        connectRssi = (int)setting("connect_rssi", -70, -110, -30);
+        connectConfirmMs = (long)(setting("connect_confirm_seconds",3,1,15)*1000);
         departureRssi = (int)setting("departure_rssi", -95, -120, connectRssi);
         weakRssi = departureRssi;
         absentDelayMs = (long)setting("scan_absent",60,5,3600)*1000;
@@ -252,6 +258,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         }
 
         bestScanRssi = -127;
+        initialSignal.reset();
         ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(address).build();
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -261,7 +268,7 @@ public class BmsMonitorService extends Service implements LocationListener {
             scanner.startScan(Collections.singletonList(filter), settings, scanCallback);
             scanRunning = true;
             handler.postDelayed(finishScanRunnable,
-                    departureMode ? DEPARTURE_SCAN_MS : SCAN_WINDOW_MS);
+                    departureMode ? DEPARTURE_SCAN_MS : Math.max(SCAN_WINDOW_MS,connectConfirmMs+5000));
             setState(departureMode ? "Prüfe Entfernung" : "Suche BMS");
         } catch (SecurityException ignored) {
             scheduleScan(absentDelayMs);
@@ -300,12 +307,18 @@ public class BmsMonitorService extends Service implements LocationListener {
 
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override public void onScanResult(int callbackType, ScanResult result) {
+            handler.post(() -> processScanResult(result));
+        }
+        private void processScanResult(ScanResult result) {
+            if (!running || !scanRunning || !address.equalsIgnoreCase(result.getDevice().getAddress())) return;
             int value = result.getRssi();
             bestScanRssi = Math.max(bestScanRssi, value);
             rssi = value;
             sendStatus();
 
-            if (value >= (recorder != null ? departureRssi : connectRssi) && gatt == null) {
+            boolean accepted = recorder != null ? value >= departureRssi
+                    : initialSignal.accept(android.os.SystemClock.elapsedRealtime(),value,connectRssi,connectConfirmMs);
+            if (accepted && gatt == null) {
                 stopScan();
                 departureMode = false;
                 farConfirmations = 0;
@@ -867,7 +880,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     }
 
     private double consumption() {
-        double reference = averageConsumption > 0 ? averageConsumption : number(prefs.getString("reference_wh_km", "15"), 15);
+        double reference = averageConsumption > 0 ? averageConsumption : number(prefs.getString("reference_wh_km", "20"), 20);
         double adjusted=TemperatureHistory.estimate(temperatureHistory,prefs.getBoolean("weather_enabled",true)&&weatherAt>0&&System.currentTimeMillis()-weatherAt<=1800000?outsideTemperature:Double.NaN,reference);
         return recentConsumption.estimate(adjusted);
     }
