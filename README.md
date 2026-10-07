@@ -4,7 +4,7 @@
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
-**Version 1.0.0 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.1.0 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
@@ -26,6 +26,12 @@ Am Lenker wird ScootPit zum **persönlichen Cockpit**: Geschwindigkeit, Strecke,
 - **Samsung-Routinen nutzen:** Editierbare Fahrtstart-/Fahrtende-Nachrichten können eingerichtete Routinen zum Umschalten des Energiesparmodus auslösen. Die App richtet die Routinen nicht selbst ein.
 - **Daten behalten:** Fahrten und Einstellungen lokal speichern, zusätzliche Sicherungsordner auswählen. Keine Anmeldung erforderlich.
 
+## Neues Design in 1.1.0
+
+Kompakter Appkopf mit integriertem Scooter-Profil, Fahrtenbuch-Symbol und Zahnrad mit Blitz. Alle Kacheln bieten moderne Liniensymbole; je Kachel sind Symbol, Beschriftung, beides oder keines wählbar. Zwei anpassbare Farbschemata: **Dunkel · Schwarz/Orange** und **Hell · Weiß/Blau**. Das neue Scooter-Logo bleibt in beiden Schemata gleich. Antippen des Tourenzählers setzt ihn nach Bestätigung zurück; Tages- und Gesamtkilometer bleiben erhalten.
+
+Unter **Einstellungen → App-Farben** ein Schema wählen. Eigene Kachelfarben können erhalten oder ausdrücklich ersetzt werden; Layouts und Bilder bleiben erhalten. Die Symbolauswahl findest du unter **Cockpit bearbeiten → Kachel antippen**. [Gestaltung anpassen](docs/design.md).
+
 ## Was brauchst du?
 
 Ein Handy ab **Android 8** und ein **kompatibles, auslesbares JBD/Jiabaida-Bluetooth-BMS** im Roller. Entwickelt für den **Joyor T6e Pro mit JBD SP14S004**. Andere BMS müssen auf Kompatibilität geprüft werden; Bluetooth allein genügt nicht. Ein Aufzeichnungsmodus ohne kompatibles BMS ist nicht enthalten.
@@ -37,7 +43,7 @@ Bluetooth, präziser Standort und die nötigen Berechtigungen müssen aktiv sein
 1. Die signierte APK aus der [offiziellen Veröffentlichung](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest) installieren und Berechtigungen erlauben.
 2. Je Scooter ein Profil anlegen, das eigene BMS auswählen und die Werte prüfen.
 3. **Bereitschaft starten** – danach Cockpit nutzen oder Handy sperren und einstecken.
-4. Nach der Fahrt **Fahrtenbuch · Karte und Statistiken** öffnen.
+4. Nach der Fahrt das **Fahrtenbuch-Symbol** im Kopf antippen.
 
 Vorhandene Profile, Kilometer, Layouts und Fahrten bleiben bei einem kompatiblen Update erhalten. Die App-ID und der dauerhafte Signierschlüssel bleiben gleich. Vor einer gegebenenfalls erforderlichen Neuinstallation Daten sichern.
 
