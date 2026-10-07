@@ -19,6 +19,8 @@ Entwickelt für den Joyor T6e Pro mit JBD SP14S004. Weitere Roller sind möglich
 
 Der Tacho hat ein voreingestelltes Skalenmaximum von **22 km/h**; gespeicherte eigene Maxima bleiben erhalten. **Akkuoptimierung** zeigt den aktuellen Status und öffnet die Android-Einstellungen oder die App-Info auch dann, wenn ScootPit BMS bereits ausgenommen ist.
 
+Die Schriftgröße der Einheit (z. B. **km/h**) lässt sich pro Messwertkachel getrennt vom Zahlenwert einstellen. Die Einheit kann neben dem Wert, hochgestellt oder über dem Wert innerhalb des Rundinstruments stehen. Größe und Position werden mit dem Layout gesichert.
+
 ## Änderungen in 6.3
 
 - Erstverbindung erst nach mindestens drei starken, frischen Empfangsmessungen über eine editierbare Bestätigungsdauer. Vorgabe für neue Profile: −70 dBm und 3 Sekunden; laufende Fahrten und Pausen bleiben tolerant.
