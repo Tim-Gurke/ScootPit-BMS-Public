@@ -17,6 +17,8 @@ Entwickelt für den Joyor T6e Pro mit JBD SP14S004. Weitere Roller sind möglich
 
 ## Änderungen in 6.3.1
 
+Appkopf und Cockpit halten Abstand zu Statusleiste, Navigationsleiste und Kameraausschnitten, auch unter Android 15 und im Querformat.
+
 Der Tacho hat ein voreingestelltes Skalenmaximum von **22 km/h**; gespeicherte eigene Maxima bleiben erhalten. **Akkuoptimierung** zeigt den aktuellen Status und öffnet die Android-Einstellungen oder die App-Info auch dann, wenn ScootPit BMS bereits ausgenommen ist.
 
 Die Schriftgröße der Einheit (z. B. **km/h**) lässt sich pro Messwertkachel getrennt vom Zahlenwert einstellen. Die Einheit kann neben dem Wert, hochgestellt oder über dem Wert innerhalb des Rundinstruments stehen. Größe und Position werden mit dem Layout gesichert.
