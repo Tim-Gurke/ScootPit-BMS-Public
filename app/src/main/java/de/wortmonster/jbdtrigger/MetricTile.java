@@ -39,7 +39,7 @@ final class MetricTile extends TextView {
     }
     private void readingText(Canvas canvas,String value,String prefix,float centerX,float centerY,float maxWidth,float size,float maxUnitSize,int color){
         String[] parts=value.trim().split("\\s+",2);
-        int position=Math.max(0,Math.min(2,config.optInt("unit_position",0)));
+        int position=Math.max(0,Math.min(3,config.optInt("unit_position",0)));
         if((!config.has("unit_font")&&position==0)||parts.length!=2||!parts[0].matches("[-+]?\\d[\\d.,]*")){
             text(canvas,prefix+value,centerX,centerY+size*.34f,maxWidth,size,true,color);return;
         }
@@ -47,13 +47,13 @@ final class MetricTile extends TextView {
         paint.setStyle(Paint.Style.FILL);paint.setColor(color);paint.setTypeface(Typeface.DEFAULT_BOLD);
         String number=prefix+parts[0];paint.setTextSize(size);float numberWidth=paint.measureText(number);
         paint.setTextSize(unitSize);float unitWidth=paint.measureText(parts[1]),gap=dp(3);
-        float total=position==2?Math.max(numberWidth,unitWidth):numberWidth+gap+unitWidth;
-        float textHeight=position==2?size+gap+unitSize:Math.max(size,unitSize+(position==1?size*.4f:0));
+        float total=position>=2?Math.max(numberWidth,unitWidth):numberWidth+gap+unitWidth;
+        float textHeight=position>=2?size+gap+unitSize:Math.max(size,unitSize+(position==1?size*.4f:0));
         float fit=Math.min(1,Math.min(maxWidth/Math.max(1,total),maxUnitSize/Math.max(1,textHeight)));
         size*=fit;unitSize*=fit;numberWidth*=fit;unitWidth*=fit;gap*=fit;total*=fit;
-        if(position==2){
-            paint.setTextSize(unitSize);canvas.drawText(parts[1],centerX-unitWidth/2,centerY-(size+gap)/2+unitSize*.34f,paint);
-            paint.setTextSize(size);canvas.drawText(number,centerX-numberWidth/2,centerY+(unitSize+gap)/2+size*.34f,paint);return;
+        if(position>=2){
+            paint.setTextSize(unitSize);canvas.drawText(parts[1],centerX-unitWidth/2,centerY+(position==3?1:-1)*(size+gap)/2+unitSize*.34f,paint);
+            paint.setTextSize(size);canvas.drawText(number,centerX-numberWidth/2,centerY+(position==3?-1:1)*(unitSize+gap)/2+size*.34f,paint);return;
         }
         float left=centerX-total/2,baseline=centerY+Math.max(size,unitSize)*.34f;
         paint.setTextSize(size);canvas.drawText(number,left,baseline,paint);
@@ -69,9 +69,12 @@ final class MetricTile extends TextView {
             value+=" km/h";displayNote="";
         }
         int layout=config.optInt("arrangement",0),style=config.optInt("display",key.equals("speed")?2:key.equals("soc")?1:0);
+        if(key.equals("speed")&&style==2&&height>=dp(110)&&width>=dp(100)){
+            gauge(c,value.replace(" km/h",""),cx,width,height,foreground,accent);return;
+        }
         boolean single=layout==1||(layout==0&&height<dp(95));
         float valueSize=sp(Math.max(12,Math.min(80,config.optInt("font",28))));
-        boolean showIcon=CockpitSymbols.icon(config);int symbol=inactive?0xff787878:parseColor(config.optString("icon_color"),this.accent);
+        boolean showIcon=CockpitSymbols.icon(config);int symbol=parseColor(config.optString("icon_color"),CockpitSymbols.defaultColor(key,Color.red(this.foreground)<180));
         if(single){
             float iconSpace=showIcon?dp(30):0;if(showIcon)CockpitSymbols.draw(c,key,dp(8),height/2-dp(12),dp(24),symbol);
             String prefix=caption.isEmpty()?"":caption.replace('\n',' ')+"  ";
@@ -100,10 +103,33 @@ final class MetricTile extends TextView {
         readingText(c,value,"",cx,middle,valueWidth,valueSize,available*.65f,foreground);
         if(showNote)text(c,displayNote.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
+    private void gauge(Canvas c,String value,float cx,float width,float height,int foreground,int accent){
+        float radius=Math.min(width/2-dp(8),height/2-dp(10)),cy=height/2;
+        double max=config.optDouble("scale_max",CockpitLayout.DEFAULT_SPEED_SCALE_MAX);
+        if(!Double.isFinite(max)||max<=0)max=CockpitLayout.DEFAULT_SPEED_SCALE_MAX;
+        double progress=progress(value);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;
+        RectF bounds=new RectF(cx-radius,cy-radius,cx+radius,cy+radius);
+        paint.setStyle(Paint.Style.STROKE);paint.setStrokeCap(Paint.Cap.BUTT);paint.setStrokeWidth(dp(3));paint.setColor(track);c.drawArc(bounds,140,260,false,paint);
+        paint.setColor(accent);paint.setStrokeWidth(dp(4));if(progress>0)c.drawArc(bounds,140,(float)(260*progress),false,paint);
+        for(int i=0;i<=40;i++){
+            double angle=Math.toRadians(140+260*i/40d);boolean major=i%10==0;
+            float outer=radius-dp(7),inner=outer-dp(major?10:5);
+            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(major?1.3f:.8f));paint.setColor(i/40d<=progress&&progress>0?accent:track);
+            c.drawLine(cx+(float)Math.cos(angle)*inner,cy+(float)Math.sin(angle)*inner,cx+(float)Math.cos(angle)*outer,cy+(float)Math.sin(angle)*outer,paint);
+            if(major){double number=max*i/40d;String label=Math.abs(number-Math.rint(number))<.001?String.format(Locale.GERMANY,"%.0f",number):String.format(Locale.GERMANY,"%.1f",number);
+                float labelRadius=radius-dp(30);text(c,label,cx+(float)Math.cos(angle)*labelRadius,cy+(float)Math.sin(angle)*labelRadius+sp(4),dp(36),sp(11),false,foreground);
+            }
+        }
+        if(progress>0){double angle=Math.toRadians(140+260*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(accent);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
+        float numberSize=Math.min(sp(Math.max(12,Math.min(80,config.optInt("font",72)))),radius*.76f);
+        int unitPosition=config.optInt("unit_position",3);float unitSize=sp(config.optInt("unit_font",18));
+        if(unitPosition==3){text(c,value,cx,cy+numberSize*.26f,radius*1.45f,numberSize,true,foreground);text(c,"km/h",cx,cy+numberSize*.26f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
+        else readingText(c,value+" km/h","",cx,cy,radius*1.45f,numberSize,radius*.88f,foreground);
+    }
     private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){
         try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:key.equals("soc")?100:key.contains("power")?1200:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
-            double max=config.optDouble("scale_max",defaultMax);return Math.max(0,Math.min(1,n/Math.max(.1,max)));}catch(Exception e){return 0;}
+            double max=config.optDouble("scale_max",defaultMax);return Double.isFinite(n)&&Double.isFinite(max)?Math.max(0,Math.min(1,n/Math.max(.1,max))):0;}catch(Exception e){return 0;}
     }
     private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?Color.argb(Color.alpha(accent),96,96,96):accent);c.drawRoundRect(x,y,x+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
 }

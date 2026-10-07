@@ -96,28 +96,44 @@ final class CockpitBoard extends FrameLayout {
     static JSONArray load(android.content.SharedPreferences prefs,String key){
         if(key.equals("cockpit_board_landscape"))try{JSONArray saved=new JSONArray(prefs.getString(key,""));validate(saved);return saved;}catch(Exception ignored){}
 
-        try{JSONArray saved=new JSONArray(prefs.getString("cockpit_board",""));validate(saved);return saved;}catch(Exception ignored){}
-        return prefs.contains("cockpit_layout")?fromRows(CockpitLayout.load(prefs)):defaults();
+        try{JSONArray saved=new JSONArray(prefs.getString("cockpit_board",""));validate(saved);
+            if(!prefs.getString("cockpit_design_version","").equals("1.1.1")){
+                JSONArray updated=arrange111(saved);validate(updated);
+                prefs.edit().putString("cockpit_board_before_111",saved.toString()).putString("cockpit_board",updated.toString()).putString("cockpit_design_version","1.1.1").apply();return updated;
+            }return saved;}catch(Exception ignored){}
+        JSONArray result=prefs.contains("cockpit_layout")?fromRows(CockpitLayout.load(prefs)):defaults();
+        prefs.edit().putString("cockpit_board",result.toString()).putString("cockpit_design_version","1.1.1").apply();return result;
+    }
+    static JSONArray arrange111(JSONArray previous)throws Exception{
+        JSONArray result=defaults();boolean[] used=new boolean[previous.length()];
+        for(int i=0;i<result.length();i++){
+            JSONObject target=result.getJSONObject(i);
+            for(int j=0;j<previous.length();j++)if(!used[j]&&previous.getJSONObject(j).optString("key").equals(target.optString("key"))){
+                JSONObject old=new JSONObject(previous.getJSONObject(j).toString());used[j]=true;
+                for(String coordinate:new String[]{"x","y","w","h"})old.put(coordinate,target.getInt(coordinate));
+                if(old.optString("key").equals("speed")){if(!old.has("unit_position"))old.put("unit_position",3);if(!old.has("unit_font"))old.put("unit_font",18);}
+                if(old.optString("key").equals("ready_start")||old.optString("key").equals("ready_end"))old.put("caption","Bereit").put("font",14);
+                result.put(i,old);break;
+            }
+        }
+        int bottom=20;for(int j=0;j<previous.length();j++)if(!used[j]){
+            JSONObject extra=new JSONObject(previous.getJSONObject(j).toString());extra.put("y",bottom);bottom+=extra.getInt("h");result.put(extra);
+        }return result;
     }
     static JSONArray defaults(){
         JSONArray tiles=new JSONArray();
         try{
-            tiles.put(position(standardTile("speed").put("display",2).put("custom_colors",true).put("background","#00000000").put("font",56).put("show_title",false),0,0,8,6));
-            tiles.put(position(standardTile("soc").put("caption","🔋").put("arrangement",1).put("display",1).put("show_note",false),8,0,4,2));
+            tiles.put(position(standardTile("speed").put("display",2).put("custom_colors",true).put("background","#00000000").put("font",72).put("unit_font",18).put("unit_position",3).put("show_title",false),0,0,8,6));
+            tiles.put(position(standardTile("soc").put("display",1).put("show_note",false),8,0,4,2));
             tiles.put(position(standardTile("range").put("show_note",false),8,2,4,2));
             tiles.put(position(standardTile("power"),8,4,4,2));
-            tiles.put(position(standardTile("moving"),0,6,6,2));
-            tiles.put(position(standardTile("distance"),6,6,6,2));
-            tiles.put(position(standardTile("standing"),0,8,6,2));
-            tiles.put(position(standardTile("total"),6,8,6,2));
-            tiles.put(position(standardTile("max_power"),0,10,6,2));
-            tiles.put(position(standardTile("bms_output"),6,10,6,2));
-            tiles.put(position(standardTile("outside").put("caption","🌞🌧️🌤️").put("show_note",false),0,12,4,2));
-            tiles.put(position(standardTile("temp2").put("caption","Akku-Temp").put("show_note",false),4,12,4,2));
-            tiles.put(position(standardTile("temp1").put("caption","BMS-Temp").put("show_note",false),8,12,4,2));
-            tiles.put(position(standardTile("ready_start").put("caption","An").put("font",30),0,14,4,2));
-            tiles.put(position(standardTile("trip_end"),4,14,4,2));
-            tiles.put(position(standardTile("ready_end").put("caption","Aus").put("font",30),8,14,4,2));
+            String[][] rows={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
+            for(int row=0;row<rows.length;row++)for(int col=0;col<3;col++){
+                String key=rows[row][col];JSONObject tile=standardTile(key);
+                if(key.equals("image"))tile.put("heading_mode",3);
+                if(key.equals("ready_start")||key.equals("ready_end"))tile.put("caption","Bereit").put("font",14);
+                tiles.put(position(tile,col*4,6+row*2,4,2));
+            }
             tiles.put(position(standardTile("log"),0,16,12,4));
         }catch(Exception e){throw new IllegalStateException(e);}
         return tiles;
@@ -142,7 +158,7 @@ final class CockpitBoard extends FrameLayout {
     private static void validateAppearance(JSONObject tile)throws Exception{
         if(tile.has("heading_mode")&&(tile.getInt("heading_mode")<0||tile.getInt("heading_mode")>3))throw new Exception("Ungültige Symbol-/Beschriftungsauswahl");
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
-        if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>2))throw new Exception("Ungültige Einheit-Position");
+        if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>3))throw new Exception("Ungültige Einheit-Position");
         for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
         if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");

@@ -14,7 +14,7 @@ final class CockpitTheme {
         SharedPreferences.Editor e=p.edit().putString("app_background",background).putString("accent_color",accent).putString("header_color",accent).putString("tile_background",tile).putString("tile_text",text).putString("scale_color",scale).putString("outline_color",light?"#D5DFEB":"#2C3843");
         if(replaceTiles){for(String key:new String[]{"cockpit_board","cockpit_board_landscape"}){
             JSONArray tiles=CockpitBoard.load(p,key);for(int i=0;i<tiles.length();i++){JSONObject t=tiles.getJSONObject(i);boolean transparent=Color.alpha(Color.parseColor(t.optString("background",tile)))==0;
-                t.put("background",transparent?"#00000000":tile).put("text",text).put("instrument_color",accent).put("icon_color",accent).put("scale_color",scale).put("custom_colors",true);
+                t.put("background",transparent?"#00000000":tile).put("text",text).put("instrument_color",accent).put("icon_color",String.format(java.util.Locale.ROOT,"#%08X",CockpitSymbols.defaultColor(t.optString("key"),light))).put("scale_color",scale).put("custom_colors",true);
             }CockpitBoard.validate(tiles);e.putString(key,tiles.toString());
         }}e.apply();
     }

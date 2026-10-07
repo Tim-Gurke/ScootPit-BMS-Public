@@ -12,6 +12,18 @@ final class CockpitSymbols extends Drawable {
     private final int color;
     private static final Map<String,Path> CACHE=new HashMap<>();
     CockpitSymbols(String key,int color){this.key=key;this.color=color;}
+    static int defaultColor(String key,boolean light){
+        switch(family(key)){
+            case "play":case "stop":return Color.BLACK;
+            case "battery":return light?0xff238b35:0xff73df58;
+            case "clock":case "route":return light?0xff087da1:0xff62cce5;
+            case "pause":return light?0xff7751a8:0xffbb9ce8;
+            case "thermometer":return light?0xffb85441:0xffffa58a;
+            case "weather":return light?0xffb6800c:0xffffd166;
+            case "mountain":return light?0xff39856e:0xff7cdbb1;
+            default:return light?0xff1565c0:0xffffb41f;
+        }
+    }
     static int mode(JSONObject config){return config.has("heading_mode")?config.optInt("heading_mode",2):config.optBoolean("show_title",!Arrays.asList("image","free_text","speed").contains(config.optString("key")))?2:3;}
     static boolean icon(JSONObject config){int mode=mode(config);return mode==0||mode==2;}
     static boolean title(JSONObject config){int mode=mode(config);return mode==1||mode==2;}

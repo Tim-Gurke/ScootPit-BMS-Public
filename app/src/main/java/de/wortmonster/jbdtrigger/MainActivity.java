@@ -44,6 +44,7 @@ public class MainActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private BmsPicker picker;
     private SharedPreferences prefs;
+    private View stateDot;
     private TextView stateView, lastTripView, logView;
     private LinearLayout dashboard;
     private Switch dischargeSwitch;
@@ -111,7 +112,8 @@ public class MainActivity extends Activity {
     private int accent(){return color(prefs.getString("accent_color","#FF9800"),0xffff9800);}
     private int foreground(){return CockpitTheme.foreground(prefs);}
     private int muted(){return CockpitTheme.light(prefs)?0xff526579:0xffacb7c1;}
-    private int iconColor(JSONObject cell){return color(cell.optString("icon_color",prefs.getString("accent_color","#FF9800")),accent());}
+    private void updateStateDot(){if(stateDot==null)return;android.graphics.drawable.GradientDrawable dot=new android.graphics.drawable.GradientDrawable();dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);dot.setColor(BmsMonitorService.running?GREEN:muted());stateDot.setBackground(dot);}
+    private int iconColor(JSONObject cell){return color(cell.optString("icon_color"),CockpitSymbols.defaultColor(cell.optString("key"),CockpitTheme.light(prefs)));}
     private ImageButton headerAction(String key,String description,Runnable action){ImageButton b=new ImageButton(this);b.setContentDescription(description);b.setBackgroundColor(Color.TRANSPARENT);b.setPadding(dp(10),dp(10),dp(10),dp(10));b.setScaleType(ImageView.ScaleType.FIT_CENTER);if(key.equals("settings")){b.setImageResource(R.drawable.settings_bolt);b.setImageTintList(android.content.res.ColorStateList.valueOf(accent()));}else b.setImageDrawable(new CockpitSymbols(key,accent()));b.setEnabled(!editingBoard);b.setOnClickListener(v->action.run());return b;}
     private View separator(boolean vertical){return new View(this){private final android.graphics.Paint p=new android.graphics.Paint(3);@Override protected void onDraw(android.graphics.Canvas c){float w=getWidth(),h=getHeight();p.setShader(new android.graphics.LinearGradient(0,0,vertical?0:w,vertical?h:0,new int[]{accent(),Color.argb(35,Color.red(accent()),Color.green(accent()),Color.blue(accent())),Color.TRANSPARENT},new float[]{0,.4f,1},android.graphics.Shader.TileMode.CLAMP));c.drawRect(0,0,w,h,p);}};}
     private void personalHeading(LinearLayout box,JSONObject cell,int text){
@@ -139,7 +141,9 @@ public class MainActivity extends Activity {
         header.addView(headerAction("journal","Fahrtenbuch",()->new JournalUi(this,prefs).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));
         header.addView(headerAction("settings","Einstellungen öffnen",()->showSettings()),new LinearLayout.LayoutParams(dp(48),dp(56)));root.addView(header);
         LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,dp(1));rule.setMargins(0,0,0,dp(8));root.addView(separator(false),rule);
-        stateView=label(BmsMonitorService.running?"Bereitschaft aktiv – wartet auf Fahrt":"Bereitschaft aus",15,muted());root.addView(stateView);
+        LinearLayout stateRow=new LinearLayout(this);stateRow.setGravity(Gravity.CENTER_VERTICAL);stateRow.setPadding(0,dp(7),0,dp(10));
+        stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(11),dp(11));dotParams.setMargins(0,0,dp(10),0);stateRow.addView(stateDot,dotParams);
+        stateView=label(BmsMonitorService.running?"Bereitschaft aktiv":"Bereitschaft aus",15,foreground());stateRow.addView(stateView);root.addView(stateRow);updateStateDot();
         if(!hasSelectedBms()&&!editingBoard){
             root.addView(label("Bitte zuerst das BMS deines Rollers auswählen.",14,muted()));
             Button select=button("BMS auswählen");select.setOnClickListener(v->openBmsPicker());root.addView(select);
@@ -184,7 +188,7 @@ public class MainActivity extends Activity {
             int text=color(cell.optBoolean("custom_colors",false)?cell.optString("text"):prefs.getString("tile_text",CockpitTheme.light(prefs)?"#172B40":"#FFFFFF"),foreground());
             if(key.equals("ready_start")||key.equals("ready_end")||key.equals("trip_end")){
                 Button action=button(cell.optString("caption",CockpitLayout.title(key)));
-                if(!CockpitSymbols.title(cell))action.setText("");if(CockpitSymbols.icon(cell)){CockpitSymbols icon=new CockpitSymbols(key,iconColor(cell));icon.setBounds(0,0,dp(26),dp(26));action.setCompoundDrawables(null,icon,null,null);action.setCompoundDrawablePadding(dp(4));}action.setContentDescription(cell.optString("caption",CockpitLayout.title(key)));
+                if(!CockpitSymbols.title(cell))action.setText("");if(CockpitSymbols.icon(cell)){CockpitSymbols icon=new CockpitSymbols(key,iconColor(cell));icon.setBounds(0,0,dp(26),dp(26));action.setCompoundDrawables(null,icon,null,null);action.setCompoundDrawablePadding(dp(4));}action.setContentDescription(CockpitLayout.title(key));
                 action.setTextSize(Math.max(12,Math.min(30,cell.optInt("font",18))));action.setMaxLines(Math.max(1,Math.min(3,cell.optInt("lines",2))));action.setAutoSizeTextTypeUniformWithConfiguration(10,Math.max(12,Math.min(30,cell.optInt("font",18))),1,android.util.TypedValue.COMPLEX_UNIT_SP);
                 if(!key.equals("trip_end")){action.setBackgroundTintList(android.content.res.ColorStateList.valueOf(key.equals("ready_start")?GREEN:RED));action.setTextColor(Color.BLACK);}
                 action.setOnClickListener(v->{if(key.equals("ready_start"))startMonitoring();else if(key.equals("ready_end"))confirmEndReadiness();else if(BmsMonitorService.running && lastStatus!=null && lastStatus.getBooleanExtra("trip_active",false))startService(new Intent(this,BmsMonitorService.class).setAction(BmsMonitorService.ACTION_END_TRIP));else Toast.makeText(this,"Keine laufende Fahrt",Toast.LENGTH_SHORT).show();});
@@ -239,7 +243,7 @@ public class MainActivity extends Activity {
         EditText font=field(l,"Schriftgröße (12–80)",""+cell.optInt("font",28));
         boolean hasUnit=!personal&&!tileKey.startsWith("ready_")&&!tileKey.equals("trip_end")&&!tileKey.equals("log")&&!tileKey.equals("bms_output");
         EditText unitFont=hasUnit?field(l,"Einheit: Schriftgröße (8–80, leer = wie Wert)",cell.has("unit_font")?""+cell.optInt("unit_font"):""):new EditText(this);
-        Spinner unitPosition=new Spinner(this);unitPosition.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Neben dem Wert","Hochgestellt","Über dem Wert"}));unitPosition.setSelection(Math.max(0,Math.min(2,cell.optInt("unit_position",0))));
+        Spinner unitPosition=new Spinner(this);unitPosition.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Neben dem Wert","Hochgestellt","Über dem Wert","Unter dem Wert / im Tacho"}));unitPosition.setSelection(Math.max(0,Math.min(3,cell.optInt("unit_position",0))));
         if(hasUnit){l.addView(label("Einheit: Position",12,muted()));l.addView(unitPosition);}
         EditText x=field(l,"Spalte (0–11)",""+cell.optInt("x")),y=field(l,"Zeile im Raster (0–300)",""+cell.optInt("y"));
         EditText w=field(l,"Breite (1–12 Rasterspalten)",""+cell.optInt("w")),h=field(l,"Höhe (2–12, je 40 dp)",""+cell.optInt("h"));
@@ -282,9 +286,9 @@ public class MainActivity extends Activity {
         String statusProfile=intent.getStringExtra("scooter_id");if(statusProfile!=null&&!statusProfile.equals(activeProfile))return;
         lastStatus=new Intent(intent);
         boolean trip=intent.getBooleanExtra("trip_active",false),paused=intent.getBooleanExtra("trip_paused",false);
-        stateView.setTextColor(BmsMonitorService.running?GREEN:RED);
+        stateView.setTextColor(foreground());updateStateDot();
         renderDischarge(intent);
-        stateView.setText(!BmsMonitorService.running?"Bereitschaft aus":trip?(paused?"Fahrt wird aufgezeichnet · Pause":"Fahrt wird aufgezeichnet"):"Bereitschaft aktiv – wartet auf Fahrt");
+        stateView.setText(!BmsMonitorService.running?"Bereitschaft aus":trip?(paused?"Bereitschaft aktiv · Fahrt pausiert":"Bereitschaft aktiv · Fahrt läuft"):"Bereitschaft aktiv");
         String detail=intent.getStringExtra("state");
         String storageError=prefs.getString("trip_storage_error",prefs.getString("settings_storage_error",""));
         if(!storageError.isEmpty())detail=storageError;
