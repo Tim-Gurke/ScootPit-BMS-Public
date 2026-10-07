@@ -363,11 +363,11 @@ public class CockpitSmokeTest extends Instrumentation {
         try {
             for(int arrangement:new int[]{1,2})for(int display:new int[]{0,1,2})for(int position:new int[]{0,1,2}){
                 org.json.JSONObject config=new org.json.JSONObject().put("key","speed").put("font",40).put("unit_font",10).put("unit_position",position).put("display",display).put("arrangement",arrangement).put("show_title",false).put("show_note",false);
-                MetricTile metric=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);metric.layout(0,0,640,320);metric.reading("18,2 km/h","",false);
+                MetricTile metric=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);metric.layout(0,0,640,320);metric.reading("18,2","km/h",false);
                 Bitmap small=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888),large=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);
                 metric.draw(new android.graphics.Canvas(small));config.put("unit_font",32);metric.draw(new android.graphics.Canvas(large));
                 int changed=0;for(int y=0;y<320;y++)for(int x=0;x<640;x++)if(small.getPixel(x,y)!=large.getPixel(x,y))changed++;
-                small.recycle();large.recycle();if(changed<20||config.getInt("font")!=40||!metric.getContentDescription().toString().contains("18,2 km/h"))throw new AssertionError("Unit font not independent in layout "+arrangement+"/"+display+"/"+position);
+                small.recycle();large.recycle();if(changed<20||config.getInt("font")!=40||!metric.getContentDescription().toString().contains("18,2")||!metric.getContentDescription().toString().contains("km/h"))throw new AssertionError("Unit font not independent in layout "+arrangement+"/"+display+"/"+position);
             }
             org.json.JSONArray invalid=CockpitBoard.defaults();invalid.getJSONObject(0).put("unit_font",81);
             boolean rejected=false;try{CockpitBoard.validate(invalid);}catch(Exception expected){rejected=true;}
