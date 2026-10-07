@@ -27,6 +27,6 @@ final class JournalChart extends View {
             float x=left+(float)(point[0]/maxX)*(right-left),y=bottom-(float)((point[1]-low)/(high-low))*(bottom-top);
             if(connected)path.lineTo(x,y);else path.moveTo(x,y);connected=true;
         }
-        paint.setColor(0xffffb300);paint.setStrokeWidth(2*d);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
+        paint.setColor(CockpitTheme.color(getContext().getSharedPreferences("settings",0),"accent_color","#FF9800"));paint.setStrokeWidth(2*d);paint.setStyle(Paint.Style.STROKE);canvas.drawPath(path,paint);
     }
 }

@@ -30,7 +30,7 @@ final class CockpitBoard extends FrameLayout {
             View overlay=new View(getContext());overlay.setTag(tile);
             overlay.setContentDescription("Kachel bearbeiten: "+CockpitLayout.title(tile.optString("key")));
             overlay.setBackground(new android.graphics.drawable.GradientDrawable(){ {
-                setColor(0x08ffffff);setStroke(2,0xffFFB300);setCornerRadius(12);
+                setColor(0x08ffffff);setStroke(2,CockpitTheme.color(getContext().getSharedPreferences("settings",0),"accent_color","#FF9800"));setCornerRadius(12);
             }});
             addView(overlay,new FrameLayout.LayoutParams(1,1));
             overlay.setOnClickListener(v->configure.run());
@@ -89,7 +89,7 @@ final class CockpitBoard extends FrameLayout {
         for(int i=0;i<getChildCount();i++){View v=getChildAt(i);JSONObject tile=(JSONObject)v.getTag();int x=width*tile.optInt("x")/12+gap,y=unit*tile.optInt("y")+gap;v.layout(x,y,x+v.getMeasuredWidth(),y+v.getMeasuredHeight());}
     }
     @Override protected void dispatchDraw(android.graphics.Canvas canvas){super.dispatchDraw(canvas);if(!editing)return;
-        android.graphics.Paint p=new android.graphics.Paint();p.setColor(0xffffb300);p.setTextSize(24*getResources().getDisplayMetrics().density);
+        android.graphics.Paint p=new android.graphics.Paint();p.setColor(CockpitTheme.color(getContext().getSharedPreferences("settings",0),"accent_color","#FF9800"));p.setTextSize(24*getResources().getDisplayMetrics().density);
         for(int i=0;i<getChildCount();i+=2){View v=getChildAt(i);canvas.drawText("◢",v.getRight()-p.getTextSize(),v.getBottom()-4,p);}
     }
     static JSONArray load(android.content.SharedPreferences prefs){return load(prefs,"cockpit_board");}
@@ -140,9 +140,10 @@ final class CockpitBoard extends FrameLayout {
     }
     static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x).put("y",y).put("w",w).put("h",h);}
     private static void validateAppearance(JSONObject tile)throws Exception{
+        if(tile.has("heading_mode")&&(tile.getInt("heading_mode")<0||tile.getInt("heading_mode")>3))throw new Exception("Ungültige Symbol-/Beschriftungsauswahl");
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
         if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>2))throw new Exception("Ungültige Einheit-Position");
-        for(String field:new String[]{"background","text","instrument_color","scale_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
+        for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
         if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");
         if(tile.has("image_data")&&!tile.getString("image_data").isEmpty())TileImage.validate(tile.getString("image_data"));

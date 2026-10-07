@@ -76,7 +76,7 @@ final class RouteMap extends View {
                 if(file.isFile()&&System.currentTimeMillis()-file.lastModified()<7L*86400000)result=BitmapFactory.decodeFile(file.getPath());
                 if(result==null){
                     HttpURLConnection connection=(HttpURLConnection)new URL("https://tile.openstreetmap.org/"+z+"/"+x+"/"+y+".png").openConnection();
-                    connection.setRequestProperty("User-Agent","ScootPit-BMS/1.0.0 (https://github.com/Tim-Gurke/ScootPit-BMS-Public)");
+                    connection.setRequestProperty("User-Agent","ScootPit-BMS/1.1.0 (https://github.com/Tim-Gurke/ScootPit-BMS-Public)");
                     connection.setConnectTimeout(8000);connection.setReadTimeout(8000);
                     try{if(connection.getResponseCode()!=200)throw new IOException("Kartenhintergrund nicht verfügbar");
                         try(InputStream input=connection.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){

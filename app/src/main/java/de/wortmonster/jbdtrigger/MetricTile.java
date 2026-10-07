@@ -17,9 +17,9 @@ final class MetricTile extends TextView {
     MetricTile(Context context,JSONObject config,int foreground,int accent,int scale,int background){super(context);this.config=config;this.key=config.optString("key");this.foreground=foreground;this.accent=accent;this.scale=scale;this.background=background;setText("–");setPadding(0,0,0,0);}
     void reading(String value,String note,boolean inactive){
         setText(value);this.note=note;this.inactive=inactive;
-        setContentDescription(config.optString("caption",CockpitLayout.title(key))+": "+value+(note.isEmpty()?"":" · "+note)+(inactive?" · nicht aktuell":""));
+        setContentDescription(CockpitSymbols.caption(config)+": "+value+(note.isEmpty()?"":" · "+note)+(inactive?" · nicht aktuell":""));
         if(getParent() instanceof android.view.View){android.graphics.drawable.Drawable bg=((android.view.View)getParent()).getBackground();if(bg instanceof android.graphics.drawable.GradientDrawable){
-            int shade=Math.min(48,Math.round((Color.red(background)*.2126f+Color.green(background)*.7152f+Color.blue(background)*.0722f)*.55f));
+            float luminance=Color.red(background)*.2126f+Color.green(background)*.7152f+Color.blue(background)*.0722f;int shade=luminance>150?Math.round(luminance*.96f):Math.min(48,Math.round(luminance*.55f));
             ((android.graphics.drawable.GradientDrawable)bg).setColor(inactive?Color.argb(Color.alpha(background),shade,shade,shade):background);
         }}invalidate();
     }
@@ -63,7 +63,7 @@ final class MetricTile extends TextView {
         int foreground=inactive?Color.argb(Color.alpha(this.foreground),120,120,120):this.foreground,accent=inactive?0xff606060:this.accent;
         float width=getWidth()-dp(12),height=getHeight(),cx=getWidth()/2f;
         if(width<=0||height<=0)return;
-        String value=getText().toString(),caption=config.optBoolean("show_title",true)?config.optString("caption",CockpitLayout.title(key)):"";
+        String value=getText().toString(),caption=CockpitSymbols.title(config)?CockpitSymbols.caption(config):"";
         String displayNote=note;
         if(key.equals("speed")&&note.equals("km/h")&&(config.has("unit_font")||config.optInt("unit_position",0)!=0)){
             value+=" km/h";displayNote="";
@@ -71,16 +71,23 @@ final class MetricTile extends TextView {
         int layout=config.optInt("arrangement",0),style=config.optInt("display",key.equals("speed")?2:key.equals("soc")?1:0);
         boolean single=layout==1||(layout==0&&height<dp(95));
         float valueSize=sp(Math.max(12,Math.min(80,config.optInt("font",28))));
+        boolean showIcon=CockpitSymbols.icon(config);int symbol=inactive?0xff787878:parseColor(config.optString("icon_color"),this.accent);
         if(single){
+            float iconSpace=showIcon?dp(30):0;if(showIcon)CockpitSymbols.draw(c,key,dp(8),height/2-dp(12),dp(24),symbol);
             String prefix=caption.isEmpty()?"":caption.replace('\n',' ')+"  ";
-            readingText(c,value,prefix,cx,height/2,width,Math.min(valueSize,height*.45f),height*.7f,foreground);
+            readingText(c,value,prefix,cx+iconSpace/2,height/2,width-iconSpace,Math.min(valueSize,height*.45f),height*.7f,foreground);
             if(style!=0)bar(c,dp(8),height-dp(10),getWidth()-dp(16),progress(value));return;
         }
-        List<String> headings=caption.isEmpty()?Collections.emptyList():lines(caption,Math.max(1,Math.min(3,config.optInt("lines",2))),width);
+        List<String> headings=caption.isEmpty()?Collections.emptyList():lines(caption,Math.max(1,Math.min(3,config.optInt("lines",2))),width-(showIcon?dp(30):0));
         float lineHeight=sp(14),top=dp(6);
         // Titles and notes give way before the reading does.
         if(height<dp(65))headings=Collections.emptyList();
-        for(String heading:headings){text(c,heading,cx,top+sp(11),width,sp(12),false,foreground);top+=lineHeight;}
+        if(showIcon&&height>=dp(65)){
+            float labelWidth=0;paint.setTextSize(sp(12));for(String heading:headings)labelWidth=Math.max(labelWidth,Math.min(width-dp(30),paint.measureText(heading)));
+            CockpitSymbols.draw(c,key,headings.isEmpty()?cx-dp(11):cx-(labelWidth+dp(28))/2,top,dp(22),symbol);
+            float headingCenter=headings.isEmpty()?cx:cx+dp(14);
+            for(String heading:headings){text(c,heading,headingCenter,top+sp(13),width-dp(30),sp(12),false,foreground);top+=lineHeight;}top=Math.max(top,dp(30));
+        }else for(String heading:headings){text(c,heading,cx,top+sp(11),width,sp(12),false,foreground);top+=lineHeight;}
         boolean showNote=config.optBoolean("show_note",true)&&!displayNote.isEmpty()&&height-top>dp(65);
         float bottom=height-(showNote?sp(23):dp(8)),middle=(top+bottom)/2;
         float valueWidth=width;
@@ -93,6 +100,7 @@ final class MetricTile extends TextView {
         readingText(c,value,"",cx,middle,valueWidth,valueSize,available*.65f,foreground);
         if(showNote)text(c,displayNote.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
+    private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){
         try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:key.equals("soc")?100:key.contains("power")?1200:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
             double max=config.optDouble("scale_max",defaultMax);return Math.max(0,Math.min(1,n/Math.max(.1,max)));}catch(Exception e){return 0;}

@@ -21,7 +21,7 @@ final class JournalUi {
     JournalUi(Activity a,SharedPreferences p){activity=a;prefs=p;}
     private int dp(int v){return Math.round(v*activity.getResources().getDisplayMetrics().density);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(dp(12),dp(8),dp(12),dp(8));return l;}
-    private TextView text(String value){TextView v=new TextView(activity);v.setText(value);v.setTextColor(Color.WHITE);v.setTextSize(15);v.setPadding(0,dp(8),0,dp(8));return v;}
+    private TextView text(String value){TextView v=new TextView(activity);v.setText(value);v.setTextColor(CockpitTheme.foreground(prefs));v.setTextSize(15);v.setPadding(0,dp(8),0,dp(8));return v;}
     private Button button(String value,Runnable action){Button b=new Button(activity);b.setText(value);b.setAllCaps(false);b.setOnClickListener(v->action.run());return b;}
     private ScrollView scroll(LinearLayout l){ScrollView s=new ScrollView(activity);s.addView(l);return s;}
     private AlertDialog dialog(String title,LinearLayout l){AlertDialog d=new AlertDialog.Builder(activity).setTitle(title).setView(scroll(l)).setNegativeButton("Zurück",null).create();d.show();d.getWindow().setLayout(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.88));return d;}
