@@ -2,7 +2,7 @@
 
 <img src="docs/assets/app-logo.svg" width="96" alt="ScootPit BMS App-Logo">
 
-**ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem. Native Android-App mit anpassbarem GPS-Cockpit, JBD-Bluetooth-BMS, Scooter-Profilen, Fahrtenbuch und Samsung-Routines-Signalen. Aktuelle Version: **6.3**.
+**ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem. Native Android-App mit anpassbarem GPS-Cockpit, JBD-Bluetooth-BMS, Scooter-Profilen, Fahrtenbuch und Samsung-Routines-Signalen. Aktuelle Version: **6.3.1**.
 
 Entwickelt für den Joyor T6e Pro mit JBD SP14S004. Weitere Roller sind mögliche Testkandidaten, keine bestätigte Kompatibilitätsliste.
 
@@ -14,6 +14,10 @@ Entwickelt für den Joyor T6e Pro mit JBD SP14S004. Weitere Roller sind möglich
 - [Restreichweite und Temperaturlernen](docs/reichweite.md)
 - [Bereitschaft, Fahrtpausen, Energiesparmodus und Samsung-Routinen](docs/hintergrund-routinen.md)
 - [Entwicklung und dauerhafte APK-Signatur](docs/entwicklung.md)
+
+## Änderungen in 6.3.1
+
+Der Tacho hat ein voreingestelltes Skalenmaximum von **22 km/h**; gespeicherte eigene Maxima bleiben erhalten. **Akkuoptimierung** zeigt den aktuellen Status und öffnet die Android-Einstellungen oder die App-Info auch dann, wenn ScootPit BMS bereits ausgenommen ist.
 
 ## Änderungen in 6.3
 
