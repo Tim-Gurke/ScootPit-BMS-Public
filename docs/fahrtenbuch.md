@@ -4,7 +4,7 @@
 
 ## Fahrt auswählen
 
-Im Cockpit **Fahrtenbuch · Karte und Statistiken** oder unter Einstellungen **Fahrtenbuch / Karte / Statistiken** öffnen. Zwischen **Letzte 7 Tage** und **Letzte 30 Tage** wählen. Die Liste enthält abgeschlossene, lokal gespeicherte Fahrten des aktiven Scooter-Profils mit Datum, Startzeit, Strecke und Dauer. Auf eine Fahrt tippen und **Statistiken**, **Karte** oder **GPX und CSV teilen** wählen.
+Im Cockpit **Fahrtenbuch** oder unter Einstellungen **Fahrtenbuch / Karte / Statistiken** öffnen. Zwischen **Letzte 7 Tage** und **Letzte 30 Tage** wählen. Die Liste enthält abgeschlossene, lokal gespeicherte Fahrten des aktiven Scooter-Profils mit Datum, Startzeit, Strecke und Dauer. Auf eine Fahrt tippen und **Statistiken**, **Karte** oder **GPX und CSV teilen** wählen.
 
 Es gibt keine automatische Löschung nach 30 Tagen; die Anzeige begrenzt nur den Zeitraum. Bereits vorhandene lokale Aufzeichnungen werden anhand ihrer JSON-Zusammenfassung und CSV-Datei gelesen. Externe Sicherungen werden nicht automatisch zurückimportiert; nach einer Neuinstallation sind lokal entfernte Fahrten nicht allein durch Auswahl des Exportordners wiederhergestellt.
 
