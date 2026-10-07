@@ -1,4 +1,10 @@
-# Gestaltung in Version 1.1.0
+# Cockpit 1.1.1
+
+Die Hochformat-Voreinstellung folgt der Referenzanordnung. Foto importieren: **Einstellungen → Cockpit bearbeiten → Bildkachel antippen → Bild auswählen**. Symbolfarben lassen sich je Kachel unabhängig von Wert-, Instrument- und Skalenfarben einstellen. Einheitengröße und Position bleiben einstellbar; „Unter dem Wert / im Tacho“ platziert km/h innerhalb der Skala.
+
+Das erste Öffnen eines vorhandenen Profils ordnet dessen Hochformat neu an. Inhalte und Zusatzkacheln bleiben erhalten. Die vorherige Anordnung wird unter `cockpit_board_before_111` in der exportierbaren Einstellungssicherung aufbewahrt. Gespeicherte Querformatlayouts bleiben unabhängig. Anschließend sind Positionen und Größen frei bearbeitbar.
+
+## Weitere Gestaltungsoptionen
 
 Der Kopf zeigt Appname und antippbaren Profilnamen ohne „Scooter:“-Präfix und ohne grauen Button. Rechts öffnen das Fahrtenbuch-Symbol und das Zahnrad mit Blitz die jeweiligen Menüs. Feine Verlaufslinien trennen den Kopf; Statusleiste und Kameraausschnitte bleiben ausgespart.
 
