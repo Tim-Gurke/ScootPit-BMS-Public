@@ -36,6 +36,10 @@ Unplausible GPS-Geschwindigkeiten und Positionssprünge werden vor der Anzeige v
 
 Ab 6.3.1 beträgt das voreingestellte Skalenmaximum des Tachos **22 km/h**. Ein selbst gespeichertes Maximum bleibt erhalten; ändern kannst du es im Kacheleditor unter **Skalenmaximum**.
 
+Unter **Einheit: Schriftgröße** kannst du die Einheit jeder Messwertkachel unabhängig vom Zahlenwert auf **8–80** einstellen, etwa für **km/h**, **%**, **W** oder **°C**. Ein leeres Feld verwendet dieselbe Größe wie der Wert. Die Einstellung gilt für Zahl, Balken und Rundinstrument und wird im Layout mit Profilen und Sicherungen gespeichert. In schmalen Kacheln passt sich die gesamte Anzeige weiterhin an den verfügbaren Platz an.
+
+**Einheit: Position** bietet **Neben dem Wert**, **Hochgestellt** und **Über dem Wert**. Beim Rundinstrument liegt **Über dem Wert** innerhalb der Skala oberhalb der Zahl; die Einheit beansprucht dann keinen zusätzlichen Platz neben der Zahl. Ohne eigene Einstellung bleibt die bisherige Position erhalten.
+
 Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** unabhängig voneinander und je Kachel einstellbar. Fehlen eigene Instrumentfarben, verwendet die Kachel weiterhin die App-Akzentfarbe. Inaktive Messwerte bleiben gedimmt.
 
 **+ Kachel → Bild** fügt eine Bildkachel hinzu. Antippen → **Bild auswählen** öffnet die Android-Dateiauswahl. Einpassen zeigt das gesamte Foto; Kachel füllen schneidet die Ränder bei Bedarf zu. Das Bild wird verkleinert, ohne Metadaten lokal in der Anordnung gespeichert und in Einstellungen sowie kopierten Profilen mitgesichert. Es wird nicht hochgeladen. Die Originaldatei bleibt unverändert. Die Kacheländerung mit **Übernehmen** und den gesamten Entwurf mit **Speichern** bestätigen.
