@@ -4,70 +4,55 @@
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
-Das Highlight von ScootPit BMS ist die **automatische Verbindung mit deinem Scooter und die automatische Fahrt-Erkennung**. Nach der Einrichtung läuft die Automatik in drei Schritten:
+**Version 1.0.0 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
-1. **Bereitschaft aktivieren:** Das gewünschte Scooter-Profil auswählen und die Bereitschaft starten. Die App sucht im Hintergrund nach dessen gespeichertem Bluetooth-BMS.
-2. **Zum Scooter gehen:** Sobald das BMS erreichbar ist und der Empfang ausreichend stark und stabil ist, verbindet sich die App automatisch. Du musst die Verbindung nicht von Hand herstellen.
-3. **Losfahren:** ScootPit erkennt die Stromentnahme über das BMS und startet automatisch die Fahrtaufzeichnung, sobald die eingestellten Startbedingungen erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
+Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
-Fahrtpausen werden berücksichtigt; beim bestätigten Entfernen vom Roller wird die Fahrt abgeschlossen. Solange die Bereitschaft aktiv bleibt, musst du nicht vor jeder Fahrt an einen Start- oder Stoppknopf denken.
+Die Aufzeichnung läuft auch mit ausgeschaltetem Bildschirm und gesperrtem Handy. Beim Ausrollen wird die GPS-Geschwindigkeit weiter ausgewertet. Nach **45 Sekunden zuverlässig erkanntem Stillstand** wird die Fahrt abgeschlossen – auch wenn das BMS noch verbunden ist. Die Bereitschaft bleibt aktiv und die Suche beginnt wieder zügig. Auch bestätigtes Entfernen vom Scooter beendet die Fahrt. Die Stillstandszeit ist einstellbar: Für längere Ampelphasen kannst du beispielsweise 90 Sekunden wählen.
 
-**Die Aufzeichnung läuft auch mit ausgeschaltetem Bildschirm und gesperrtem Handy in der Hosentasche.** Bluetooth und Standort bleiben aktiv; Berechtigungen und Hintergrundbetrieb müssen eingerichtet sein. So entsteht dein Fahrtenbuch im Alltag, während du dich auf die Fahrt konzentrierst.
+Mehrere gespeicherte Scooter? Die App prüft erreichbare BMS nacheinander und übernimmt das passende Profil. Während einer laufenden Fahrt bleibt die Zuordnung fest. Unbekannte BMS werden nicht ungefragt übernommen; jedes Gerät wird bei der Einrichtung einmal seinem Profil zugeordnet.
 
-Wenn du das Handy am Lenker nutzt, wird ScootPit zusätzlich zum **persönlichen Scooter-Cockpit**: Geschwindigkeit, Strecke, Akkustand, Leistung, Verbrauch und geschätzte Restreichweite auf einen Blick.
+Am Lenker wird ScootPit zum **persönlichen Cockpit**: Geschwindigkeit, Strecke, Akku, elektrische Leistung, Verbrauch und geschätzte Restreichweite auf einen Blick.
 
-## Was kann ScootPit BMS?
+## Was bringt dir ScootPit?
 
-- **Fahrten automatisch aufzeichnen:** Fahrtstart erkennen, Pausen berücksichtigen und die Fahrt beim bestätigten Entfernen vom Roller abschließen. Strecke, Fahr- und Standzeit, Geschwindigkeit und Höhenwerte werden mitgeschrieben.
-- **Scooter- und Akkuwerte live sehen:** GPS-Tacho, Kilometer, Akkustand, Spannung, Strom, Leistung, Energieverbrauch und Temperaturen in einer Ansicht. Weitere BMS-Daten, etwa Zellspannungen, sind je nach Gerät verfügbar.
-- **Restreichweite besser einschätzen:** Die Schätzung berücksichtigt Akkureserve und Verbrauch. Während der Fahrt fließt der aktuelle Verbrauch ein; passende frühere Fahrten helfen bei der Startschätzung.
-- **Das Cockpit selbst gestalten:** Kacheln verschieben und vergrößern, Zahlen, Balken oder Rundinstrumente wählen sowie Farben, Transparenz und Schriftgrößen anpassen. Separate Hoch- und Querformatlayouts, ein eigenes Rollerfoto und Freitext machen daraus dein persönliches Cockpit.
-- **Fahrten behalten und weiterverwenden:** Das Fahrtenbuch wird lokal gespeichert. GPX-, CSV- und JSON-Dateien lassen sich in einen gewählten Ordner exportieren; GPX und CSV kannst du auch teilen.
-- **Mehrere Scooter und Samsung-Routinen nutzen:** Eigene Profile trennen Roller, Einstellungen und Fahrtdaten. Vor dem Bereitschaftsstart wählst du das gewünschte Profil; ein automatischer Wechsel zwischen Scootern ist derzeit nicht enthalten. Auf Samsung-Handys können eingerichtete Routinen die Fahrtstart- und Fahrtende-Nachrichten nutzen, um den Energiesparmodus aus- und wieder einzuschalten.
+- **Automatisches Tracking:** Fahrtstart und Fahrtende erkennen, Fahr- und Standzeit erfassen, auch mit gesperrtem Handy.
+- **Live-Werte im Blick:** GPS-Tacho, Akkustand, Spannung, Strom, Leistung, Energie, Temperaturen und verfügbare Zusatzdaten des BMS.
+- **Drei Kilometerzähler:** Gesamtkilometer, Tageskilometer mit täglichem Neustart und ein manuell zurücksetzbarer Tourenzähler – getrennt je Scooter.
+- **Fahrtenbuch mit Karte:** Fahrten der letzten 7 oder 30 Tage auswählen, Route mit Start und Ziel anzeigen, zoomen, verschieben und GPX/CSV teilen.
+- **Auswählbare Statistiken:** Per Häkchen Werte und Diagramme wählen. Geschwindigkeit, Leistung und GPS-Höhe im Zeitverlauf; Zeitraumübersicht, Tagesstrecken und Vergleich einzelner Fahrten.
+- **Eigenes Cockpit:** Kacheln verschieben und vergrößern, Zahl/Balken/Rundinstrument wählen, Instrument- und Skalenfarben separat einstellen, Transparenz, Schrift und Einheitenposition anpassen. Eigene Bild- und Freitextkacheln sowie getrennte Hoch-/Querformatlayouts.
+- **Restreichweite einschätzen:** Akkureserve und Verbrauch berücksichtigen; aktuelle Fahrtdaten und passende Verbrauchshistorie verbessern die Schätzung. Startwert: 20 Wh/km.
+- **Samsung-Routinen nutzen:** Editierbare Fahrtstart-/Fahrtende-Nachrichten können eingerichtete Routinen zum Umschalten des Energiesparmodus auslösen. Die App richtet die Routinen nicht selbst ein.
+- **Daten behalten:** Fahrten und Einstellungen lokal speichern, zusätzliche Sicherungsordner auswählen. Keine Anmeldung erforderlich.
 
-## Was brauchst du dafür?
+## Was brauchst du?
 
-Ein Android-Handy ab **Android 8** und ein **kompatibles, auslesbares JBD/Jiabaida-Bluetooth-BMS** im Roller. ScootPit wurde für den **Joyor T6e Pro mit JBD SP14S004** entwickelt. Andere Roller und BMS-Versionen müssen auf Kompatibilität geprüft werden; Bluetooth allein genügt dafür nicht. Ein eigenständiger Aufzeichnungsmodus ohne kompatibles BMS ist derzeit nicht enthalten.
+Ein Handy ab **Android 8** und ein **kompatibles, auslesbares JBD/Jiabaida-Bluetooth-BMS** im Roller. Entwickelt für den **Joyor T6e Pro mit JBD SP14S004**. Andere BMS müssen auf Kompatibilität geprüft werden; Bluetooth allein genügt nicht. Ein Aufzeichnungsmodus ohne kompatibles BMS ist nicht enthalten.
 
-Für den Betrieb mit gesperrtem Handy müssen Bluetooth, Standort und die nötigen Berechtigungen aktiv sein. Die Bereitschaft wird bei geöffneter App gestartet. Auf Samsung-Handys sollte ScootPit von Akkuoptimierung und App-Standby ausgenommen sein; die Benachrichtigungen für Routine-Signale bleiben aktiviert. Die Kombination aus echtem BMS, Handy und Energiesparmodus bitte zunächst auf einer kurzen Fahrt prüfen. [Mehr zum Hintergrundbetrieb und zu Samsung-Routinen](docs/hintergrund-routinen.md).
+Bluetooth, präziser Standort und die nötigen Berechtigungen müssen aktiv sein. Starte die Bereitschaft bei geöffneter App. Für zuverlässigen Hintergrundbetrieb ScootPit von Akkuoptimierung und App-Standby ausnehmen. Prüfe die Kombination aus Handy, BMS und Samsung-Energiesparmodus auf einer kurzen Fahrt. [Hintergrundbetrieb einrichten](docs/hintergrund-routinen.md).
 
 ## Loslegen
 
-1. Die APK aus der [aktuellen Veröffentlichung](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest) installieren und die Berechtigungen erlauben.
-2. Das eigene BMS auswählen und die Akkuwerte prüfen.
-3. **Bereitschaft starten** – danach das Cockpit nutzen oder das Handy sperren und einstecken.
+1. Die signierte APK aus der [offiziellen Veröffentlichung](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest) installieren und Berechtigungen erlauben.
+2. Je Scooter ein Profil anlegen, das eigene BMS auswählen und die Werte prüfen.
+3. **Bereitschaft starten** – danach Cockpit nutzen oder Handy sperren und einstecken.
+4. Nach der Fahrt **Fahrtenbuch · Karte und Statistiken** öffnen.
 
-Aktuelle Version: **6.3.1**. **ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem.
+Vorhandene Profile, Kilometer, Layouts und Fahrten bleiben bei einem kompatiblen Update erhalten. Die App-ID und der dauerhafte Signierschlüssel bleiben gleich. Vor einer gegebenenfalls erforderlichen Neuinstallation Daten sichern.
 
 ## Anleitung
 
 - [Installation, Ersteinrichtung, Profile und Speicherorte](docs/einrichtung.md)
-- [BMS auswählen, optionale Daten, Kompatibilität und Wegfahrsperre](docs/bms.md)
-- [Cockpit, Hoch-/Querformat, Farben und GPS-Messwerte](docs/cockpit.md)
+- [BMS, optionale Daten, Kompatibilität und Lastausgang](docs/bms.md)
+- [Cockpit, Kilometerzähler und Messwerte](docs/cockpit.md)
+- [Fahrtenbuch, Karten, Statistiken und Diagramme](docs/fahrtenbuch.md)
 - [Restreichweite und Temperaturlernen](docs/reichweite.md)
-- [Bereitschaft, Fahrtpausen, Energiesparmodus und Samsung-Routinen](docs/hintergrund-routinen.md)
-- [Entwicklung und dauerhafte APK-Signatur](docs/entwicklung.md)
+- [Automatik, Fahrtende und Samsung-Routinen](docs/hintergrund-routinen.md)
+- [Entwicklung und APK-Signierung](docs/entwicklung.md)
 
-## Änderungen in 6.3.1
+## Datenschutz
 
-Appkopf und Cockpit halten Abstand zu Statusleiste, Navigationsleiste und Kameraausschnitten, auch unter Android 15 und im Querformat.
+Fahrtdateien, Profile und persönliche Bilder bleiben lokal und werden nicht an GitHub übertragen. Wetterdaten sind optional: Dafür werden gerundete Standortkoordinaten höchstens alle 15 Minuten an Open-Meteo gesendet. Beim Öffnen einer Karte werden die sichtbaren Hintergrundkacheln von OpenStreetMap geladen; der Anbieter erhält deine IP-Adresse und die angefragten Kartenausschnitte. Die Route selbst wird lokal gezeichnet, die Fahrtdatei wird nicht hochgeladen. Statistiken benötigen kein Internet.
 
-Der Tacho hat ein voreingestelltes Skalenmaximum von **22 km/h**; gespeicherte eigene Maxima bleiben erhalten. **Akkuoptimierung** zeigt den aktuellen Status und öffnet die Android-Einstellungen oder die App-Info auch dann, wenn ScootPit BMS bereits ausgenommen ist.
-
-Die Schriftgröße der Einheit (z. B. **km/h**) lässt sich pro Messwertkachel getrennt vom Zahlenwert einstellen. Die Einheit kann neben dem Wert, hochgestellt oder über dem Wert innerhalb des Rundinstruments stehen. Größe und Position werden mit dem Layout gesichert.
-
-## Änderungen in 6.3
-
-- Erstverbindung erst nach mindestens drei starken, frischen Empfangsmessungen über eine editierbare Bestätigungsdauer. Vorgabe für neue Profile: −70 dBm und 3 Sekunden; laufende Fahrten und Pausen bleiben tolerant.
-- Neue Standardanordnung mit großem transparentem Tacho und Akku-/Wettersymbolen. Eigene Layouts bleiben erhalten; das neue Layout lässt sich im Editor mit **Standardlayout → Zurücksetzen → Speichern** übernehmen.
-- Instrumentfarbe und Skalenfarbe separat je Kachel; zusätzliche Bild- und Freitextkacheln, einschließlich Profil- und Einstellungssicherung.
-- Zurück aus Einstellungs-Untermenüs führt ins Einstellungs-Hauptmenü. Zahnrad mit Blitz; keine erzwungenen Großbuchstaben auf Schaltflächen.
-- Restreichweite: Startwert standardmäßig **20 Wh/km**. Gespeicherte Werte werden nicht überschrieben.
-
-Die bestehende App-ID bleibt erhalten. Ein Update benötigt denselben Signierschlüssel wie die installierte App; [Einrichtung und Grenzen der Signierung](docs/entwicklung.md). Vor einer erforderlichen Neuinstallation Einstellungen und Fahrten sichern.
-
-Screenshots werden später neu ergänzt.
-
-## Datenschutz im Repository
-
-Dieses Repository beginnt mit einem bereinigten Stand der Version 6.2. Persönliche Bluetooth-Adressen, Fahrtdaten, alte Bildschirmaufnahmen und private Signierdateien werden nicht mitgeliefert. Commits verwenden die GitHub-No-Reply-Adresse. Lokale Fahrtdaten werden durch die App nicht an GitHub übertragen.
+Der Quellcode enthält keine persönlichen Geräteadressen, Fahrten oder Signierschlüssel. **ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem.
