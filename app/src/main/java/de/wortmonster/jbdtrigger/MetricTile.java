@@ -64,6 +64,10 @@ final class MetricTile extends TextView {
         float width=getWidth()-dp(12),height=getHeight(),cx=getWidth()/2f;
         if(width<=0||height<=0)return;
         String value=getText().toString(),caption=config.optBoolean("show_title",true)?config.optString("caption",CockpitLayout.title(key)):"";
+        String displayNote=note;
+        if(key.equals("speed")&&note.equals("km/h")&&(config.has("unit_font")||config.optInt("unit_position",0)!=0)){
+            value+=" km/h";displayNote="";
+        }
         int layout=config.optInt("arrangement",0),style=config.optInt("display",key.equals("speed")?2:key.equals("soc")?1:0);
         boolean single=layout==1||(layout==0&&height<dp(95));
         float valueSize=sp(Math.max(12,Math.min(80,config.optInt("font",28))));
@@ -77,7 +81,7 @@ final class MetricTile extends TextView {
         // Titles and notes give way before the reading does.
         if(height<dp(65))headings=Collections.emptyList();
         for(String heading:headings){text(c,heading,cx,top+sp(11),width,sp(12),false,foreground);top+=lineHeight;}
-        boolean showNote=config.optBoolean("show_note",true)&&!note.isEmpty()&&height-top>dp(65);
+        boolean showNote=config.optBoolean("show_note",true)&&!displayNote.isEmpty()&&height-top>dp(65);
         float bottom=height-(showNote?sp(23):dp(8)),middle=(top+bottom)/2;
         float valueWidth=width;
         if(style==2&&bottom-top>=dp(85)&&width>=dp(100)){
@@ -87,7 +91,7 @@ final class MetricTile extends TextView {
         }else if(style!=0){bar(c,dp(8),bottom-dp(5),getWidth()-dp(16),progress(value));bottom-=dp(12);middle=(top+bottom)/2;}
         float available=Math.max(dp(12),bottom-top);valueSize=Math.min(valueSize,available*.65f);
         readingText(c,value,"",cx,middle,valueWidth,valueSize,available*.65f,foreground);
-        if(showNote)text(c,note.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
+        if(showNote)text(c,displayNote.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
     private double progress(String value){
         try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:key.equals("soc")?100:key.contains("power")?1200:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
