@@ -80,6 +80,7 @@ public class CockpitSmokeTest extends Instrumentation {
             });
             profileCheck(prefs);
             officialVersionCheck(activity,prefs);
+            designCheck(activity,prefs);
             checked(()->{
                 boolean old=BmsMonitorService.running;
                 try{invoke(activity,"addTile",new Class[]{String.class},new Object[]{"bms_cell_delta"});
@@ -201,7 +202,7 @@ public class CockpitSmokeTest extends Instrumentation {
     private void customizationCheck(Activity activity,SharedPreferences prefs)throws Throwable{
         getUiAutomation();
         checked(()->{
-            TextView profile=findText(activity.getWindow().getDecorView(),"Scooter: Mein Scooter ▾");
+            TextView profile=findText(activity.getWindow().getDecorView(),"Mein Scooter");
             if(profile==null || (profile.getTransformationMethod()!=null&&profile.getTransformationMethod().getClass().getSimpleName().contains("AllCaps")))throw new AssertionError("Profile label forced to uppercase");
             invoke(activity,"showSettings",new Class[0],new Object[0]);
         });
@@ -214,7 +215,8 @@ public class CockpitSmokeTest extends Instrumentation {
         checked(()->{android.app.AlertDialog battery=(android.app.AlertDialog)member(activity,"batteryConfigDialog");
             if(!battery.isShowing()||!inputAfterLabel(battery.getWindow().getDecorView(),"Startwert Verbrauch (Wh/km)").getText().toString().equals("20"))throw new AssertionError("20 Wh/km battery default");});
         sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
-        android.view.accessibility.AccessibilityNodeInfo returned=getUiAutomation().getRootInActiveWindow();
+        android.view.accessibility.AccessibilityNodeInfo returned=null;
+        for(int attempt=0;attempt<20;attempt++){returned=getUiAutomation().getRootInActiveWindow();if(returned!=null&&!returned.findAccessibilityNodeInfosByText("App-Farben").isEmpty())break;android.os.SystemClock.sleep(100);}
         if(returned==null||returned.findAccessibilityNodeInfosByText("App-Farben").isEmpty())throw new AssertionError("Settings menu not in foreground after back");
         checked(()->{
             android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
@@ -283,7 +285,7 @@ public class CockpitSmokeTest extends Instrumentation {
             android.widget.EditText found=inputAfterLabel(child,label);if(found!=null)return found;
         }}return null;
     }
-    private static boolean hasPhoto(View view,String description){if(view instanceof android.widget.ImageView&&description.contentEquals(view.getContentDescription())&&((android.widget.ImageView)view).getDrawable()!=null)return true;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(hasPhoto(group.getChildAt(i),description))return true;}return false;}
+    private static boolean hasPhoto(View view,String description){if(view instanceof android.widget.ImageView&&view.getContentDescription()!=null&&description.contentEquals(view.getContentDescription())&&((android.widget.ImageView)view).getDrawable()!=null)return true;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)if(hasPhoto(group.getChildAt(i),description))return true;}return false;}
     private void profileCheck(SharedPreferences prefs)throws Exception{
         String first=prefs.getString(ScooterProfiles.ACTIVE,"");String board=CockpitBoard.defaults().toString();
         prefs.edit().putString("total_km","123.45").putString("header_color","#42A5F5").putString("temp1_label","BMS (vermutet)").putString("cockpit_board",board).putString("temperature_history","[]").putLong("last_started_at",123456).putString("trips_tree","content://first").commit();
@@ -455,7 +457,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(ScooterProfiles.knownBms(test).containsKey("02:00:00:00:02:01"))throw new AssertionError("Ambiguous identity allowed");
                 test.edit().putString("daily_day",DistanceCounters.day(System.currentTimeMillis())).putString("journal_stats","[\"speed_chart\"]").commit();
                 StorageFolders.validateProfiles(ScooterProfiles.export(test),test.getString(ScooterProfiles.ACTIVE,""));
-                if(!contains(activity.getWindow().getDecorView(),"Fahrtenbuch · Karte und Statistiken"))throw new AssertionError("Journal entry missing");
+                if(findDescription(activity.getWindow().getDecorView(),"Fahrtenbuch")==null)throw new AssertionError("Journal entry missing");
                 long start=System.currentTimeMillis()-10000;TripRecorder recorder=new TripRecorder(getTargetContext(),start);
                 android.location.Location one=new android.location.Location("gps");one.setLatitude(49);one.setLongitude(8);one.setAccuracy(3);one.setSpeed(3);one.setAltitude(100);one.setTime(start);
                 recorder.add(one,80,48,-2,96,0,96,20,new double[]{25,30});
@@ -467,10 +469,30 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.0.0".equals(version))throw new AssertionError("Official version");
+                if(!"1.1.0".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
+    private void designCheck(Activity activity,SharedPreferences prefs)throws Throwable {
+        java.util.Map<String,?> saved=prefs.getAll();Object savedTiles=member(activity,"boardTiles");
+        try{
+            checked(()->{try{
+                for(String key:CockpitLayout.KEYS){Bitmap b=Bitmap.createBitmap(48,48,Bitmap.Config.ARGB_8888);CockpitSymbols.draw(new android.graphics.Canvas(b),key,0,0,48,0xffff9800);int count=0;for(int y=0;y<48;y++)for(int x=0;x<48;x++)if(android.graphics.Color.alpha(b.getPixel(x,y))>0)count++;b.recycle();if(count<40)throw new AssertionError("Missing icon: "+key);}
+                for(int mode=0;mode<4;mode++){org.json.JSONObject t=new org.json.JSONObject().put("key","tour").put("heading_mode",mode);if(CockpitSymbols.icon(t)!=(mode==0||mode==2)||CockpitSymbols.title(t)!=(mode==1||mode==2))throw new AssertionError("Heading choice");}
+                org.json.JSONArray tiles=new org.json.JSONArray(savedTiles.toString());tiles.put(CockpitBoard.position(CockpitLayout.tile("tour"),0,40,6,2));prefs.edit().putString("cockpit_board",tiles.toString()).putString("tour_km","38.2").putString("daily_km","12.6").commit();
+                String before=tiles.getJSONObject(1).toString();CockpitTheme.apply(prefs,true,false);if(!new org.json.JSONArray(prefs.getString("cockpit_board","")).getJSONObject(1).toString().equals(before))throw new AssertionError("Preset changed custom tile without permission");
+                CockpitTheme.apply(prefs,true,true);org.json.JSONArray light=new org.json.JSONArray(prefs.getString("cockpit_board",""));if(!light.getJSONObject(0).getString("background").equals("#00000000")||!light.getJSONObject(0).getString("text").equals("#172B40"))throw new AssertionError("Light transparent gauge");
+                java.lang.reflect.Field f=MainActivity.class.getDeclaredField("boardTiles");f.setAccessible(true);f.set(activity,light);invoke(activity,"rebuild",new Class[0],new Object[0]);
+                String total=prefs.getString("total_km","0"),daily=prefs.getString("daily_km","0");View tour=findDescription(activity.getWindow().getDecorView(),"Tourenzähler zurücksetzen");if(tour==null||!tour.performClick())throw new AssertionError("Tour tile not clickable");
+            }catch(Exception e){throw new RuntimeException(e);}});
+            waitForIdleSync();
+            android.view.accessibility.AccessibilityNodeInfo active=getUiAutomation().getRootInActiveWindow();if(active==null||active.findAccessibilityNodeInfosByText("Tourenzähler zurücksetzen?").isEmpty())throw new AssertionError("Tour confirmation missing");
+            sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
+            checked(()->{if(!prefs.getString("tour_km","").equals("38.2"))throw new AssertionError("Cancel reset changed counter");String total=prefs.getString("total_km","0"),daily=prefs.getString("daily_km","0");findDescription(activity.getWindow().getDecorView(),"Tourenzähler zurücksetzen").performClick();((android.app.AlertDialog)member(activity,"tourDialog")).getButton(-1).performClick();if(DistanceCounters.number(prefs,"tour_km")!=0||!total.equals(prefs.getString("total_km",""))||!daily.equals(prefs.getString("daily_km","")))throw new AssertionError("Tour reset changed other counters");systemInsetsCheck(activity);});screenshot("design-light.png");
+            checked(()->{try{CockpitTheme.apply(prefs,false,true);java.lang.reflect.Field f=MainActivity.class.getDeclaredField("boardTiles");f.setAccessible(true);f.set(activity,CockpitBoard.load(prefs));invoke(activity,"rebuild",new Class[0],new Object[0]);View journal=findDescription(activity.getWindow().getDecorView(),"Fahrtenbuch"),settings=findDescription(activity.getWindow().getDecorView(),"Einstellungen öffnen");if(journal==null||settings==null||journal.getParent()!=settings.getParent())throw new AssertionError("Header actions not in same row");StorageFolders.validateValues(StorageFolders.install(getTargetContext()).snapshot().getJSONObject("settings"),false);}catch(Exception e){throw new RuntimeException(e);}});waitForIdleSync();screenshot("design-dark.png");
+        }finally{checked(()->{SharedPreferences.Editor e=prefs.edit().clear();for(java.util.Map.Entry<String,?> entry:saved.entrySet()){Object value=entry.getValue();String key=entry.getKey();if(value instanceof String)e.putString(key,(String)value);else if(value instanceof Boolean)e.putBoolean(key,(Boolean)value);else if(value instanceof Long)e.putLong(key,(Long)value);else if(value instanceof Integer)e.putInt(key,(Integer)value);}e.commit();try{java.lang.reflect.Field f=MainActivity.class.getDeclaredField("boardTiles");f.setAccessible(true);f.set(activity,savedTiles);invoke(activity,"rebuild",new Class[0],new Object[0]);}catch(Exception ex){throw new RuntimeException(ex);}});}
+    }
+    private static View findDescription(View v,String text){if(v.getContentDescription()!=null&&text.contentEquals(v.getContentDescription()))return v;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=findDescription(((ViewGroup)v).getChildAt(i),text);if(found!=null)return found;}return null;}
     private static void invoke(Object target,String name,Class[] types,Object[] args){try{Method m=target.getClass().getDeclaredMethod(name,types);m.setAccessible(true);m.invoke(target,args);}catch(Exception e){throw new RuntimeException(e);}}
     private static void findSliders(View view,java.util.List<android.widget.SeekBar> result){if(view instanceof android.widget.SeekBar)result.add((android.widget.SeekBar)view);if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)findSliders(((ViewGroup)view).getChildAt(i),result);}
     private static androidx.core.widget.NestedScrollView findLog(View v){if(v instanceof androidx.core.widget.NestedScrollView)return (androidx.core.widget.NestedScrollView)v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){androidx.core.widget.NestedScrollView found=findLog(g.getChildAt(i));if(found!=null)return found;}}return null;}
