@@ -14,6 +14,14 @@ Mehrere gespeicherte Scooter? Die App prüft erreichbare BMS nacheinander und ü
 
 Am Lenker wird ScootPit zum **persönlichen Cockpit**: Geschwindigkeit, Strecke, Akku, elektrische Leistung, Verbrauch und geschätzte Restreichweite auf einen Blick.
 
+## Ein Blick in die App
+
+<img src="docs/assets/cockpit-v1.1.1.jpg" width="320" alt="ScootPit Cockpit mit transparentem Tacho, farbigen Symbolen und Scooterfoto">
+
+*Das persönliche Cockpit: Tacho, Akku, Reichweite, Kilometerzähler und Temperaturen auf einen Blick.*
+
+[Weitere Ansichten: Cockpit und Editor](docs/cockpit.md) · [Fahrtenbuch, Statistik und Karte](docs/fahrtenbuch.md) · [Einstellungen](docs/einrichtung.md)
+
 ## Was bringt dir ScootPit?
 
 - **Automatisches Tracking:** Fahrtstart und Fahrtende erkennen, Fahr- und Standzeit erfassen, auch mit gesperrtem Handy.
@@ -61,6 +69,6 @@ Vorhandene Profile, Kilometer, Layouts und Fahrten bleiben bei einem kompatiblen
 
 ## Datenschutz
 
-Fahrtdateien, Profile und persönliche Bilder bleiben lokal und werden nicht an GitHub übertragen. Wetterdaten sind optional: Dafür werden gerundete Standortkoordinaten höchstens alle 15 Minuten an Open-Meteo gesendet. Beim Öffnen einer Karte werden die sichtbaren Hintergrundkacheln von OpenStreetMap geladen; der Anbieter erhält deine IP-Adresse und die angefragten Kartenausschnitte. Die Route selbst wird lokal gezeichnet, die Fahrtdatei wird nicht hochgeladen. Statistiken benötigen kein Internet.
+Die App speichert Fahrtdateien, Profile und persönliche Bilder lokal und überträgt sie nicht an GitHub. Die Screenshots in dieser Dokumentation wurden vom Herausgeber ausdrücklich zur Veröffentlichung bereitgestellt. Wetterdaten sind optional: Dafür werden gerundete Standortkoordinaten höchstens alle 15 Minuten an Open-Meteo gesendet. Beim Öffnen einer Karte werden die sichtbaren Hintergrundkacheln von OpenStreetMap geladen; der Anbieter erhält deine IP-Adresse und die angefragten Kartenausschnitte. Die Route selbst wird lokal gezeichnet, die Fahrtdatei wird nicht hochgeladen. Statistiken benötigen kein Internet.
 
-Der Quellcode enthält keine persönlichen Geräteadressen, Fahrten oder Signierschlüssel. **ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem.
+Der Quellcode enthält keine persönlichen Geräteadressen, Fahrtdateien oder Signierschlüssel. **ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem.
