@@ -1,7 +1,7 @@
 name: ScootPit BMS Android UI check
 on:
   push:
-    branches: [ main, release-1.1.0 ]
+    branches: [ main, release-1.1.1 ]
   workflow_dispatch:
 jobs:
   ui:
@@ -45,6 +45,7 @@ jobs:
             adb shell pm grant de.wortmonster.jbdtrigger android.permission.BLUETOOTH_SCAN
             adb shell pm grant de.wortmonster.jbdtrigger android.permission.BLUETOOTH_CONNECT
             adb shell pm grant de.wortmonster.jbdtrigger android.permission.POST_NOTIFICATIONS
+            adb shell am force-stop com.android.launcher3
             adb shell am instrument -w de.wortmonster.jbdtrigger.test/de.wortmonster.jbdtrigger.CockpitSmokeTest | tee ui-result.txt
             adb pull /sdcard/Android/data/de.wortmonster.jbdtrigger/files/screenshots ui-screenshots
             grep 'Cockpit launch.*OK' ui-result.txt

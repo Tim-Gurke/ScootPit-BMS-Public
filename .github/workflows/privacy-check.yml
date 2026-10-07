@@ -2,7 +2,7 @@ name: Repository privacy check
 on:
   workflow_dispatch:
   push:
-    branches: [ main, release-1.1.0 ]
+    branches: [ main, release-1.1.1 ]
 permissions:
   contents: read
 jobs:
