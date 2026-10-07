@@ -104,7 +104,15 @@ final class MetricTile extends TextView {
         if(showNote)text(c,displayNote.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
     private void gauge(Canvas c,String value,float cx,float width,float height,int foreground,int accent){
-        float radius=Math.min(width/2-dp(8),height/2-dp(10)),cy=height/2;
+        float headingHeight=0;
+        if(CockpitSymbols.icon(config)||CockpitSymbols.title(config)){
+            String caption=CockpitSymbols.title(config)?CockpitSymbols.caption(config).replace('\n',' '):"";
+            paint.setTextSize(sp(12));float labelWidth=Math.min(width-dp(32),paint.measureText(caption));
+            if(CockpitSymbols.icon(config))CockpitSymbols.draw(c,key,caption.isEmpty()?cx-dp(11):cx-(labelWidth+dp(28))/2,dp(5),dp(22),parseColor(config.optString("icon_color"),CockpitSymbols.defaultColor(key,Color.red(this.foreground)<180)));
+            if(!caption.isEmpty())text(c,caption,cx+(CockpitSymbols.icon(config)?dp(14):0),dp(5)+sp(15),width-(CockpitSymbols.icon(config)?dp(30):0),sp(12),false,foreground);
+            headingHeight=dp(30);
+        }
+        float radius=Math.min(width/2-dp(8),(height-headingHeight)/2-dp(10)),cy=(height+headingHeight)/2;
         double max=config.optDouble("scale_max",CockpitLayout.DEFAULT_SPEED_SCALE_MAX);
         if(!Double.isFinite(max)||max<=0)max=CockpitLayout.DEFAULT_SPEED_SCALE_MAX;
         double progress=progress(value);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;

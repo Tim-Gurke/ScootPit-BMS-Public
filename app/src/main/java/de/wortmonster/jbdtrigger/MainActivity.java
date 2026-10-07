@@ -251,7 +251,7 @@ public class MainActivity extends Activity {
         EditText instrument=personal?new EditText(this):textField(l,"Instrument / Balken: Farbe (#RRGGBB)",cell.optString("instrument_color",prefs.getString("accent_color","#FF9800")));
         EditText track=personal?new EditText(this):textField(l,"Skala / Hintergrundbogen: Farbe (#RRGGBB)",cell.optString("scale_color",CockpitTheme.scale(prefs)));
         if(personal){instrument.setText(cell.optString("instrument_color",prefs.getString("accent_color","#FF9800")));track.setText(cell.optString("scale_color",CockpitTheme.scale(prefs)));}
-        EditText icon=textField(l,"Symbolfarbe (#RRGGBB)",cell.optString("icon_color",prefs.getString("accent_color","#FF9800")));
+        EditText icon=textField(l,"Symbolfarbe (#RRGGBB)",cell.optString("icon_color",String.format(Locale.ROOT,"#%06X",iconColor(cell)&0xffffff)));
         EditText fg=textField(l,"Textfarbe (#RRGGBB)",cell.optBoolean("custom_colors",false)?cell.optString("text"):prefs.getString("tile_text",CockpitTheme.light(prefs)?"#172B40":"#FFFFFF"));
         android.widget.SeekBar bgAlpha=opacity(l,"Hintergrund",bg.getText().toString());
         android.widget.SeekBar fgAlpha=opacity(l,"Text",fg.getText().toString());
