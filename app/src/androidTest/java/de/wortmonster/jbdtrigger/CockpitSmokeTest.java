@@ -70,6 +70,7 @@ public class CockpitSmokeTest extends Instrumentation {
             });
             customizationCheck(activity,prefs);
             batterySettingsCheck(activity);
+            checked(()->unitFontRenderCheck(activity));
             checked(()->{
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());for(int i=0;i<board.tiles.length();i++){org.json.JSONObject t=board.tiles.getJSONObject(i);if(t.getString("key").equals("soc"))t.put("h",2);if(t.getString("key").equals("ready_start"))t.put("caption","Los geht’s");}prefs.edit().putString("header_name","Mein Joyor").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS")||!contains(activity.getWindow().getDecorView(),"Los geht’s"))throw new AssertionError("Custom header/button labels");
                 org.json.JSONArray rides=new org.json.JSONArray();for(int i=0;i<3;i++)rides.put(new org.json.JSONObject().put("temperature",10+i).put("km",5).put("wh",100));TemperatureHistory.validate(rides);if(Math.abs(TemperatureHistory.estimate(rides,11,15)-20)>.01)throw new AssertionError("Temperature start estimate");if(TemperatureHistory.estimate(rides,30,15)!=15)throw new AssertionError("No unsupported extrapolation");
@@ -221,6 +222,11 @@ public class CockpitSmokeTest extends Instrumentation {
             invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{0});
             android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"tileDialog");
             if(Double.parseDouble(inputAfterLabel(dialog.getWindow().getDecorView(),"Skalenmaximum (Balken / Rundinstrument)").getText().toString())!=22)throw new AssertionError("Gauge editor default scale");
+            android.widget.EditText unitSize=inputAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Schriftgröße (8–80, leer = wie Wert)");
+            if(!unitSize.getText().toString().isEmpty())throw new AssertionError("Legacy unit size should follow the value");
+            unitSize.setText("7");clickText(dialog.getWindow().getDecorView(),"Übernehmen");
+            if(!dialog.isShowing())throw new AssertionError("Invalid unit font accepted");unitSize.setText("16");
+            spinnerAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Position").setSelection(2);
             inputAfterLabel(dialog.getWindow().getDecorView(),"Instrument / Balken: Farbe (#RRGGBB)").setText("#26C6DA");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");
@@ -250,6 +256,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 clickText(activity.getWindow().getDecorView(),"Speichern");
                 org.json.JSONObject exported=StorageFolders.install(getTargetContext()).snapshot();StorageFolders.validateValues(exported.getJSONObject("settings"),false);
                 org.json.JSONArray saved=new org.json.JSONArray(exported.getJSONObject("settings").getString("cockpit_board"));
+                if(saved.getJSONObject(0).getInt("unit_font")!=16||saved.getJSONObject(0).getInt("font")!=56||saved.getJSONObject(0).getInt("unit_position")!=2)throw new AssertionError("Unit size/position missing from backup");
                 if(!saved.getJSONObject(saved.length()-1).getString("image_data").equals(portablePhoto)||!saved.getJSONObject(saved.length()-2).getString("free_text").contains("T6e"))throw new AssertionError("Personal tiles absent from backup");
                 ScooterProfiles.add(prefs,"Foto-Kopie",true);
                 if(!prefs.getString("cockpit_board","").equals(saved.toString()))throw new AssertionError("Photo/text design not copied across profiles");
@@ -257,6 +264,12 @@ public class CockpitSmokeTest extends Instrumentation {
                 java.lang.reflect.Field tiles=MainActivity.class.getDeclaredField("boardTiles");tiles.setAccessible(true);tiles.set(activity,CockpitBoard.defaults());invoke(activity,"rebuild",new Class[0],new Object[0]);
             }catch(Exception e){throw new RuntimeException(e);}
         });
+    }
+    private static android.widget.Spinner spinnerAfterLabel(View view,String label){
+        if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){
+            View child=group.getChildAt(i);if(child instanceof TextView&&((TextView)child).getText().toString().equals(label)&&i+1<group.getChildCount()&&group.getChildAt(i+1) instanceof android.widget.Spinner)return (android.widget.Spinner)group.getChildAt(i+1);
+            android.widget.Spinner found=spinnerAfterLabel(child,label);if(found!=null)return found;
+        }}return null;
     }
     private static boolean scrollAccessible(android.view.accessibility.AccessibilityNodeInfo node){
         if(node.isScrollable()&&node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))return true;
@@ -326,6 +339,24 @@ public class CockpitSmokeTest extends Instrumentation {
         AtomicReference<Throwable> error=new AtomicReference<>();
         runOnMainSync(()->{try{task.run();}catch(Throwable t){error.set(t);}});
         if(error.get()!=null)throw error.get();waitForIdleSync();
+    }
+    private void unitFontRenderCheck(Activity activity) {
+        try {
+            for(int arrangement:new int[]{1,2})for(int display:new int[]{0,1,2})for(int position:new int[]{0,1,2}){
+                org.json.JSONObject config=new org.json.JSONObject().put("key","speed").put("font",40).put("unit_font",10).put("unit_position",position).put("display",display).put("arrangement",arrangement).put("show_title",false).put("show_note",false);
+                MetricTile metric=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);metric.layout(0,0,640,320);metric.reading("18,2 km/h","",false);
+                Bitmap small=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888),large=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);
+                metric.draw(new android.graphics.Canvas(small));config.put("unit_font",32);metric.draw(new android.graphics.Canvas(large));
+                int changed=0;for(int y=0;y<320;y++)for(int x=0;x<640;x++)if(small.getPixel(x,y)!=large.getPixel(x,y))changed++;
+                small.recycle();large.recycle();if(changed<20||config.getInt("font")!=40||!metric.getContentDescription().toString().contains("18,2 km/h"))throw new AssertionError("Unit font not independent in layout "+arrangement+"/"+display+"/"+position);
+            }
+            org.json.JSONArray invalid=CockpitBoard.defaults();invalid.getJSONObject(0).put("unit_font",81);
+            boolean rejected=false;try{CockpitBoard.validate(invalid);}catch(Exception expected){rejected=true;}
+            if(!rejected)throw new AssertionError("Invalid imported unit font accepted");
+            invalid.getJSONObject(0).put("unit_font",16).put("unit_position",3);rejected=false;
+            try{CockpitBoard.validate(invalid);}catch(Exception expected){rejected=true;}
+            if(!rejected)throw new AssertionError("Invalid imported unit position accepted");
+        }catch(Exception e){throw new RuntimeException(e);}
     }
     private void batterySettingsCheck(Activity activity)throws Throwable {
         checked(()->invoke(activity,"showSettings",new Class[0],new Object[0]));
