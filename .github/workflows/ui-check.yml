@@ -1,7 +1,7 @@
 name: ScootPit BMS Android UI check
 on:
   push:
-    branches: [ main, update-6.3 ]
+    branches: [ main, release-1.0.0 ]
   workflow_dispatch:
 jobs:
   ui:

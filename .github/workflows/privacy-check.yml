@@ -2,7 +2,7 @@ name: Repository privacy check
 on:
   workflow_dispatch:
   push:
-    branches: [ main, update-6.3 ]
+    branches: [ main, release-1.0.0 ]
 permissions:
   contents: read
 jobs:
@@ -41,7 +41,7 @@ jobs:
                   forbidden.append('Private key material')
               text = content.decode('utf-8', errors='replace')
               for mac in re.findall(r'(?i)\b(?:[0-9a-f]{2}:){5}[0-9a-f]{2}\b', text):
-                  if mac.upper() not in ['02:00:00:00:00:01', '02:00:00:00:00:02', 'AA:BB:CC:DD:EE:FF']:
+                  if mac.upper() not in ['02:00:00:00:00:01', '02:00:00:00:00:02', 'AA:BB:CC:DD:EE:FF', '02:00:00:00:02:01', '02:00:00:00:02:02']:
                       forbidden.append('Non-example Bluetooth address')
               for email in re.findall(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', text):
                   if not (email.endswith('@users.noreply.github.com') or email == 'noreply@github.com'):
