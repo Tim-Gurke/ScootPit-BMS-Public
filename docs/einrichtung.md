@@ -2,6 +2,12 @@
 
 [← Übersicht](../README.md)
 
+## Einstellungen im Überblick
+
+<img src="assets/einstellungen-v1.1.1.jpg" width="320" alt="Einstellungsmenü mit Cockpit, Farben, BMS-Erkennung, Benachrichtigungen und Scooterprofilen">
+
+*Einstellungen: Cockpit und Farben gestalten, Scooterprofile verwalten sowie BMS-Erkennung, Reichweite und Benachrichtigungen anpassen.*
+
 ## Build, Tests und Installation
 
 GitHub Actions prüft die App und baut bei vollständig eingerichteten Signier-Secrets eine Release-APK; ohne diese Secrets entsteht eine Test-APK. Artefakte: **ScootPit-BMS-APK** und **ScootPit-BMS-UI**. Erforderlich: Java 17, Gradle 8.9, Android SDK 35; minSdk 26. Protokoll-, Steuerungs-, Reichweiten- und Rastertests laufen als Java-Tests; Android Lint prüft die App. Android-13/15-Emulatortests prüfen Messwerte, Beschriftungen, Layoutänderungen, Temperatur-Startschätzung, Log, persistente Ordnerberechtigungen, Settings-Roundtrip, fehlgeschlagene Fahrtkopie mit Wiederholung und Bereitschaft bei ausgeschaltetem Bildschirm. Bildschirmaufnahmen werden archiviert.

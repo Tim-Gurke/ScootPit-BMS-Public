@@ -4,6 +4,11 @@ In ScootPit BMS bleiben Appkopf und Bedienelemente außerhalb von Statusleiste, 
 
 [← Übersicht](../README.md)
 
+
+<img src="assets/cockpit-v1.1.1.jpg" width="320" alt="Cockpit von ScootPit BMS mit Scooterprofil und farbigen Kachelsymbolen">
+
+*Cockpit in Version 1.1.1: transparenter Tacho, drei Kachelspalten und ein eigenes Scooterfoto.*
+
 ## Cockpit und visueller Editor
 
 Zahnrad mit Blitz → **Cockpit bearbeiten**. Kachel lange drücken und ziehen; am Griff unten rechts Größe ändern. Antippen öffnet Beschriftung, Schriftgröße, Farben, Darstellung und genaue Rasterwerte. Aktionen sind während der Bearbeitung gesperrt. **Speichern** übernimmt den Entwurf, **Zurück** verwirft ihn. Entwürfe bleiben beim Drehen des Handys erhalten.
@@ -15,6 +20,16 @@ Bis zu 100 Kacheln, individuelle Höhen von 80–480 dp. Bei Überlappung weiche
 Messkacheln unterstützen **Zahl, Balken und Rundinstrument** mit einstellbarem Skalenmaximum. Geschwindigkeit ist standardmäßig rund, Akku mit Balken. Anordnung: automatisch, einzeilig oder untereinander. In flachen Kacheln hat der Messwert Vorrang; beispielsweise „Akku 75 %“ in einer Zeile. Überschrift und Zusatztext sind einzeln ausblendbar. Eigene Zeilenumbrüche und maximal 1–3 Überschriftzeilen werden berücksichtigt; Werte passen ihre Schrift an die verfügbare Fläche an. Bei zu kleinen Rundkacheln erscheint eine kompakte Balkenansicht.
 
 Bereitschaft starten/beenden, manuelles Fahrtende, BMS-Lastausgang und Log sind ebenfalls verschiebbare Kacheln. Eigene Button-Beschriftungen erscheinen in der Ansicht. Start bleibt grün, Ende rot. Das zunächst eingeklappte Log besitzt einen eigenen Scrollbereich und zeigt maximal 60 Zustandswechsel.
+
+
+<img src="assets/layout-editor-v1.1.1.jpg" width="320" alt="Cockpit-Editor mit verschiebbaren Kacheln und orangefarbenen Größengriffen">
+
+*Cockpit bearbeiten: Kacheln verschieben, am unteren rechten Griff vergrößern und durch Antippen individuell gestalten.*
+
+
+<img src="assets/cockpit-log-v1.1.1.jpg" width="320" alt="Cockpit mit ausgeklapptem Statusdetails- und Log-Bereich">
+
+*Statusdetails / Log: Verbindungszustände und die automatische BMS-Suche nachvollziehen.*
 
 ## Messwerte
 
@@ -48,7 +63,7 @@ Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** un
 
 **+ Kachel → Freitext** erlaubt bis zu 4000 Zeichen mit Groß-/Kleinschreibung und Zeilenumbrüchen. Schriftgröße, Hintergrund und Textfarbe einschließlich Transparenz bleiben einstellbar.
 
-Die neue Grundeinstellung zeigt links einen großen, vollständig transparenten Tacho; rechts Akku 🔋, Restreichweite und Leistung. Darunter folgen Fahrzeit/Fahrtstrecke, Standzeit/Gesamtkilometer, maximale Fahrtleistung/BMS-Lastausgang, Wetter 🌞🌧️🌤️ und die beiden Temperatursensoren sowie An/Fahrt beenden/Aus. Das Log nimmt unten die gesamte Breite ein. Vorhandene eigene Anordnungen bleiben gespeichert; **Standardlayout → Zurücksetzen → Speichern** übernimmt die neue Anordnung.
+Die Grundeinstellung zeigt links einen großen, vollständig transparenten Tacho; rechts Akku, Restreichweite und Leistung. Darunter folgen drei Spalten: Fahrzeit/Standzeit/Fahrtstrecke, maximale Fahrtleistung/Tageskilometer/Tourenzähler, BMS-Lastausgang/Bild/Gesamtkilometer und Außentemperatur/Akku-Temperatur/BMS-Temperatur. Die letzte Reihe enthält Bereit/Fahrt beenden/Bereit. Das Log nimmt unten die gesamte Breite ein. **Standardlayout → Zurücksetzen → Speichern** übernimmt diese Anordnung.
 
 Zurück aus einem Einstellungs-Untermenü führt zum Hauptmenü der Einstellungen. Beschriftungen von Schaltflächen behalten ihre Groß-/Kleinschreibung.
 
