@@ -5,11 +5,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 final class CockpitLayout {
+    static final double DEFAULT_SPEED_SCALE_MAX = 22;
     static final String[] KEYS = {"speed","soc","range","distance","total","power","voltage","current","energy","consumption","moving","standing","average","maximum","altitude","ascent","temp1","temp2","outside","max_power","bms_output","ready_start","ready_end","trip_end","log","image","free_text"};
     static final String[] TITLES = {"Geschwindigkeit","Akku","Restreichweite ≈","Fahrtstrecke","Gesamtkilometer","Leistung","Spannung","Strom","Verbrauchte Energie","Verbrauch","Fahrzeit","Standzeit","Durchschnitt","Maximum","Höhe","Höhenmeter","Temp1","Temp2","Außentemperatur","Maximale Fahrtleistung","BMS-Lastausgang","Bereitschaft starten","Bereitschaft beenden","Fahrt beenden","Statusdetails / Log","Bild","Freitext"};
     static JSONObject tile(String key) {
         JSONObject t = new JSONObject();
-        try { t.put("key",key).put("font",28).put("weight",1).put("background","#1C2228").put("text","#FFFFFF"); }
+        try { t.put("key",key).put("font",28).put("weight",1).put("background","#1C2228").put("text","#FFFFFF");
+            if(key.equals("speed"))t.put("scale_max",DEFAULT_SPEED_SCALE_MAX); }
         catch(Exception ignored) {}
         return t;
     }

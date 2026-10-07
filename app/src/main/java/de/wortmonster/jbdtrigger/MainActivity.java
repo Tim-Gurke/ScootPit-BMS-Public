@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
@@ -62,7 +63,7 @@ public class MainActivity extends Activity {
             if(BmsMonitorService.ACTION_STATUS.equals(intent.getAction()))renderStatus(intent);
         }
     };
-    private AlertDialog tileDialog, settingsDialog;
+    private AlertDialog tileDialog, settingsDialog, batteryDialog;
     private boolean editorFromSettings;
     private String pendingImageTile="", pendingImageLayout="", draftCacheFile="";
 
@@ -202,7 +203,7 @@ public class MainActivity extends Activity {
         CheckBox showTitle=new CheckBox(this);showTitle.setText("Überschrift anzeigen");showTitle.setTextColor(Color.WHITE);showTitle.setChecked(cell.optBoolean("show_title",!personal));l.addView(showTitle);
         CheckBox showNote=new CheckBox(this);showNote.setText("Zusatztext anzeigen");showNote.setTextColor(Color.WHITE);showNote.setChecked(cell.optBoolean("show_note",true));l.addView(showNote);
         EditText lines=field(l,"Überschrift / Button: maximal 1–3 Zeilen",""+cell.optInt("lines",2));
-        EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?40:cell.optString("key").contains("power")?1200:100));
+        EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:cell.optString("key").contains("power")?1200:100));
         EditText font=field(l,"Schriftgröße (12–80)",""+cell.optInt("font",28));
         EditText x=field(l,"Spalte (0–11)",""+cell.optInt("x")),y=field(l,"Zeile im Raster (0–300)",""+cell.optInt("y"));
         EditText w=field(l,"Breite (1–12 Rasterspalten)",""+cell.optInt("w")),h=field(l,"Höhe (2–12, je 40 dp)",""+cell.optInt("h"));
@@ -567,13 +568,32 @@ public class MainActivity extends Activity {
     }
 
     private void requestBatteryExemption() {
-        try {
-            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-        } catch (Exception exception) {
-            startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
-        }
+        PowerManager power=getSystemService(PowerManager.class);
+        showBatterySettings(power!=null && power.isIgnoringBatteryOptimizations(getPackageName()));
+    }
+    private void showBatterySettings(boolean exempt) {
+        String message=exempt
+            ?"ScootPit BMS ist bereits von der Android-Akkuoptimierung ausgenommen."
+            :"Die Android-Akkuoptimierung ist für ScootPit BMS aktiv. Für zuverlässige Fahrt-Erkennung im Hintergrund kannst du eine Ausnahme erlauben.";
+        batteryDialog=new AlertDialog.Builder(this).setTitle("Akkuoptimierung")
+            .setMessage(message+"\n\nZusätzliche Beschränkungen deines Handys findest du in der App-Info unter Akku.")
+            .setPositiveButton(exempt?"Android-Einstellungen":"Freigabe anfragen",(d,w)->openBatterySettings(!exempt))
+            .setNeutralButton("App-Info",(d,w)->openAppBatteryInfo())
+            .setNegativeButton("Zurück",null).show();
+    }
+    private boolean tryOpenSettings(Intent intent) {
+        try { startActivity(intent);return true; }
+        catch(android.content.ActivityNotFoundException | SecurityException exception){return false;}
+    }
+    private void openBatterySettings(boolean request) {
+        if(request && tryOpenSettings(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:"+getPackageName()))))return;
+        if(tryOpenSettings(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)))return;
+        openAppBatteryInfo();
+    }
+    private void openAppBatteryInfo() {
+        if(!tryOpenSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()))))
+            Toast.makeText(this,"Bitte Android-Einstellungen → Apps → ScootPit BMS → Akku öffnen.",Toast.LENGTH_LONG).show();
     }
 
     private void showLastTrip() {
