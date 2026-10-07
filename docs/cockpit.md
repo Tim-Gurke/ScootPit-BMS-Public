@@ -1,6 +1,6 @@
 # Cockpit, Layout und Messwerte
 
-Ab Version 6.3.1 bleiben Appkopf und Bedienelemente außerhalb von Statusleiste, Navigationsleiste und Kameraausschnitten. Das gilt auch unter Android 15 und bei gedrehtem Bildschirm.
+In ScootPit BMS bleiben Appkopf und Bedienelemente außerhalb von Statusleiste, Navigationsleiste und Kameraausschnitten. Das gilt auch unter Android 15 und bei gedrehtem Bildschirm.
 
 [← Übersicht](../README.md)
 
@@ -18,11 +18,11 @@ Bereitschaft starten/beenden, manuelles Fahrtende, BMS-Lastausgang und Log sind 
 
 ## Messwerte
 
-Fehlende, veraltete und inaktive Messwerte erscheinen deutlich gedimmt: Text, Balken und Rundinstrumente werden grau; auch individuell gefärbte Kachelhintergründe werden abgedunkelt und entsättigt. Bei frischen Daten kehren die gewählten Farben zurück. BMS-Werte gelten ohne laufende Bereitschaft/Verbindung oder nach 8 s als inaktiv, GPS-Geschwindigkeit/Höhe ohne laufende Fahrt oder nach 5 s ohne Fix. Wetterwerte werden nach 30 Minuten gedimmt; Fahrtstatistiken ohne laufende Fahrt ebenfalls. Gespeicherte Gesamtkilometer bleiben normal sichtbar. Ein gültiger Nullwert bleibt aktiv.
+Fehlende, veraltete und inaktive Messwerte erscheinen deutlich gedimmt: Text, Balken und Rundinstrumente werden grau; auch individuell gefärbte Kachelhintergründe werden abgedunkelt und entsättigt. Bei frischen Daten kehren die gewählten Farben zurück. BMS-Werte gelten ohne laufende Bereitschaft/Verbindung oder nach 8 s als inaktiv, GPS-Geschwindigkeit/Höhe ohne laufende Fahrt oder nach 8 s ohne Fix. Wetterwerte werden nach 30 Minuten gedimmt; Fahrtstatistiken ohne laufende Fahrt ebenfalls. Gespeicherte Gesamt-, Tages- und Tourenkilometer bleiben normal sichtbar. Ein gültiger Nullwert bleibt aktiv.
 
 GPS-Geschwindigkeit, Fahrtstrecke, Gesamtkilometer, Fahr-/Standzeit (Bewegung ab 2 km/h), Durchschnitt während Bewegung, Höchstgeschwindigkeit, Höhe/Höhenmeter, Akku-Prozent, Spannung, Strom, elektrische Entladeleistung, maximale elektrische Fahrtleistung, verbrauchte Wh, Wh/km, Restreichweite, Temp1, Temp2 und Außentemperatur.
 
-Gesamtkilometer können jederzeit korrigiert werden, auch bei laufender Fahrt. Nur akzeptierte GPS-Strecken werden addiert. Ungenaue, alte und zeitlich rückwärts laufende Punkte werden verworfen. Höhe/Höhenmeter bleiben GPS-Schätzungen. Maximale Leistung ist das Maximum der BMS-Messwerte bei etwa 2-s-Abfrage; sehr kurze Spitzen können fehlen.
+Gesamtkilometer können jederzeit korrigiert werden, auch bei laufender Fahrt. Nur akzeptierte GPS-Strecken werden addiert. Ungenaue, alte und zeitlich rückwärts laufende Punkte werden verworfen. Höhe/Höhenmeter bleiben GPS-Schätzungen. Maximale Leistung ist das Maximum der BMS-Messwerte bei etwa 1-s-Abfrage; sehr kurze Spitzen können fehlen.
 
 Temp1 und Temp2 entsprechen der BMS-Sensorreihenfolge. SP14S004 besitzt laut Hersteller einen internen und einen externen NTC; deren numerische Zuordnung ist nicht sicher dokumentiert. Die Beschriftungen sind editierbar. Außentemperatur stammt von [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), nicht von einem Rollersensor.
 
@@ -34,9 +34,9 @@ Temp1 und Temp2 entsprechen der BMS-Sensorreihenfolge. SP14S004 besitzt laut Her
 
 Unplausible GPS-Geschwindigkeiten und Positionssprünge werden vor der Anzeige verworfen und verändern weder Höchstgeschwindigkeit noch Strecke oder Fahrtenbuch. Das Maximum ist pro Profil unter BMS und Fahrt-Erkennung editierbar (Vorgabe 45 km/h). Zusätzlich wird die Bewegung gegenüber vorherigen akzeptierten Punkten geprüft. GPS bleibt eine Messung mit Unsicherheit.
 
-## Neue Kacheln und Farben ab 6.3
+## Kacheln, Farben und Einheiten
 
-Ab 6.3.1 beträgt das voreingestellte Skalenmaximum des Tachos **22 km/h**. Ein selbst gespeichertes Maximum bleibt erhalten; ändern kannst du es im Kacheleditor unter **Skalenmaximum**.
+Das voreingestellte Skalenmaximum des Tachos beträgt **22 km/h**. Ein selbst gespeichertes Maximum bleibt erhalten; ändern kannst du es im Kacheleditor unter **Skalenmaximum**.
 
 Unter **Einheit: Schriftgröße** kannst du die Einheit jeder Messwertkachel unabhängig vom Zahlenwert auf **8–80** einstellen, etwa für **km/h**, **%**, **W** oder **°C**. Ein leeres Feld verwendet dieselbe Größe wie der Wert. Die Einstellung gilt für Zahl, Balken und Rundinstrument und wird im Layout mit Profilen und Sicherungen gespeichert. In schmalen Kacheln passt sich die gesamte Anzeige weiterhin an den verfügbaren Platz an.
 
@@ -51,3 +51,9 @@ Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** un
 Die neue Grundeinstellung zeigt links einen großen, vollständig transparenten Tacho; rechts Akku 🔋, Restreichweite und Leistung. Darunter folgen Fahrzeit/Fahrtstrecke, Standzeit/Gesamtkilometer, maximale Fahrtleistung/BMS-Lastausgang, Wetter 🌞🌧️🌤️ und die beiden Temperatursensoren sowie An/Fahrt beenden/Aus. Das Log nimmt unten die gesamte Breite ein. Vorhandene eigene Anordnungen bleiben gespeichert; **Standardlayout → Zurücksetzen → Speichern** übernimmt die neue Anordnung.
 
 Zurück aus einem Einstellungs-Untermenü führt zum Hauptmenü der Einstellungen. Beschriftungen von Schaltflächen behalten ihre Groß-/Kleinschreibung.
+
+## Tages- und Tourenkilometer
+
+Im Editor **+ Kachel → Tageskilometer** oder **Tourenzähler** wählen. Tageskilometer beginnen am nächsten Kalendertag nach der lokalen Handyzeit wieder bei 0. Der Tourenzähler läuft bis **Einstellungen → Tourenzähler zurücksetzen**. Ein Reset betrifft nur den aktiven Scooter und verändert weder Tageskilometer noch Gesamtstand. Die drei Zähler verwenden dieselben akzeptierten GPS-Strecken.
+
+Das Einstellungen-Symbol zeigt Zahnrad und Blitz ohne Hintergrund; die Symbolgröße bleibt erhalten.

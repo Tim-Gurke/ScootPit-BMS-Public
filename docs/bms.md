@@ -40,7 +40,7 @@ Beim Joyor des Projektbesitzers sind **26 Ah** korrekt. Dies ist der editierbare
 
 Protokollreferenz: [ESPHome JBD-BMS Decoder](https://github.com/syssi/esphome-jbd-bms/blob/main/components/jbd_bms/jbd_bms.cpp). Screenshots werden später neu ergänzt.
 
-## BMS-Verbindungsprüfung (6.1)
+## BMS-Verbindungsprüfung
 
 Nach dem Aktivieren des Antwortkanals wartet die Auswahl 800 ms und wiederholt die reine Basisdaten-Leseabfrage bei fehlender Antwort bis zu achtmal im Abstand von 2 Sekunden. Neue Geräte werden weiterhin erst mit gültigen Basisdaten gespeichert. Bluetooth-Schreibfehler und Zeitüberschreitungen beim Verbindungsaufbau, bei der Dienstsuche oder der Datenabfrage werden getrennt angezeigt. Während der Prüfung andere BMS-Apps trennen und das Handy nahe an den Roller halten. Ein Emulator kann den tatsächlichen BLE-Antwortablauf des Rollers nicht bestätigen.
 
