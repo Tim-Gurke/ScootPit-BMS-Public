@@ -7,7 +7,7 @@ import java.util.*;
 /** Active values remain in the original preferences for service and backup compatibility. */
 final class ScooterProfiles {
     static final String LIST="scooter_profiles",ACTIVE="active_scooter";
-    static final Set<String> KEYS=new HashSet<>(Arrays.asList("header_name","header_color","temp1_label","temp2_label","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","connect_confirm_seconds","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled","outside_temperature","weather_at","bms_available","trips_tree","trips_tree_label"));
+    static final Set<String> KEYS=new HashSet<>(Arrays.asList("stop_seconds","daily_day","daily_km","tour_km","routine_start_title","routine_start_text","routine_end_title","routine_end_text","journal_stats","header_name","header_color","temp1_label","temp2_label","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","connect_confirm_seconds","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled","outside_temperature","weather_at","bms_available","trips_tree","trips_tree_label"));
     static boolean scoped(String key){return KEYS.contains(key)||key.startsWith("last_");}
     static JSONObject capture(SharedPreferences p)throws JSONException{
         JSONObject values=new JSONObject();for(Map.Entry<String,?> e:p.getAll().entrySet())if(scoped(e.getKey()))values.put(e.getKey(),e.getValue());
@@ -26,10 +26,26 @@ final class ScooterProfiles {
     static String name(SharedPreferences p){try{JSONArray all=export(p);for(int i=0;i<all.length();i++)if(all.getJSONObject(i).getString("id").equals(p.getString(ACTIVE,"")))return all.getJSONObject(i).getString("name");}catch(Exception ignored){}return "Mein Scooter";}
     static synchronized void switchTo(SharedPreferences p,String id)throws Exception{
         if(BmsMonitorService.running)throw new Exception("Zuerst Bereitschaft beenden");
+        switchValues(p,id);
+    }
+    static synchronized void switchForService(SharedPreferences p,String id)throws Exception{
+        switchValues(p,id);
+    }
+    private static void switchValues(SharedPreferences p,String id)throws Exception{
         JSONArray all=export(p);JSONObject target=null;for(int i=0;i<all.length();i++)if(all.getJSONObject(i).getString("id").equals(id))target=all.getJSONObject(i);
         if(target==null)throw new Exception("Scooter-Profil fehlt");
         SharedPreferences.Editor edit=p.edit();for(String k:p.getAll().keySet())if(scoped(k))edit.remove(k);
         put(edit,target.getJSONObject("settings"));edit.putString(LIST,all.toString()).putString(ACTIVE,id);if(!edit.commit())throw new Exception("Profil konnte nicht gespeichert werden");
+    }
+    static JSONObject settingsFor(SharedPreferences p,String id){
+        try{JSONArray all=export(p);for(int i=0;i<all.length();i++)if(id.equals(all.getJSONObject(i).getString("id")))return all.getJSONObject(i).getJSONObject("settings");}catch(Exception ignored){}return new JSONObject();
+    }
+    static synchronized java.util.Map<String,String> knownBms(SharedPreferences p){
+        java.util.Map<String,String> result=new java.util.LinkedHashMap<>();
+        try{JSONArray all=export(p);for(int i=0;i<all.length();i++){JSONObject profile=all.getJSONObject(i);String address=profile.getJSONObject("settings").optString("device_address","").toUpperCase(java.util.Locale.ROOT);
+            if(android.bluetooth.BluetoothAdapter.checkBluetoothAddress(address)){if(result.containsKey(address))result.put(address,"");else result.put(address,profile.getString("id"));}}}
+        catch(Exception e){android.util.Log.e("ScootPit","BMS-Profile konnten nicht gelesen werden",e);}
+        result.values().removeIf(String::isEmpty);return result;
     }
     static void put(SharedPreferences.Editor edit,JSONObject values)throws JSONException{
         Iterator<String> keys=values.keys();while(keys.hasNext()){String k=keys.next();if(!scoped(k))continue;Object v=values.get(k);
@@ -42,7 +58,7 @@ final class ScooterProfiles {
         JSONArray all=export(p);if(all.length()>=20)throw new Exception("Maximal 20 Scooter-Profile");String id=UUID.randomUUID().toString();
         JSONObject values=copy?capture(p):new JSONObject();
         // A copied design must never copy identity, accumulated distance or another scooter's consumption.
-        for(String k:new String[]{"device_address","device_name","total_km","learned_wh_km","temperature_history","bms_available","outside_temperature","weather_at","trips_tree","trips_tree_label"})values.remove(k);
+        for(String k:new String[]{"daily_day","daily_km","tour_km","device_address","device_name","total_km","learned_wh_km","temperature_history","bms_available","outside_temperature","weather_at","trips_tree","trips_tree_label"})values.remove(k);
         ArrayList<String> remove=new ArrayList<>();Iterator<String> keys=values.keys();while(keys.hasNext()){String k=keys.next();if(k.startsWith("last_"))remove.add(k);}for(String k:remove)values.remove(k);
         all.put(new JSONObject().put("id",id).put("name",name.trim()).put("settings",values));p.edit().putString(LIST,all.toString()).commit();switchTo(p,id);
     }

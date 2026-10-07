@@ -76,12 +76,12 @@ final class TripRecorder {
         try {
             String timestamp = isoUtc(location.getTime());
             double speed = location.hasSpeed() ? location.getSpeed() * 3.6 : 0;
-            double altitude = location.hasAltitude() ? location.getAltitude() : 0;
+            double altitude = location.hasAltitude() ? location.getAltitude() : Double.NaN;
             double accuracy = location.hasAccuracy() ? location.getAccuracy() : 0;
 
             gpx.write(String.format(Locale.US,
-                    "<trkpt lat=\"%.7f\" lon=\"%.7f\"><ele>%.2f</ele><time>%s</time></trkpt>\n",
-                    location.getLatitude(), location.getLongitude(), altitude, timestamp));
+                    "<trkpt lat=\"%.7f\" lon=\"%.7f\">%s<time>%s</time></trkpt>\n",
+                    location.getLatitude(), location.getLongitude(), Double.isFinite(altitude)?String.format(Locale.US,"<ele>%.2f</ele>",altitude):"", timestamp));
             csv.write(String.format(Locale.GERMANY,
                     "%s;%.7f;%.7f;%.1f;%.2f;%.2f;%d;%.2f;%.2f;%.1f;%.3f;%.1f;%s;%s;%s%n",
                     timestamp, location.getLatitude(), location.getLongitude(), accuracy,
@@ -92,7 +92,7 @@ final class TripRecorder {
     }
 
     synchronized Summary finish(long endedAt, double distanceMeters, double maxSpeedKmh,
-                                double ascentMeters, double energyWh, double maxPowerW, double outside,double temp1,double temp2) {
+                                double ascentMeters, double energyWh, double maxPowerW, double outside,double temp1,double temp2,long movingMs,long standingMs) {
         try {
             if (gpx != null) {
                 gpx.write("</trkseg></trk></gpx>\n");
@@ -103,7 +103,7 @@ final class TripRecorder {
         gpx = null;
         csv = null;
         Summary summary=new Summary(startedAt, endedAt, distanceMeters, maxSpeedKmh, ascentMeters, energyWh, gpxFile, csvFile);
-        try(BufferedWriter metadata=new BufferedWriter(new FileWriter(summary.metadataFile))){metadata.write(new org.json.JSONObject().put("scooter_id",scooterId).put("scooter_name",scooterName).put("started_at",startedAt).put("ended_at",endedAt).put("distance_m",distanceMeters).put("max_speed_kmh",maxSpeedKmh).put("ascent_m",ascentMeters).put("energy_wh",energyWh).put("max_power_w",maxPowerW).put("outside_temperature_c",Double.isFinite(outside)?outside:org.json.JSONObject.NULL).put("temp1_c",Double.isFinite(temp1)?temp1:org.json.JSONObject.NULL).put("temp2_c",Double.isFinite(temp2)?temp2:org.json.JSONObject.NULL).toString(2));}catch(Exception e){android.util.Log.e("Joyor","Fahrtzusammenfassung konnte nicht gespeichert werden",e);}
+        try(BufferedWriter metadata=new BufferedWriter(new FileWriter(summary.metadataFile))){metadata.write(new org.json.JSONObject().put("scooter_id",scooterId).put("scooter_name",scooterName).put("started_at",startedAt).put("ended_at",endedAt).put("moving_ms",movingMs).put("standing_ms",standingMs).put("distance_m",distanceMeters).put("max_speed_kmh",maxSpeedKmh).put("ascent_m",ascentMeters).put("energy_wh",energyWh).put("max_power_w",maxPowerW).put("outside_temperature_c",Double.isFinite(outside)?outside:org.json.JSONObject.NULL).put("temp1_c",Double.isFinite(temp1)?temp1:org.json.JSONObject.NULL).put("temp2_c",Double.isFinite(temp2)?temp2:org.json.JSONObject.NULL).toString(2));}catch(Exception e){android.util.Log.e("Joyor","Fahrtzusammenfassung konnte nicht gespeichert werden",e);}
         return summary;
     }
 

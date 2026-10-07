@@ -66,8 +66,9 @@ public class MainActivity extends Activity {
             if(BmsMonitorService.ACTION_STATUS.equals(intent.getAction()))renderStatus(intent);
         }
     };
-    private AlertDialog tileDialog, settingsDialog, batteryDialog;
+    private AlertDialog tileDialog, settingsDialog, batteryDialog, batteryConfigDialog;
     private boolean editorFromSettings;
+    private String displayedProfile="";
     private String pendingImageTile="", pendingImageLayout="", draftCacheFile="";
 
     private final java.util.HashMap<String,String> orientationDrafts=new java.util.HashMap<>(),orientationSaved=new java.util.HashMap<>();
@@ -78,7 +79,7 @@ public class MainActivity extends Activity {
         WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
         prefs=getSharedPreferences("settings",MODE_PRIVATE);
         ScooterProfiles.install(prefs);
-        boardTiles=loadBoard();
+        boardTiles=loadBoard();displayedProfile=prefs.getString(ScooterProfiles.ACTIVE,"");
         if(state!=null){
             pendingImageTile=state.getString("pending_image_tile","");pendingImageLayout=state.getString("pending_image_layout","");editorFromSettings=state.getBoolean("editor_from_settings",false);
             logExpanded=state.getBoolean("log_expanded",false);
@@ -117,9 +118,10 @@ public class MainActivity extends Activity {
         TextView title=label("ScootPit BMS",22,color(prefs.getString("header_color",prefs.getString("accent_color","#FFB300")),accent()));title.setPadding(dp(8),0,0,0);title.setTypeface(null,Typeface.BOLD);
         header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         ImageButton menu=new ImageButton(this);menu.setImageResource(R.drawable.settings_bolt);menu.setContentDescription("Einstellungen öffnen");
-        GradientDrawable menuBackground=new GradientDrawable();menuBackground.setColor(0xff302719);menuBackground.setCornerRadius(dp(14));menuBackground.setStroke(dp(1),0xff7b6020);menu.setBackground(menuBackground);menu.setPadding(dp(12),dp(12),dp(12),dp(12));
+        menu.setBackgroundColor(Color.TRANSPARENT);menu.setPadding(dp(12),dp(12),dp(12),dp(12));
         menu.setEnabled(!editingBoard);menu.setOnClickListener(v->showSettings());header.addView(menu,new LinearLayout.LayoutParams(dp(64),dp(56)));root.addView(header);
         if(!editingBoard){Button profile=button("Scooter: "+ScooterProfiles.name(prefs)+" ▾");profile.setContentDescription("Scooter-Profil auswählen");profile.setOnClickListener(v->profileMenu());root.addView(profile);}
+        if(!editingBoard){Button journal=button("Fahrtenbuch · Karte und Statistiken");journal.setOnClickListener(v->new JournalUi(this,prefs).show());root.addView(journal);}
         stateView=label(BmsMonitorService.running?"Bereitschaft aktiv – wartet auf Fahrt":"Bereitschaft aus",15,Color.LTGRAY);root.addView(stateView);
         if(!hasSelectedBms()&&!editingBoard){
             root.addView(label("Bitte zuerst das BMS deines Rollers auswählen.",14,Color.LTGRAY));
@@ -254,6 +256,9 @@ public class MainActivity extends Activity {
     private String alphaColor(String color,int transparent){return String.format(Locale.ROOT,"#%08X",(Color.parseColor(color)&0xffffff)|(Math.round((100-transparent)*255f/100)<<24));}
     private String f(double n,String format){return Double.isFinite(n)?String.format(Locale.GERMANY,format,n):"–";}
     private void renderStatus(Intent intent){
+        String activeProfile=prefs.getString(ScooterProfiles.ACTIVE,"");
+        if(!activeProfile.equals(displayedProfile)&&!editingBoard){displayedProfile=activeProfile;boardTiles=loadBoard();lastStatus=new Intent(intent);rebuild();return;}
+        String statusProfile=intent.getStringExtra("scooter_id");if(statusProfile!=null&&!statusProfile.equals(activeProfile))return;
         lastStatus=new Intent(intent);
         boolean trip=intent.getBooleanExtra("trip_active",false),paused=intent.getBooleanExtra("trip_paused",false);
         stateView.setTextColor(BmsMonitorService.running?GREEN:RED);
@@ -270,7 +275,7 @@ public class MainActivity extends Activity {
         long packet=intent.getLongExtra("bms_at",0);
         long now=System.currentTimeMillis(),gps=intent.getLongExtra("gps_at",0);
         boolean bmsFresh=BmsMonitorService.running && packet>0 && intent.getBooleanExtra("bms_connected",false) && now-packet<=8000;
-        boolean gpsFresh=BmsMonitorService.running && trip && gps>0 && now-gps<=5000;
+        boolean gpsFresh=BmsMonitorService.running && trip && gps>0 && now-gps<=8000;
         for(int i=0;i<tileKeys.size();i++){
             String key=tileKeys.get(i),value="–",note="";
             if(key.startsWith("bms_")){
@@ -282,11 +287,13 @@ public class MainActivity extends Activity {
             }
             double distance=intent.getDoubleExtra("distance_m",0)/1000.0;
             switch(key){
-                case "speed":value=f(intent.getDoubleExtra("speed_kmh",0),"%.1f");note="km/h";break;
+                case "speed":value=gpsFresh?f(intent.getDoubleExtra("speed_kmh",0),"%.1f"):"–";note="km/h";break;
                 case "soc":int soc=intent.getIntExtra("soc",-1);value=soc<0?"–":soc+" %";break;
                 case "range":value=f(intent.getDoubleExtra("range_km",Double.NaN),"%.1f km");note=(intent.getBooleanExtra("range_recent",false)?"jüngster Fahrtverbrauch":"Startschätzung")+" · "+prefs.getString("reserve_percent","10")+" % Reserve";break;
                 case "distance":value=f(distance,"%.2f km");break;
                 case "total":value=f(numberPref("total_km"),"%.2f km");break;
+                case "daily":value=f(DistanceCounters.daily(prefs,now),"%.2f km");note="Heute";break;
+                case "tour":value=f(DistanceCounters.number(prefs,"tour_km"),"%.2f km");note="Manuell zurücksetzbar";break;
                 case "power":value=packet==0?"–":f(intent.getDoubleExtra("discharge_watts",0),"%.0f W");break;
                 case "voltage":value=packet==0?"–":f(intent.getDoubleExtra("voltage",0),"%.2f V");break;
                 case "current":value=packet==0?"–":f(intent.getDoubleExtra("current",0),"%.2f A");break;
@@ -310,7 +317,7 @@ public class MainActivity extends Activity {
                 if(!bmsFresh)note=packet==0?"Keine aktuellen BMS-Daten":!BmsMonitorService.running?"Inaktiv · letzter Messwert":"Veraltet · "+Math.max(0,(now-packet)/1000)+" s";
             }else if(key.equals("speed")||key.equals("altitude"))inactive|=!gpsFresh;
             else if(key.equals("outside")){long at=intent.getLongExtra("weather_at",0);inactive|=!prefs.getBoolean("weather_enabled",true)||at==0||now-at>1800000;}
-            else if(!key.equals("total"))inactive|=!BmsMonitorService.running||!trip;
+            else if(!Arrays.asList("total","daily","tour").contains(key))inactive|=!BmsMonitorService.running||!trip;
             ((MetricTile)tileValues.get(i)).reading(value,note,inactive);tileNotes.get(i).setText(note);
         }
     }
@@ -336,14 +343,14 @@ public class MainActivity extends Activity {
             .setNegativeButton("Zurück",null).show();
     }
     private void showSettings(){
-        String[] items={"Cockpit bearbeiten","App-Farben","Gesamtkilometer korrigieren","BMS und Fahrt-Erkennung","Akku und Restreichweite","Benachrichtigungen","Außentemperatur","Letzte Fahrt / Export","Akkuoptimierung","Speicherorte","Scooter-Profile","Temperatur-Beschriftungen"};
+        String[] items={"Cockpit bearbeiten","App-Farben","Gesamtkilometer korrigieren","BMS und Fahrt-Erkennung","Akku und Restreichweite","Benachrichtigungen","Außentemperatur","Letzte Fahrt / Export","Akkuoptimierung","Speicherorte","Scooter-Profile","Temperatur-Beschriftungen","Fahrtenbuch / Karte / Statistiken","Tourenzähler zurücksetzen","Routine-Nachrichten bearbeiten"};
         if(settingsDialog!=null&&settingsDialog.isShowing())return;
         settingsDialog=new AlertDialog.Builder(this).setTitle("Einstellungen").setItems(items,null).setNegativeButton("Schließen",null).create();
         settingsDialog.show();
         settingsDialog.getListView().setOnItemClickListener((parent,view,w,id)->{
             switch(w){case 0:editorFromSettings=true;settingsDialog.dismiss();editLayout();break;case 1:editColors();break;case 2:editOdometer();break;
                 case 3:editBms();break;case 4:editBattery();break;case 5:notificationSettings();break;
-                case 6:weatherSettings();break;case 7:tripDialog();break;case 8:requestBatteryExemption();break;case 9:storageSettings();break;case 10:profileMenu();break;case 11:editTemperatures();break;}
+                case 6:weatherSettings();break;case 7:tripDialog();break;case 8:requestBatteryExemption();break;case 9:storageSettings();break;case 10:profileMenu();break;case 11:editTemperatures();break;case 12:new JournalUi(this,prefs).show();break;case 13:resetTour();break;case 14:editRoutineMessages();break;}
         });
     }
     private void returnAfterEditor(){if(!draftCacheFile.isEmpty()){new File(getCacheDir(),draftCacheFile).delete();draftCacheFile="";}if(editorFromSettings){editorFromSettings=false;showSettings();}}
@@ -382,6 +389,17 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Erkannte BMS-Daten dieses Scooters").setItems(names,(d,i)->addTile(keys.get(i))).setNegativeButton("Zurück",null).show();
     }
 
+    private void resetTour(){new AlertDialog.Builder(this).setTitle("Tourenzähler zurücksetzen?").setMessage("Nur der Tourenzähler für "+ScooterProfiles.name(prefs)+" wird auf 0 gesetzt. Tages- und Gesamtkilometer bleiben erhalten.")
+        .setPositiveButton("Zurücksetzen",(d,w)->{prefs.edit().putString("tour_km","0").apply();if(lastStatus!=null)renderStatus(lastStatus);else buildTiles();}).setNegativeButton("Zurück",null).show();}
+    private void editRoutineMessages(){
+        LinearLayout l=column();String[] keys={"routine_start_title","routine_start_text","routine_end_title","routine_end_text"};
+        String[] names={"Fahrtstart: Titel","Fahrtstart: Text (leer = Standard)","Fahrtende: Titel","Fahrtende: Text (leer = Fahrtwerte)"};String[] defaults={"T6E Fahrt gestartet","","T6E Fahrt beendet",""};
+        java.util.List<EditText> fields=new ArrayList<>();for(int i=0;i<keys.length;i++){EditText e=textField(l,names[i],prefs.getString(keys[i],defaults[i]));e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(i%2==0?100:1000)});fields.add(e);}
+        l.addView(label("Platzhalter im Text: {scooter}, {km}, {wh}. Wenn du den von einer Samsung-Routine gesuchten Titel oder Text änderst, passe auch die Routine an. Die Nachrichten gelten für dieses Scooter-Profil.",13,Color.LTGRAY));
+        ScrollView scroll=new ScrollView(this);scroll.addView(l);
+        AlertDialog d=new AlertDialog.Builder(this).setTitle("Routine-Nachrichten").setView(scroll).setPositiveButton("Speichern",null).setNeutralButton("Standard",(a,w)->{SharedPreferences.Editor e=prefs.edit();for(String k:keys)e.remove(k);e.apply();}).setNegativeButton("Zurück",null).create();
+        d.setOnShowListener(a->d.getButton(-1).setOnClickListener(v->{if(fields.get(0).getText().toString().trim().isEmpty()||fields.get(2).getText().toString().trim().isEmpty()){fields.get(0).setError("Titel dürfen nicht leer sein");return;}SharedPreferences.Editor e=prefs.edit();for(int i=0;i<keys.length;i++)e.putString(keys[i],fields.get(i).getText().toString());e.apply();d.dismiss();}));d.show();
+    }
     private void notificationSettings(){new AlertDialog.Builder(this).setTitle("Benachrichtigungen")
         .setMessage("Nur den Kanal Hintergrundbetrieb ausschalten, um die dauerhafte Anzeige auszublenden. Routine-Signale aktiviert lassen. Android kann die App weiterhin unter Aktive Apps zeigen.")
         .setPositiveButton("Hintergrundbetrieb",(d,w)->openChannel("monitor"))
@@ -428,20 +446,21 @@ public class MainActivity extends Activity {
     private void editBattery(){LinearLayout l=column();String[] keys={"capacity_ah","nominal_voltage","reserve_percent","reference_wh_km"};String[] titles={"Kapazität (Ah, Ersatzwert ohne BMS-Kapazität)","Nennspannung (V)","Restreserve (%)","Startwert Verbrauch (Wh/km)"};String[] values={"26","48","10","20"};List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++)es.add(field(l,titles[i],prefs.getString(keys[i],values[i])));
         l.addView(label("Ab 250 m wird der aktuelle Fahrtverbrauch verwendet; die jüngsten ungefähr 800 m werden stärker gewichtet. Reichweite ist eine Schätzung.",12,Color.GRAY));
         ScrollView scroll=new ScrollView(this);scroll.addView(l);
-        AlertDialog d=new AlertDialog.Builder(this).setTitle("Akku und Restreichweite").setView(scroll).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{double[] mins={0.1,1,0,1},maxs={1000,100,99,200};SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++){Double n=valid(es.get(i),mins[i],maxs[i]);if(n==null)return;edit.putString(keys[i],n.toString());}edit.apply();d.dismiss();}));d.show();}
+        AlertDialog d=new AlertDialog.Builder(this).setTitle("Akku und Restreichweite").setView(scroll).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();batteryConfigDialog=d;d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{double[] mins={0.1,1,0,1},maxs={1000,100,99,200};SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++){Double n=valid(es.get(i),mins[i],maxs[i]);if(n==null)return;edit.putString(keys[i],n.toString());}edit.apply();d.dismiss();}));d.show();}
     private boolean hasSelectedBms(){return BluetoothAdapter.checkBluetoothAddress(prefs.getString("device_address",""));}
     private void editBms(){LinearLayout l=column();TextView selected=panel(hasSelectedBms()?"Ausgewählt: "+prefs.getString("device_name","BMS")+"\n"+prefs.getString("device_address",""):"Noch kein BMS ausgewählt");l.addView(selected);
         Button scan=button(hasSelectedBms()?"Anderes BMS auswählen":"BMS auswählen");scan.setOnClickListener(v->openBmsPicker());l.addView(scan);
-        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","connect_confirm_seconds"};
-        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)","Starken Empfang vor Erstverbindung bestätigen (s)"};
-        String[] defs={"0.30","3","5","90","-70","-95","60","15","5","5","30","45","3"};
+        CheckBox automatic=new CheckBox(this);automatic.setText("Gespeicherte Scooter automatisch erkennen und auswählen");automatic.setTextColor(Color.WHITE);automatic.setChecked(prefs.getBoolean("auto_scooter",true));l.addView(automatic);
+        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","connect_confirm_seconds","stop_seconds"};
+        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)","Starken Empfang vor Erstverbindung bestätigen (s)","Fahrtende nach Stillstand (s)"};
+        String[] defs={"0.30","1","5","90","-75","-95","5","15","2","2","30","45","3","45"};
         List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++){EditText input=field(l,titles[i],prefs.getString(keys[i],defs[i]));if(i==4||i==5)input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);es.add(input);}
-        l.addView(label("Die Erstverbindung benötigt mindestens drei aufeinanderfolgende starke Empfangsmessungen über die Bestätigungsdauer. Schwacher Empfang setzt diese Prüfung zurück. Frische BMS-Daten erhalten die Verbindung auch bei schwachem Empfang. In Pausen wird weiter Strom abgefragt. Fahrtende erst bei bestätigter Entfernung. Ohne Stromentnahme werden GPS-Strecken nach 3 s nicht weiter gezählt. Änderungen gelten nach Neustart der Bereitschaft.",12,Color.GRAY));ScrollView sv=new ScrollView(this);sv.addView(l);
+        l.addView(label("Erstverbindung nach mindestens drei stabilen Empfangsmessungen. Automatik prüft nur gespeicherte, eindeutig zugeordnete BMS und hält das Profil während einer Fahrt fest. Ausrollen wird weiter aufgezeichnet. Fahrtende bei bestätigter Entfernung oder zuverlässig erkanntem Stillstand (Standard 45 s). Längere Ampelphasen können eine Fahrt teilen; dafür z. B. 90 s einstellen. GPS-Ausfall zählt nicht als Stillstand. Änderungen der Erkennung gelten nach Neustart der Bereitschaft.",12,Color.GRAY));ScrollView sv=new ScrollView(this);sv.addView(l);
         AlertDialog d=new AlertDialog.Builder(this).setTitle("BMS und Fahrt-Erkennung").setView(sv).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
-            double[] mins={.01,1,1,1,-110,-120,5,5,5,5,10,10,1},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150,15};
+            double[] mins={.01,1,1,1,-110,-120,5,5,1,1,10,10,1,15},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150,15,3600};
             Double[] values=new Double[keys.length];for(int i=0;i<keys.length;i++){values[i]=valid(es.get(i),mins[i],maxs[i]);if(values[i]==null)return;}
             if(values[5]>values[4]){es.get(5).setError("Entfernungsschwelle muss gleich oder schwächer als Verbindungsschwelle sein");return;}
-            SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++)edit.putString(keys[i],values[i].toString());edit.apply();d.dismiss();
+            SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++)edit.putString(keys[i],values[i].toString());edit.putBoolean("auto_scooter",automatic.isChecked()).putString("connection_policy_version","3");edit.apply();d.dismiss();
         }));d.show();}
 
     private void tripDialog(){LinearLayout l=column();lastTripView=panel("");l.addView(lastTripView);showLastTrip();Button share=button("Letzte GPX- und CSV-Datei teilen");share.setOnClickListener(v->shareLastTrip());l.addView(share);new AlertDialog.Builder(this).setTitle("Letzte Fahrt").setView(l).setNegativeButton("Schließen",null).show();}
@@ -573,7 +592,7 @@ public class MainActivity extends Activity {
 
     private void startMonitoring() {
         if (BmsMonitorService.running) { Toast.makeText(this,"Bereitschaft ist bereits aktiv",Toast.LENGTH_SHORT).show(); return; }
-        if(!hasSelectedBms()){Toast.makeText(this,"Bitte zuerst ein BMS auswählen",Toast.LENGTH_LONG).show();openBmsPicker();return;}
+        if(!hasSelectedBms()&&(!prefs.getBoolean("auto_scooter",true)||ScooterProfiles.knownBms(prefs).isEmpty())){Toast.makeText(this,"Bitte zuerst ein BMS auswählen",Toast.LENGTH_LONG).show();openBmsPicker();return;}
         requestNeededPermissions();
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT>=31 && (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)!=PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED))){Toast.makeText(this,"Bitte Standort und Bluetooth erlauben und erneut starten",Toast.LENGTH_LONG).show();return;}
         Intent service=new Intent(this,BmsMonitorService.class);

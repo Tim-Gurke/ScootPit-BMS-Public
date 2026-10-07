@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 /** Local working data is retained. Completed trips and settings snapshots use independently selected SAF trees. */
 final class StorageFolders {
     static final String SETTINGS="settings_tree",TRIPS="trips_tree",NAME="Joyor-Cockpit-settings.json";
-    private static final Set<String> KEYS=new HashSet<>(Arrays.asList("header_name","header_color","temp1_label","temp2_label","bms_available","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","connect_confirm_seconds","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled"));
+    private static final Set<String> KEYS=new HashSet<>(Arrays.asList("auto_scooter","stop_seconds","daily_day","daily_km","tour_km","routine_start_title","routine_start_text","routine_end_title","routine_end_text","journal_stats","header_name","header_color","temp1_label","temp2_label","bms_available","temperature_history","device_name","device_address","active_current","active_seconds","idle_seconds","monitor_timeout","connection_policy_version","connect_rssi","connect_confirm_seconds","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","cockpit_board_landscape","capacity_ah","nominal_voltage","reserve_percent","reference_wh_km","learned_wh_km","total_km","accent_color","app_background","tile_background","tile_text","cockpit_layout","cockpit_board","weather_enabled"));
     private static StorageFolders instance;
     private final Context context;
     private final SharedPreferences prefs;
@@ -73,6 +73,7 @@ final class StorageFolders {
             if(profiles!=null){for(String key:prefs.getAll().keySet())if(ScooterProfiles.scoped(key))editor.remove(key);
                 for(int i=0;i<profiles.length();i++)if(profiles.getJSONObject(i).getString("id").equals(active))ScooterProfiles.put(editor,profiles.getJSONObject(i).getJSONObject("settings"));
                 editor.putString(ScooterProfiles.LIST,profiles.toString()).putString(ScooterProfiles.ACTIVE,active);
+                if(values.has("auto_scooter"))editor.putBoolean("auto_scooter",values.getBoolean("auto_scooter"));
             }else{
                 // Legacy files replace only the active scooter, preserving other profiles and existing trip files.
                 for(String key:KEYS)editor.remove(key);
@@ -90,7 +91,7 @@ final class StorageFolders {
         Iterator<String> keys=values.keys();while(keys.hasNext()){
             String key=keys.next();if(!KEYS.contains(key)&&!(profile&&ScooterProfiles.scoped(key)))continue;
             Object value=values.get(key);
-            if(key.equals("weather_enabled")){if(!(value instanceof Boolean))throw new IOException("Ungültiger Wetterwert");continue;}
+            if(key.equals("weather_enabled")||key.equals("auto_scooter")){if(!(value instanceof Boolean))throw new IOException("Ungültiger Wetterwert");continue;}
             if(key.equals("weather_at")||key.equals("last_started_at")||key.equals("last_ended_at")){if(!(value instanceof Number)||((Number)value).doubleValue()<0)throw new IOException("Ungültiger Zeitpunkt");continue;}
             if(!(value instanceof String))throw new IOException("Ungültiger Wert: "+key);String text=(String)value;
             if((key.equals("cockpit_board")||key.equals("cockpit_board_landscape"))){CockpitBoard.validate(new JSONArray(text));continue;}
@@ -100,6 +101,8 @@ final class StorageFolders {
             if(key.equals("header_name")||key.equals("temp1_label")||key.equals("temp2_label")){if(text.trim().isEmpty()||text.length()>40||text.contains("\n"))throw new IOException("Ungültige Beschriftung");continue;}
             if(key.equals("temperature_history")){TemperatureHistory.validate(new JSONArray(text));continue;}
             if(key.equals("bms_available")){JSONArray list=new JSONArray(text);if(list.length()>150)throw new IOException("Zu viele BMS-Daten");for(int i=0;i<list.length();i++)if(!BmsExtras.known(list.getString(i)))throw new IOException("Unbekannte BMS-Kachel");continue;}
+            if(key.startsWith("routine_")||key.equals("daily_day")){if(text.length()>2000)throw new IOException("Text zu lang");continue;}
+            if(key.equals("journal_stats")){new JSONArray(text);continue;}
             if(key.equals("device_name")||key.equals("trips_tree")||key.equals("trips_tree_label")||key.equals("last_gpx")||key.equals("last_csv"))continue;
             if(key.equals("connect_rssi")||key.equals("departure_rssi")){double r=Double.parseDouble(text);if(!Double.isFinite(r)||r< -120||r> -30)throw new IOException("Ungültige Empfangsschwelle");continue;}
             double n=Double.parseDouble(text);if(!Double.isFinite(n)||(!key.equals("outside_temperature")&&n<0)||n>10000000)throw new IOException("Ungültige Zahl: "+key);

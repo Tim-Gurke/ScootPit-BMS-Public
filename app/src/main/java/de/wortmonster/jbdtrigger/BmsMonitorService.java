@@ -54,6 +54,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     private String controlMessage = "Bereitschaft starten, um den BMS-Lastausgang zu lesen";
     static volatile Intent latestStatus;
     static volatile boolean running;
+    static volatile BmsMonitorService liveService;
     private SharedPreferences prefs;
     private WeatherClient weather;
     private double remainingAh, fullAh;
@@ -74,14 +75,25 @@ public class BmsMonitorService extends Service implements LocationListener {
                 if (now - gpsAt < 5000 && currentSpeedKmh >= 2) movingMs += elapsed;
                 else standingMs += elapsed;
             }
-            if (now - gpsAt > 5000) currentSpeedKmh = 0;
+            if(recorder!=null && motion.stopped(android.os.SystemClock.elapsedRealtime(),stopMs)){
+                active=false;manualHold=true;activeSince=0;idleSince=0;
+                finishTrip();closeGatt();near=false;departureMode=false;missingSince=0;
+                tried.clear();scheduleScan(1000);emit(ACTION_IDLE);
+                setState("Fahrt nach Stillstand beendet – Suche wird fortgesetzt");
+            }
             lastClock = now;
             sendStatus();
             handler.postDelayed(this, 1000);
         }
     };
 
-    private int connectRssi = -70;
+    private int connectRssi = -75;
+    private boolean autoSelection;
+    private java.util.Map<String,String> knownBms=new java.util.LinkedHashMap<>();
+    private final java.util.Map<String,ConnectionPolicy.InitialSignal> signals=new java.util.HashMap<>();
+    private final java.util.Map<String,Long> tried=new java.util.HashMap<>();
+    private long stopMs=45000;
+    private final RideMotion motion=new RideMotion();
     private long connectConfirmMs = 3000;
     private final ConnectionPolicy.InitialSignal initialSignal = new ConnectionPolicy.InitialSignal();
     private int departureRssi = -95;
@@ -89,12 +101,12 @@ public class BmsMonitorService extends Service implements LocationListener {
     private double gpsMaxKmh = 45;
     private int weakRssi = -95;
     private static final long SCAN_WINDOW_MS = 10_000;
-    private long absentDelayMs = 60_000;
+    private long absentDelayMs = 5_000;
     private long weakDelayMs = 30_000;
     private long goodDelayMs = 10_000;
     private static final long DEPARTURE_SCAN_MS = 3_000;
     private static final int FAR_CONFIRMATIONS = 3;
-    private static final long BMS_POLL_MS = 2_000;
+    private static final long BMS_POLL_MS = 1_000;
 
     private static final UUID SERVICE_UUID = UUID.fromString("0000ff00-0000-1000-8000-00805f9b34fb");
     private static final UUID NOTIFY_UUID = UUID.fromString("0000ff01-0000-1000-8000-00805f9b34fb");
@@ -123,7 +135,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     private int farConfirmations;
 
     private double activeAmps = 0.30;
-    private long activeMs = 3_000;
+    private long activeMs = 1_000;
     private long idleMs = 5_000;
     private long monitorTimeoutMs = 90_000;
     private long activeSince;
@@ -158,7 +170,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         weatherAt = prefs.getLong("weather_at", 0);
         averageConsumption = number(prefs.getString("learned_wh_km", "0"), 0);
         try{temperatureHistory=new org.json.JSONArray(prefs.getString("temperature_history","[]"));}catch(Exception ignored){}
-        running = true;
+        running = true;liveService=this;
         locationManager = getSystemService(LocationManager.class);
         PowerManager power=getSystemService(PowerManager.class);
         wakeLock=power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"Joyor:Readiness");
@@ -168,7 +180,9 @@ public class BmsMonitorService extends Service implements LocationListener {
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
-        if(!BluetoothAdapter.checkBluetoothAddress(prefs.getString("device_address",""))){
+        autoSelection=prefs.getBoolean("auto_scooter",true);
+        knownBms=ScooterProfiles.knownBms(prefs);
+        if((!autoSelection&&!BluetoothAdapter.checkBluetoothAddress(prefs.getString("device_address",""))) || (autoSelection&&knownBms.isEmpty())){
             setState("Bitte zuerst ein BMS auswählen");stopSelf();return START_NOT_STICKY;
         }
         if(intent!=null && ACTION_SET_DISCHARGE.equals(intent.getAction())){
@@ -188,26 +202,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         lastClock = System.currentTimeMillis();
         SharedPreferences preferences = prefs;
         address = preferences.getString("device_address", "");
-        activeAmps = number(preferences.getString("active_current", "0.30"), 0.30);
-        activeMs = seconds(preferences.getString("active_seconds", "3"), 3);
-        // Replace the previous default and the suggested temporary workaround once per profile.
-        if(!"2".equals(preferences.getString("connection_policy_version",""))){
-            String old=preferences.getString("idle_seconds","5");double n=number(old,5);
-            SharedPreferences.Editor migrate=preferences.edit().putString("connection_policy_version","2");
-            if(n==20||n==120)migrate.putString("idle_seconds","5");migrate.apply();
-        }
-        idleMs = seconds(preferences.getString("idle_seconds", "5"), 5);
-        monitorTimeoutMs = seconds(preferences.getString("monitor_timeout", "90"), 90);
-        connectRssi = (int)setting("connect_rssi", -70, -110, -30);
-        connectConfirmMs = (long)(setting("connect_confirm_seconds",3,1,15)*1000);
-        departureRssi = (int)setting("departure_rssi", -95, -120, connectRssi);
-        weakRssi = departureRssi;
-        absentDelayMs = (long)setting("scan_absent",60,5,3600)*1000;
-        weakDelayMs = (long)setting("scan_weak",15,5,3600)*1000;
-        goodDelayMs = (long)setting("scan_good",5,5,3600)*1000;
-        reconnectMs = (long)setting("scan_pause",5,5,60)*1000;
-        departureGraceMs = (long)setting("departure_seconds",30,10,600)*1000;
-        gpsMaxKmh = setting("gps_max_kmh",45,10,150);
+        loadProfileSettings();
 
         handler.removeCallbacksAndMessages(null);
         stopScan();
@@ -218,6 +213,36 @@ public class BmsMonitorService extends Service implements LocationListener {
         scheduleScan(0);
         handler.post(clock);
         return START_STICKY;
+    }
+
+    private void loadProfileSettings(){
+        // Change former shipped defaults once; retain user-entered alternatives.
+        if(!"3".equals(prefs.getString("connection_policy_version",""))){
+            SharedPreferences.Editor e=prefs.edit().putString("connection_policy_version","3");
+            if(number(prefs.getString("connect_rssi","-70"),-70)==-70)e.putString("connect_rssi","-75");
+            if(number(prefs.getString("scan_absent","60"),60)==60)e.putString("scan_absent","5");
+            if(number(prefs.getString("scan_good","5"),5)==5)e.putString("scan_good","2");
+            if(number(prefs.getString("scan_pause","5"),5)==5)e.putString("scan_pause","2");
+            if(number(prefs.getString("active_seconds","3"),3)==3)e.putString("active_seconds","1");
+            e.apply();
+        }
+        address=prefs.getString("device_address","");
+        activeAmps=setting("active_current",.30,.01,100);activeMs=(long)(setting("active_seconds",1,1,3600)*1000);
+        idleMs=(long)(setting("idle_seconds",5,1,3600)*1000);
+        monitorTimeoutMs=(long)(setting("monitor_timeout",90,1,3600)*1000);
+        connectRssi=(int)setting("connect_rssi",-75,-110,-30);
+        connectConfirmMs=(long)(setting("connect_confirm_seconds",3,1,15)*1000);
+        departureRssi=(int)setting("departure_rssi",-95,-120,connectRssi);weakRssi=departureRssi;
+        absentDelayMs=(long)(setting("scan_absent",5,5,3600)*1000);
+        weakDelayMs=(long)(setting("scan_weak",15,5,3600)*1000);
+        goodDelayMs=(long)(setting("scan_good",2,1,3600)*1000);
+        reconnectMs=(long)(setting("scan_pause",2,1,60)*1000);
+        departureGraceMs=(long)(setting("departure_seconds",30,10,600)*1000);
+        stopMs=(long)(setting("stop_seconds",45,15,3600)*1000);
+        gpsMaxKmh=setting("gps_max_kmh",45,10,150);
+        averageConsumption=number(prefs.getString("learned_wh_km","0"),0);
+        outsideTemperature=number(prefs.getString("outside_temperature","NaN"),Double.NaN);weatherAt=prefs.getLong("weather_at",0);
+        try{temperatureHistory=new org.json.JSONArray(prefs.getString("temperature_history","[]"));}catch(Exception e){temperatureHistory=new org.json.JSONArray();}
     }
 
     private double number(String value, double fallback) {
@@ -244,7 +269,7 @@ public class BmsMonitorService extends Service implements LocationListener {
 
     private void startScan() {
         if (Build.VERSION.SDK_INT >= 31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) { scheduleScan(absentDelayMs); return; }
-        if (scanRunning || gatt != null || address.isEmpty()) return;
+        if (scanRunning || gatt != null || (!autoSelection && address.isEmpty())) return;
         BluetoothManager manager = getSystemService(BluetoothManager.class);
         BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
         if (adapter == null || !adapter.isEnabled()) {
@@ -258,14 +283,17 @@ public class BmsMonitorService extends Service implements LocationListener {
         }
 
         bestScanRssi = -127;
-        initialSignal.reset();
-        ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(address).build();
+        initialSignal.reset();signals.clear();
+        java.util.List<ScanFilter> filters=new java.util.ArrayList<>();
+        if(autoSelection && recorder==null){knownBms=ScooterProfiles.knownBms(prefs);for(String mac:knownBms.keySet())filters.add(new ScanFilter.Builder().setDeviceAddress(mac).build());}
+        else if(BluetoothAdapter.checkBluetoothAddress(address))filters.add(new ScanFilter.Builder().setDeviceAddress(address).build());
+        if(filters.isEmpty()){setState("Keine eindeutigen gespeicherten BMS-Profile");scheduleScan(absentDelayMs);return;}
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setReportDelay(0)
                 .build();
         try {
-            scanner.startScan(Collections.singletonList(filter), settings, scanCallback);
+            scanner.startScan(filters, settings, scanCallback);
             scanRunning = true;
             handler.postDelayed(finishScanRunnable,
                     departureMode ? DEPARTURE_SCAN_MS : Math.max(SCAN_WINDOW_MS,connectConfirmMs+5000));
@@ -310,15 +338,35 @@ public class BmsMonitorService extends Service implements LocationListener {
             handler.post(() -> processScanResult(result));
         }
         private void processScanResult(ScanResult result) {
-            if (!running || !scanRunning || !address.equalsIgnoreCase(result.getDevice().getAddress())) return;
+            if (!running || !scanRunning) return;
+            String mac=result.getDevice().getAddress().toUpperCase(Locale.ROOT);
+            if(recorder!=null || !autoSelection){if(!address.equalsIgnoreCase(mac))return;}
+            else if(!knownBms.containsKey(mac))return;
+            long scanNow=android.os.SystemClock.elapsedRealtime();
+            if(autoSelection&&recorder==null&&scanNow-tried.getOrDefault(mac,-30000L)<10000)return;
             int value = result.getRssi();
             bestScanRssi = Math.max(bestScanRssi, value);
             rssi = value;
             sendStatus();
 
+            int candidateRssi=connectRssi;long candidateConfirm=connectConfirmMs;
+            if(autoSelection&&recorder==null){org.json.JSONObject candidate=ScooterProfiles.settingsFor(prefs,knownBms.get(mac));
+                candidateRssi=(int)number(candidate.optString("connect_rssi","-75"),-75);
+                if(!"3".equals(candidate.optString("connection_policy_version"))&&candidateRssi==-70)candidateRssi=-75;
+                candidateRssi=Math.max(-110,Math.min(-30,candidateRssi));candidateConfirm=(long)(Math.max(1,Math.min(15,number(candidate.optString("connect_confirm_seconds","3"),3)))*1000);
+            }
             boolean accepted = recorder != null ? value >= departureRssi
-                    : initialSignal.accept(android.os.SystemClock.elapsedRealtime(),value,connectRssi,connectConfirmMs);
+                    : signals.computeIfAbsent(mac,k->new ConnectionPolicy.InitialSignal()).accept(scanNow,value,candidateRssi,candidateConfirm);
             if (accepted && gatt == null) {
+                if(autoSelection && recorder==null){
+                    String id=knownBms.get(mac);
+                    try{if(!id.equals(prefs.getString(ScooterProfiles.ACTIVE,""))){
+                        ScooterProfiles.switchForService(prefs,id);loadProfileSettings();
+                        manualHold=false;motion.reset();lastLocation=null;gpsAt=0;extras.values.clear();extras.times.clear();soc=-1;voltage=current=dischargeWatts=0;
+                        temperatures=new double[0];distanceMeters=energyWh=maxPowerW=maxSpeedKmh=0;movingMs=standingMs=0;
+                    }}catch(Exception e){setState("Profil konnte nicht gewählt werden: "+e.getMessage());return;}
+                    address=mac;tried.put(mac,scanNow);
+                }
                 stopScan();
                 departureMode = false;
                 farConfirmations = 0;
@@ -384,6 +432,7 @@ public class BmsMonitorService extends Service implements LocationListener {
             }
             enableNotifications(bluetoothGatt, notify);
             monitorStartedAt = System.currentTimeMillis();
+            startLocationTracking();
             activeSince = 0;
             idleSince = 0;
             farConfirmations = 0;
@@ -428,7 +477,6 @@ public class BmsMonitorService extends Service implements LocationListener {
 
     private void handleDisconnected() {
         closeGatt();
-        currentSpeedKmh = 0; lastLocation = null;
         if (recorder != null) {
             if(active){active=false;emit(ACTION_IDLE);}
             if(missingSince==0)missingSince=System.currentTimeMillis();
@@ -463,6 +511,9 @@ public class BmsMonitorService extends Service implements LocationListener {
             long now = System.currentTimeMillis();
 
             if(controlPending && !controlAcknowledged){handler.postDelayed(this,BMS_POLL_MS);return;}
+            if(autoSelection && recorder==null && knownBms.size()>1 && monitorStartedAt>0 && now-monitorStartedAt>=6000 && activeSince==0){
+                closeGatt();near=false;scheduleScan(1000);return;
+            }
             if (recorder == null && monitorStartedAt > 0
                     && now - monitorStartedAt >= monitorTimeoutMs) {
                 emit(ACTION_TIMEOUT);
@@ -477,9 +528,9 @@ public class BmsMonitorService extends Service implements LocationListener {
             }
             if(lastPacket==0 && now-monitorStartedAt>15_000){handleDisconnected();return;}
             requestBasicInfo();
-            handler.removeCallbacks(optionalRead);handler.postDelayed(optionalRead,900);
+            handler.removeCallbacks(optionalRead);handler.postDelayed(optionalRead,550);
             handler.removeCallbacks(readRssiRunnable);
-            handler.postDelayed(readRssiRunnable, 650);
+            handler.postDelayed(readRssiRunnable, 300);
             handler.postDelayed(this, BMS_POLL_MS);
         }
     };
@@ -611,7 +662,6 @@ public class BmsMonitorService extends Service implements LocationListener {
             if (activeSince == 0) activeSince = now;
             if (now - activeSince >= activeMs) {
                 active = true;
-                lastLocation = null;
                 idleSince = 0;
                 farConfirmations = 0;
                 boolean newTrip = recorder == null;
@@ -631,7 +681,7 @@ public class BmsMonitorService extends Service implements LocationListener {
                 activeSince = 0;
                 farConfirmations = 0;
                 emit(ACTION_IDLE);
-                currentSpeedKmh = 0; lastLocation = null;
+
                 setState("Fahrt pausiert – BMS wird weiter überwacht");
             }
         } else if (active) {
@@ -659,7 +709,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         lastPowerAt = now;
         lastLocation = null;
         movingMs = standingMs = 0;
-        lastClock = now;
+        lastClock = now;motion.reset();
         startLocationTracking();
         rideNotification(true);
     }
@@ -678,7 +728,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         }
         finishTrip();
         closeGatt();
-        scheduleScan(absentDelayMs);
+        scheduleScan(1000);
     }
 
     private void finishTrip() {
@@ -688,7 +738,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         double averageTemperature=temperatureSamples>0?temperatureSum/temperatureSamples:Double.NaN;
         double temp1=sensorSamples[0]>0?sensorSums[0]/sensorSamples[0]:Double.NaN,temp2=sensorSamples[1]>0?sensorSums[1]/sensorSamples[1]:Double.NaN;
         TripRecorder.Summary summary = recorder.finish(endedAt, distanceMeters,
-                maxSpeedKmh, ascentMeters, energyWh, maxPowerW, averageTemperature,temp1,temp2);
+                maxSpeedKmh, ascentMeters, energyWh, maxPowerW, averageTemperature,temp1,temp2,movingMs,standingMs);
         if(Double.isFinite(averageTemperature)&&distanceMeters>=1000&&energyWh>0&&energyWh/(distanceMeters/1000)<=200)try{temperatureHistory.put(new org.json.JSONObject().put("temperature",averageTemperature).put("km",distanceMeters/1000).put("wh",energyWh));while(temperatureHistory.length()>100)temperatureHistory.remove(0);prefs.edit().putString("temperature_history",temperatureHistory.toString()).apply();}catch(Exception ignored){}
         recorder = null;
         currentSpeedKmh = 0;
@@ -723,7 +773,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        1_000, 0.5f, this, Looper.getMainLooper());
+                        500, 0, this, Looper.getMainLooper());
             }
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
@@ -740,9 +790,8 @@ public class BmsMonitorService extends Service implements LocationListener {
     @Override public void onLocationChanged(Location location) {
         if (recorder == null || location == null) return;
         long now = System.currentTimeMillis();
-        if(!ConnectionPolicy.recordMovement(active,now,lastPacket,idleSince)){
-            lastLocation=null;currentSpeedKmh=0;return;
-        }
+        // Coasting is motion even when the BMS reports no motor load.
+        if(!LocationManager.GPS_PROVIDER.equals(location.getProvider()) && now-gpsAt<5000)return;
         if (!location.hasAccuracy() || location.getAccuracy() > 35) return;
         if (System.currentTimeMillis() - location.getTime() > 10000) return;
         if (lastLocation != null && location.getElapsedRealtimeNanos() <= lastLocation.getElapsedRealtimeNanos()) return;
@@ -759,8 +808,7 @@ public class BmsMonitorService extends Service implements LocationListener {
             if (elapsed > 0 && delta >= 0.8 && delta <= maximumPlausible) {
                 if (speedKmh >= 2 || (!location.hasSpeed() && delta / (elapsed / 1000.0) >= 0.56)) {
                     distanceMeters += delta;
-                    double total = number(prefs.getString("total_km", "0"), 0) + delta / 1000.0;
-                    prefs.edit().putString("total_km", Double.toString(total)).apply();
+                    DistanceCounters.add(prefs,delta,location.getTime());
                 }
                 if (!location.hasSpeed()) speedKmh = delta / (elapsed / 1000.0) * 3.6;
                 if (location.hasAltitude() && lastLocation.hasAltitude()) {
@@ -770,6 +818,9 @@ public class BmsMonitorService extends Service implements LocationListener {
             }
         }
         gpsAt = System.currentTimeMillis();
+        boolean reliableStop=LocationManager.GPS_PROVIDER.equals(location.getProvider()) && location.hasSpeed()
+            && location.getAccuracy()<=15 && (!location.hasSpeedAccuracy()||location.getSpeedAccuracyMetersPerSecond()<=1);
+        motion.fix(android.os.SystemClock.elapsedRealtime(),speedKmh,reliableStop);
         if (prefs.getBoolean("weather_enabled", true)) {
             weather.update(location.getLatitude(), location.getLongitude(), (temp, at) -> {
                 outsideTemperature = temp; weatherAt = at;
@@ -784,7 +835,9 @@ public class BmsMonitorService extends Service implements LocationListener {
         if(lastPacket>0 && System.currentTimeMillis()-lastPacket<=8000)recentConsumption.add(distanceMeters,energyWh);
         if(prefs.getBoolean("weather_enabled",true)&&Double.isFinite(outsideTemperature)&&weatherAt>0&&System.currentTimeMillis()-weatherAt<=1800000){temperatureSum+=outsideTemperature;temperatureSamples++;}
         if(lastPacket>0&&System.currentTimeMillis()-lastPacket<=8000)for(int i=0;i<Math.min(2,temperatures.length);i++)if(Double.isFinite(temperatures[i])){sensorSums[i]+=temperatures[i];sensorSamples[i]++;}
-        recorder.add(location, soc, voltage, current, dischargeWatts, energyWh, maxPowerW, prefs.getBoolean("weather_enabled",true)&&System.currentTimeMillis()-weatherAt<=1800000?outsideTemperature:Double.NaN,lastPacket>0&&System.currentTimeMillis()-lastPacket<=8000?temperatures:new double[0]);
+        Location recorded=new Location(location);recorded.setSpeed((float)(currentSpeedKmh/3.6));
+        boolean packetFresh=lastPacket>0&&now-lastPacket<=8000;
+        recorder.add(recorded, packetFresh?soc:-1, packetFresh?voltage:Double.NaN, packetFresh?current:Double.NaN, packetFresh?dischargeWatts:Double.NaN, energyWh, maxPowerW, prefs.getBoolean("weather_enabled",true)&&System.currentTimeMillis()-weatherAt<=1800000?outsideTemperature:Double.NaN,lastPacket>0&&System.currentTimeMillis()-lastPacket<=8000?temperatures:new double[0]);
         sendStatus();
     }
 
@@ -800,6 +853,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     private void closeGatt() {
+        if(recorder==null)stopLocationTracking();
         handler.removeCallbacks(pollRunnable);
         handler.removeCallbacks(readRssiRunnable);handler.removeCallbacks(optionalRead);
         handler.removeCallbacks(controlTimeout);handler.removeCallbacks(submitControl);
@@ -826,6 +880,7 @@ public class BmsMonitorService extends Service implements LocationListener {
 
     private Intent baseIntent(String action) {
         return new Intent(action)
+                .putExtra("scooter_id",prefs.getString(ScooterProfiles.ACTIVE,""))
                 .putExtra("device_address", address)
                 .putExtra("rssi", rssi)
                 .putExtra("soc", soc)
@@ -860,7 +915,7 @@ public class BmsMonitorService extends Service implements LocationListener {
                 .putExtra("wh_km", consumption())
                 .putExtra("range_km", rangeKm())
                 .putExtra("trip_active", recorder != null)
-                .putExtra("trip_paused", recorder != null && !active)
+                .putExtra("trip_paused", recorder != null && System.currentTimeMillis()-gpsAt<8000 && currentSpeedKmh<1.5)
                 .putExtra("timestamp", System.currentTimeMillis());
     }
 
@@ -918,10 +973,12 @@ public class BmsMonitorService extends Service implements LocationListener {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager == null) return;
-        String title = started ? "T6E Fahrt gestartet" : "T6E Fahrt beendet";
+        String title=prefs.getString(started?"routine_start_title":"routine_end_title",started?"T6E Fahrt gestartet":"T6E Fahrt beendet");
         String text = started ? "GPS-Aufzeichnung und BMS-Fahrtenbuch laufen."
                 : String.format(Locale.GERMANY, "%.2f km · maximal %.1f km/h · %.1f Wh",
                 distanceMeters / 1000.0, maxSpeedKmh, energyWh);
+        String custom=prefs.getString(started?"routine_start_text":"routine_end_text","");
+        if(!custom.isEmpty())text=custom.replace("{scooter}",ScooterProfiles.name(prefs)).replace("{km}",String.format(Locale.GERMANY,"%.2f",distanceMeters/1000)).replace("{wh}",String.format(Locale.GERMANY,"%.1f",energyWh));
         manager.notify(started ? 21 : 22, new Notification.Builder(this, "ride_events")
                 .setSmallIcon(started ? android.R.drawable.ic_media_play : android.R.drawable.ic_media_pause)
                 .setContentTitle(title)
@@ -941,7 +998,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     }
 
     @Override public void onDestroy() {
-        running = false;
+        running = false;liveService=null;
         if(wakeLock!=null && wakeLock.isHeld())wakeLock.release();
         weather.close();
         handler.removeCallbacksAndMessages(null);
