@@ -24,6 +24,7 @@ public class CockpitSmokeTest extends Instrumentation {
             prefs.edit().clear().putString("total_km","123.45").commit();
             Activity activity=startActivitySync(new Intent(getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             waitForIdleSync();
+            checked(()->systemInsetsCheck(activity));
             checked(()->{
                 if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS"))throw new AssertionError("App name");
                 if(!contains(activity.getWindow().getDecorView(),"123,45 km"))throw new AssertionError("Saved odometer before readiness");
@@ -186,10 +187,10 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->{invoke(activity,"editLayout",new Class[0],new Object[0]);try{((CockpitBoard)findBoard(activity.getWindow().getDecorView())).tiles.getJSONObject(0).put("caption","Portrait draft");}catch(Exception e){throw new RuntimeException(e);}});
             android.app.Instrumentation.ActivityMonitor rotation=addMonitor(MainActivity.class.getName(),null,false);
             checked(()->activity.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
-            Activity landscape=rotation.waitForActivityWithTimeout(10000);if(landscape==null)throw new AssertionError("Landscape recreation");waitForIdleSync();
+            Activity landscape=rotation.waitForActivityWithTimeout(10000);if(landscape==null)throw new AssertionError("Landscape recreation");waitForIdleSync();checked(()->systemInsetsCheck(landscape));
             checked(()->{if(!contains(landscape.getWindow().getDecorView(),"Layout: Querformat · Kachel lange drücken und ziehen · unten rechts Größe ziehen · antippen für Inhalt/Farbe."))throw new AssertionError("Landscape editor lost");try{((CockpitBoard)findBoard(landscape.getWindow().getDecorView())).tiles.getJSONObject(0).put("caption","Landscape draft");}catch(Exception e){throw new RuntimeException(e);}});
             checked(()->landscape.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            Activity portrait=rotation.waitForActivityWithTimeout(10000);if(portrait==null)throw new AssertionError("Portrait recreation");waitForIdleSync();removeMonitor(rotation);
+            Activity portrait=rotation.waitForActivityWithTimeout(10000);if(portrait==null)throw new AssertionError("Portrait recreation");waitForIdleSync();removeMonitor(rotation);checked(()->systemInsetsCheck(portrait));
             checked(()->{try{if(!((CockpitBoard)findBoard(portrait.getWindow().getDecorView())).tiles.getJSONObject(0).getString("caption").equals("Portrait draft"))throw new AssertionError("Portrait draft lost on rotation");if(!clickText(portrait.getWindow().getDecorView(),"Speichern"))throw new AssertionError("Save orientation drafts");if(!new org.json.JSONArray(prefs.getString("cockpit_board_landscape","")).getJSONObject(0).getString("caption").equals("Landscape draft"))throw new AssertionError("Landscape draft lost on save");}catch(Exception e){throw new RuntimeException(e);}});
             result.putString("stream","Cockpit launch, battery/range display, persisted odometer layout editor and screen-off readiness: OK\n");
             finish(Activity.RESULT_OK,result);
@@ -339,6 +340,24 @@ public class CockpitSmokeTest extends Instrumentation {
         AtomicReference<Throwable> error=new AtomicReference<>();
         runOnMainSync(()->{try{task.run();}catch(Throwable t){error.set(t);}});
         if(error.get()!=null)throw error.get();waitForIdleSync();
+    }
+    private void systemInsetsCheck(Activity activity){
+        ViewGroup content=activity.findViewById(android.R.id.content);
+        android.widget.ScrollView scroll=(android.widget.ScrollView)content.getChildAt(0);
+        androidx.core.view.WindowInsetsCompat actual=androidx.core.view.ViewCompat.getRootWindowInsets(scroll);
+        if(actual==null)throw new AssertionError("System insets missing");
+        int types=androidx.core.view.WindowInsetsCompat.Type.systemBars()|androidx.core.view.WindowInsetsCompat.Type.displayCutout();
+        androidx.core.graphics.Insets safe=actual.getInsets(types);
+        if(scroll.getPaddingTop()!=safe.top||scroll.getPaddingBottom()!=safe.bottom||scroll.getPaddingLeft()!=safe.left||scroll.getPaddingRight()!=safe.right||!scroll.getClipToPadding())throw new AssertionError("System bars or cutout overlap scroll viewport");
+        TextView heading=findText(content,"ScootPit BMS");int[] position=new int[2];heading.getLocationOnScreen(position);
+        if(position[1]<safe.top)throw new AssertionError("App header behind status bar");
+        androidx.core.view.WindowInsetsCompat simulated=new androidx.core.view.WindowInsetsCompat.Builder()
+            .setInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars(),androidx.core.graphics.Insets.of(0,30,0,48))
+            .setInsets(androidx.core.view.WindowInsetsCompat.Type.displayCutout(),androidx.core.graphics.Insets.of(24,60,12,0)).build();
+        try{
+            for(int i=0;i<2;i++)androidx.core.view.ViewCompat.dispatchApplyWindowInsets(scroll,simulated);
+            if(scroll.getPaddingLeft()!=24||scroll.getPaddingTop()!=60||scroll.getPaddingRight()!=12||scroll.getPaddingBottom()!=48)throw new AssertionError("Cutout/system bar padding accumulated or missing");
+        }finally{androidx.core.view.ViewCompat.dispatchApplyWindowInsets(scroll,actual);}
     }
     private void unitFontRenderCheck(Activity activity) {
         try {
