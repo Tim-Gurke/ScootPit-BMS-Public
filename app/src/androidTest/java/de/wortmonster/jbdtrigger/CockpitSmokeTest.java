@@ -40,10 +40,10 @@ public class CockpitSmokeTest extends Instrumentation {
                     legacyGauge.put("scale_max",40);
                     if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.275)>.001)throw new AssertionError("Custom gauge scale overwritten");
                     org.json.JSONArray previous=new org.json.JSONArray(board.tiles.toString());
-                    previous.getJSONObject(12).put("image_data","test-preserved-marker");
+                    previous.getJSONObject(11).put("image_data","test-preserved-marker");
                     previous.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Meine Notiz"),0,20,12,2));
                     org.json.JSONArray migrated=CockpitBoard.arrange111(previous);
-                    if(!migrated.getJSONObject(12).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(20).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
+                    if(!migrated.getJSONObject(11).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(20).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
                     String[][] expected={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
                     for(int row=0;row<5;row++)for(int col=0;col<3;col++){org.json.JSONObject t=board.tiles.getJSONObject(4+row*3+col);if(!t.getString("key").equals(expected[row][col])||t.getInt("x")!=col*4||t.getInt("y")!=6+row*2||t.getInt("w")!=4)throw new AssertionError("Reference arrangement");}
                     CockpitBoard.validate(board.tiles);
