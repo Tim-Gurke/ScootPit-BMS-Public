@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108" role="img" aria-label="ScootPit BMS App-Logo">
-<rect width="108" height="108" rx="24" fill="#0C1014"/>
-<g transform="translate(54 54) scale(.8) translate(-54 -54)">
-<path d="M57,22 L43,43 L53,43 L48,57 L67,35 L57,35 Z" fill="#FFB300"/>
-<path d="M31,69 L64,69 L74,59 L67,47 L60,47 M67,47 L76,66" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M35,74 A7,7 0,1 0,21,74 A7,7 0,1 0,35,74 M86,74 A7,7 0,1 0,72,74 A7,7 0,1 0,86,74" fill="none" stroke="#FFFFFF" stroke-width="4"/>
-</g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108" role="img" aria-label="ScootPit BMS App-Logo"><rect width="108" height="108" rx="20" fill="#0B1015"/><g transform="translate(54 54) scale(.78) translate(-54 -54)"><path fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M39 21h14 M45 21L30 74h40l8-6 M31 71l8-16 7 17 M29 83a8 8 0 1 0 0-16 8 8 0 1 0 0 16 M79 83a8 8 0 1 0 0-16 8 8 0 1 0 0 16"/><path fill="#FF9800" d="M61 33L47 53h10l-4 15 18-22H61Z"/></g></svg>
