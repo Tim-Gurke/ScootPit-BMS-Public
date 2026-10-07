@@ -2,10 +2,21 @@
 <resources>
     <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:buttonStyle">@style/ScootPitButton</item>
+        <item name="android:buttonBarButtonStyle">@style/ScootPitDialogButton</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/ScootPitDialogButton</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/ScootPitDialogButton</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/ScootPitDialogButton</item>
         <item name="android:colorAccent">#FFB300</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:statusBarColor">#0C1014</item>
         <item name="android:navigationBarColor">#111111</item>
     </style>
+    <style name="ScootPitButton" parent="android:style/Widget.Material.Button">
+        <item name="android:textAllCaps">false</item>
+    </style>
+    <style name="ScootPitDialogButton" parent="android:style/Widget.Material.Button.Borderless">
+        <item name="android:textAllCaps">false</item>
+    </style>
 </resources>
-
