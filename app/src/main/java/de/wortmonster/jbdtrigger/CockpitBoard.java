@@ -110,6 +110,7 @@ final class CockpitBoard extends FrameLayout {
             JSONObject target=result.getJSONObject(i);
             for(int j=0;j<previous.length();j++)if(!used[j]&&previous.getJSONObject(j).optString("key").equals(target.optString("key"))){
                 JSONObject old=new JSONObject(previous.getJSONObject(j).toString());used[j]=true;
+                if(!old.has("caption")&&target.has("caption"))old.put("caption",target.getString("caption"));
                 for(String coordinate:new String[]{"x","y","w","h"})old.put(coordinate,target.getInt(coordinate));
                 if(old.optString("key").equals("speed")){if(!old.has("unit_position"))old.put("unit_position",3);if(!old.has("unit_font"))old.put("unit_font",18);}
                 if(old.optString("key").equals("ready_start")||old.optString("key").equals("ready_end"))old.put("caption","Bereit").put("font",14);
@@ -117,8 +118,9 @@ final class CockpitBoard extends FrameLayout {
             }
         }
         int bottom=20;for(int j=0;j<previous.length();j++)if(!used[j]){
+            if(bottom>300)return new JSONArray(previous.toString());
             JSONObject extra=new JSONObject(previous.getJSONObject(j).toString());extra.put("y",bottom);bottom+=extra.getInt("h");result.put(extra);
-        }return result;
+        }if(result.length()>100||bottom>312)return new JSONArray(previous.toString());return result;
     }
     static JSONArray defaults(){
         JSONArray tiles=new JSONArray();
@@ -131,6 +133,9 @@ final class CockpitBoard extends FrameLayout {
             for(int row=0;row<rows.length;row++)for(int col=0;col<3;col++){
                 String key=rows[row][col];JSONObject tile=standardTile(key);
                 if(key.equals("image"))tile.put("heading_mode",3);
+                if(key.equals("temp2"))tile.put("caption","Akku-Temp");
+                if(key.equals("temp1"))tile.put("caption","BMS-Temp");
+                if(key.equals("bms_output"))tile.put("caption","BMS\nLastausgang");
                 if(key.equals("ready_start")||key.equals("ready_end"))tile.put("caption","Bereit").put("font",14);
                 tiles.put(position(tile,col*4,6+row*2,4,2));
             }

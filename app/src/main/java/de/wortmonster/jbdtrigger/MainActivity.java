@@ -112,7 +112,7 @@ public class MainActivity extends Activity {
     private int accent(){return color(prefs.getString("accent_color","#FF9800"),0xffff9800);}
     private int foreground(){return CockpitTheme.foreground(prefs);}
     private int muted(){return CockpitTheme.light(prefs)?0xff526579:0xffacb7c1;}
-    private void updateStateDot(){if(stateDot==null)return;android.graphics.drawable.GradientDrawable dot=new android.graphics.drawable.GradientDrawable();dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);dot.setColor(BmsMonitorService.running?GREEN:muted());stateDot.setBackground(dot);}
+    private void updateStateDot(){if(stateDot==null)return;android.graphics.drawable.GradientDrawable dot=new android.graphics.drawable.GradientDrawable();dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);if(BmsMonitorService.running){dot.setColors(new int[]{GREEN,GREEN,0x0039dc74});dot.setGradientType(android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT);dot.setGradientRadius(dp(8));}else dot.setColor(muted());stateDot.setBackground(dot);}
     private int iconColor(JSONObject cell){return color(cell.optString("icon_color"),CockpitSymbols.defaultColor(cell.optString("key"),CockpitTheme.light(prefs)));}
     private ImageButton headerAction(String key,String description,Runnable action){ImageButton b=new ImageButton(this);b.setContentDescription(description);b.setBackgroundColor(Color.TRANSPARENT);b.setPadding(dp(10),dp(10),dp(10),dp(10));b.setScaleType(ImageView.ScaleType.FIT_CENTER);if(key.equals("settings")){b.setImageResource(R.drawable.settings_bolt);b.setImageTintList(android.content.res.ColorStateList.valueOf(accent()));}else b.setImageDrawable(new CockpitSymbols(key,accent()));b.setEnabled(!editingBoard);b.setOnClickListener(v->action.run());return b;}
     private View separator(boolean vertical){return new View(this){private final android.graphics.Paint p=new android.graphics.Paint(3);@Override protected void onDraw(android.graphics.Canvas c){float w=getWidth(),h=getHeight();p.setShader(new android.graphics.LinearGradient(0,0,vertical?0:w,vertical?h:0,new int[]{accent(),Color.argb(35,Color.red(accent()),Color.green(accent()),Color.blue(accent())),Color.TRANSPARENT},new float[]{0,.4f,1},android.graphics.Shader.TileMode.CLAMP));c.drawRect(0,0,w,h,p);}};}
@@ -142,7 +142,7 @@ public class MainActivity extends Activity {
         header.addView(headerAction("settings","Einstellungen öffnen",()->showSettings()),new LinearLayout.LayoutParams(dp(48),dp(56)));root.addView(header);
         LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,dp(1));rule.setMargins(0,0,0,dp(8));root.addView(separator(false),rule);
         LinearLayout stateRow=new LinearLayout(this);stateRow.setGravity(Gravity.CENTER_VERTICAL);stateRow.setPadding(0,dp(7),0,dp(10));
-        stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(11),dp(11));dotParams.setMargins(0,0,dp(10),0);stateRow.addView(stateDot,dotParams);
+        stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(16),dp(16));dotParams.setMargins(0,0,dp(10),0);stateRow.addView(stateDot,dotParams);
         stateView=label(BmsMonitorService.running?"Bereitschaft aktiv":"Bereitschaft aus",15,foreground());stateRow.addView(stateView);root.addView(stateRow);updateStateDot();
         if(!hasSelectedBms()&&!editingBoard){
             root.addView(label("Bitte zuerst das BMS deines Rollers auswählen.",14,muted()));
