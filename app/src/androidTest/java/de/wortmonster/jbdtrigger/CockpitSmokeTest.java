@@ -223,6 +223,7 @@ public class CockpitSmokeTest extends Instrumentation {
         waitForIdleSync();
         checked(()->{android.app.AlertDialog battery=(android.app.AlertDialog)member(activity,"batteryConfigDialog");
             if(!battery.isShowing()||!inputAfterLabel(battery.getWindow().getDecorView(),"Startwert Verbrauch (Wh/km)").getText().toString().equals("20"))throw new AssertionError("20 Wh/km battery default");});
+        waitForDialogFocus(activity,"batteryConfigDialog");
         sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
         android.view.accessibility.AccessibilityNodeInfo returned=null;
         for(int attempt=0;attempt<20;attempt++){returned=getUiAutomation().getRootInActiveWindow();if(returned!=null&&!returned.findAccessibilityNodeInfosByText("App-Farben").isEmpty())break;android.os.SystemClock.sleep(100);}
@@ -391,6 +392,13 @@ public class CockpitSmokeTest extends Instrumentation {
             if(!rejected)throw new AssertionError("Invalid imported unit position accepted");
         }catch(Exception e){throw new RuntimeException(e);}
     }
+    private void waitForDialogFocus(Activity activity,String field)throws Throwable {
+        AtomicReference<Boolean> focused=new AtomicReference<>(false);
+        for(int attempt=0;attempt<100;attempt++){
+            checked(()->{android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,field);focused.set(dialog!=null&&dialog.isShowing()&&dialog.getWindow().getDecorView().hasWindowFocus());});
+            if(focused.get())return;Thread.sleep(50);
+        }throw new AssertionError("Dialog did not receive input focus: "+field);
+    }
     private void batterySettingsCheck(Activity activity)throws Throwable {
         checked(()->invoke(activity,"showSettings",new Class[0],new Object[0]));
         checked(()->{
@@ -401,7 +409,9 @@ public class CockpitSmokeTest extends Instrumentation {
             TextView message=status.findViewById(android.R.id.message);
             if(!status.isShowing()||message==null||!message.getText().toString().contains(exempt?"bereits von":"ist für ScootPit BMS aktiv"))throw new AssertionError("Battery menu did not show current status");
         });
+        waitForDialogFocus(activity,"batteryDialog");
         sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK);waitForIdleSync();
+        waitForDialogFocus(activity,"settingsDialog");
         checked(()->{
             android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
             if(!menu.isShowing())throw new AssertionError("Battery back lost settings menu");menu.dismiss();
