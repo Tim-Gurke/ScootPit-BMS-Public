@@ -34,3 +34,9 @@ In Samsung **Modi und Routinen → Routinen** zwei Routinen anlegen. Als Wenn-Be
 Die Ausnahme von der **Akkuoptimierung für ScootPit** ist eine andere Einstellung als der globale Energiesparmodus. Beides kann den Hintergrundbetrieb beeinflussen; das Verhalten muss auf dem eigenen Handy geprüft werden.
 
 Quellen: [Android: privilegierte POWER_SAVER-Berechtigung](https://source.android.com/docs/core/power/routine-battery-saver), [Samsung: Modi und Routinen](https://www.samsung.com/de/support/mobile-devices/modi-und-routinen/).
+
+## Erstverbindung und laufende Fahrt ab 6.3
+
+Vor der ersten Verbindung müssen mindestens drei Empfangsmessungen die Verbindungsschwelle erreichen und über die Bestätigungsdauer stabil bleiben. Schwächere Messungen oder eine Lücke über 2,5 Sekunden setzen die Bestätigung zurück. Neue Profile verwenden **−70 dBm / 3 Sekunden**; vorhandene Schwellen bleiben erhalten. Die Bestätigungsdauer ist unter **BMS und Fahrt-Erkennung** zwischen 1 und 15 Sekunden einstellbar.
+
+Nach erkanntem Fahrtstart gilt bei einer Wiederverbindung die schwächere Entfernungsschwelle. Frische BMS-Antworten erhalten die bestehende Verbindung auch in einer Pause. Nach dem Fahrtende gilt erneut die strenge Erstverbindung. Empfangsstärke ist keine zuverlässige Entfernungsmessung: Die geeignete Schwelle am Roller und am Abstellort erproben.

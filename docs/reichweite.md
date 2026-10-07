@@ -4,7 +4,7 @@
 
 ## Restreichweite und Temperaturlernen
 
-Restreichweite = nutzbare Restenergie nach Reserve / geschätzter Verbrauch. Kapazität und Rest-Ah kommen bevorzugt vom BMS; Ersatzwerte sind **26 Ah und 48 V**. Reserve standardmäßig 10 %, anfänglicher Verbrauch 15 Wh/km; Werte sind konfigurierbar.
+Restreichweite = nutzbare Restenergie nach Reserve / geschätzter Verbrauch. Kapazität und Rest-Ah kommen bevorzugt vom BMS; Ersatzwerte sind **26 Ah und 48 V**. Reserve standardmäßig 10 %, anfänglicher Verbrauch 20 Wh/km; Werte sind konfigurierbar.
 
 Bis 250 m dient Startwert/erlernter Verbrauch als Schätzung. Danach werden der jüngste Verbrauch über ungefähr 800 m zu 75 % und der Durchschnitt der laufenden Fahrt zu 25 % gewichtet. Energie wird aus BMS-Leistung zeitlich integriert. Nach einer Messlücke über 8 s wird das Verbrauchsfenster neu aufgebaut; fehlende Energie wird nicht erfunden. BMS-Werte werden nach 8 s bzw. Verbindungsverlust als veraltet dargestellt. Reichweite bleibt eine Schätzung.
 

@@ -4,7 +4,7 @@
 
 ## Cockpit und visueller Editor
 
-Zahnrad → **Cockpit bearbeiten**. Kachel lange drücken und ziehen; am Griff unten rechts Größe ändern. Antippen öffnet Beschriftung, Schriftgröße, Farben, Darstellung und genaue Rasterwerte. Aktionen sind während der Bearbeitung gesperrt. **Speichern** übernimmt den Entwurf, **Zurück** verwirft ihn. Entwürfe bleiben beim Drehen des Handys erhalten.
+Zahnrad mit Blitz → **Cockpit bearbeiten**. Kachel lange drücken und ziehen; am Griff unten rechts Größe ändern. Antippen öffnet Beschriftung, Schriftgröße, Farben, Darstellung und genaue Rasterwerte. Aktionen sind während der Bearbeitung gesperrt. **Speichern** übernimmt den Entwurf, **Zurück** verwirft ihn. Entwürfe bleiben beim Drehen des Handys erhalten.
 
 Das Raster hat 12 Spalten und 40-dp-Höheneinheiten: Breite 12 = ganze Zeile, Breite 6 = zwei gleiche Spalten, Breite 4 = drei. Hoch- und Querformat werden pro Scooter getrennt gespeichert. Ohne eigenes Querformatlayout wird das Hochformatlayout übernommen. Beim Drehen bleiben Layoutentwürfe erhalten. Hintergrund und Textfarbe jeder Kachel besitzen einen Transparenzregler (0 % = deckend, 100 % = unsichtbar). Die Aktionen Übernehmen, Zurück und Entfernen stehen fest in einer horizontalen Zeile.
 
@@ -31,3 +31,15 @@ Temp1 und Temp2 entsprechen der BMS-Sensorreihenfolge. SP14S004 besitzt laut Her
 ## GPS-Ausreißer
 
 Unplausible GPS-Geschwindigkeiten und Positionssprünge werden vor der Anzeige verworfen und verändern weder Höchstgeschwindigkeit noch Strecke oder Fahrtenbuch. Das Maximum ist pro Profil unter BMS und Fahrt-Erkennung editierbar (Vorgabe 45 km/h). Zusätzlich wird die Bewegung gegenüber vorherigen akzeptierten Punkten geprüft. GPS bleibt eine Messung mit Unsicherheit.
+
+## Neue Kacheln und Farben ab 6.3
+
+Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** unabhängig voneinander und je Kachel einstellbar. Fehlen eigene Instrumentfarben, verwendet die Kachel weiterhin die App-Akzentfarbe. Inaktive Messwerte bleiben gedimmt.
+
+**+ Kachel → Bild** fügt eine Bildkachel hinzu. Antippen → **Bild auswählen** öffnet die Android-Dateiauswahl. Einpassen zeigt das gesamte Foto; Kachel füllen schneidet die Ränder bei Bedarf zu. Das Bild wird verkleinert, ohne Metadaten lokal in der Anordnung gespeichert und in Einstellungen sowie kopierten Profilen mitgesichert. Es wird nicht hochgeladen. Die Originaldatei bleibt unverändert. Die Kacheländerung mit **Übernehmen** und den gesamten Entwurf mit **Speichern** bestätigen.
+
+**+ Kachel → Freitext** erlaubt bis zu 4000 Zeichen mit Groß-/Kleinschreibung und Zeilenumbrüchen. Schriftgröße, Hintergrund und Textfarbe einschließlich Transparenz bleiben einstellbar.
+
+Die neue Grundeinstellung zeigt links einen großen, vollständig transparenten Tacho; rechts Akku 🔋, Restreichweite und Leistung. Darunter folgen Fahrzeit/Fahrtstrecke, Standzeit/Gesamtkilometer, maximale Fahrtleistung/BMS-Lastausgang, Wetter 🌞🌧️🌤️ und die beiden Temperatursensoren sowie An/Fahrt beenden/Aus. Das Log nimmt unten die gesamte Breite ein. Vorhandene eigene Anordnungen bleiben gespeichert; **Standardlayout → Zurücksetzen → Speichern** übernimmt die neue Anordnung.
+
+Zurück aus einem Einstellungs-Untermenü führt zum Hauptmenü der Einstellungen. Beschriftungen von Schaltflächen behalten ihre Groß-/Kleinschreibung.
