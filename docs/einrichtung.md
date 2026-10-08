@@ -14,13 +14,23 @@ ZIP entpacken und APK öffnen. Präzisen Standort, Bluetooth/Nearby Devices und 
 
 Bei einer frischen Installation ist kein BMS vorbelegt. Über **BMS auswählen → Suche starten** das eigene Bluetooth-BMS auswählen. Erst danach kann die Bereitschaft gestartet werden. Eine bereits gespeicherte oder importierte gültige BMS-Auswahl bleibt erhalten. Die App enthält keine feste Geräteadresse. Auch ein direkter Dienststart ohne gültige Auswahl wird beendet.
 
+![Dialog zur Auswahl eines gefundenen BMS-Kandidaten](assets/screenshots/bms-auswahl.jpg)
+
+*Der Kandidat lässt sich vor der Verbindung prüfen; die Bluetooth-Adresse ist im Screenshot geschwärzt.*
+
 Das Standardlayout zeigt oben zwei transparente Halbkreisinstrumente für Verbrauch der letzten 500 m und aktuelle Leistung. Darunter stehen kompakte Geschwindigkeit, Akku, Restreichweite, Fahr-/Stand-/Gesamtzeit, Kilometerzähler, Foto, BMS-Lastausgang und Temperaturen. Die Bereitschaftsschaltflächen heißen **Bereit**; **Fahrt beenden** schließt die aktuelle Aufzeichnung ab. Der Appkopf bleibt ScootPit BMS.
 
 Version 1.2.1 stellt vorhandene Hochformatlayouts einmalig auf die neue Anordnung um und sichert den vorherigen Stand in den Einstellungen. Fotos, eigene Texte und zusätzliche Kacheln werden übernommen. Gespeicherte Querformatlayouts werden auf das feinere Raster umgerechnet. Das Standardlayout lässt sich jederzeit unter **Einstellungen → Cockpit bearbeiten → Standardlayout → Zurücksetzen → Speichern** übernehmen.
 
 ## Mehrere Scooter
 
-Über den **Profilnamen im Appkopf** oder **Einstellungen → Scooter-Profile** auswählen, hinzufügen, umbenennen, kopieren und entfernen. Beim ersten Start wird das bisherige Setup als erstes Profil übernommen. Pro Profil getrennt: BMS, Akku-Konfiguration, Gesamt-/Tages-/Tourenkilometer, Verbrauchs-/Temperaturhistorie, Routine-Texte, Statistik-Auswahl, letzte Fahrt, Fahrtenordner, Layout, Appkopf und Farben. Manuelle Profilwechsel erfordern beendete Bereitschaft. Die Automatik kann gespeicherte BMS erkennen und vor Fahrtbeginn das zugehörige Profil wählen; während einer Fahrt bleibt die Zuordnung fest. Eine Designkopie übernimmt keine BMS-Zuordnung, Kilometer, Fahrten oder Verbrauchshistorie. Entfernen eines Profils löscht keine Fahrtdateien.
+Über den **Profilnamen im Appkopf** oder **Einstellungen → Scooter-Profile** auswählen, hinzufügen, umbenennen, kopieren und entfernen.
+
+![Dialog zur Auswahl und Verwaltung der Scooter-Profile](assets/screenshots/scooter-profile.jpg)
+
+*Im Profildialog wechselst du den aktiven Scooter, verwaltest Profile oder legst ein neues an.*
+
+Beim ersten Start wird das bisherige Setup als erstes Profil übernommen. Pro Profil getrennt: BMS, Akku-Konfiguration, Gesamt-/Tages-/Tourenkilometer, Verbrauchs-/Temperaturhistorie, Routine-Texte, Statistik-Auswahl, letzte Fahrt, Fahrtenordner, Layout, Appkopf und Farben. Manuelle Profilwechsel erfordern beendete Bereitschaft. Die Automatik kann gespeicherte BMS erkennen und vor Fahrtbeginn das zugehörige Profil wählen; während einer Fahrt bleibt die Zuordnung fest. Eine Designkopie übernimmt keine BMS-Zuordnung, Kilometer, Fahrten oder Verbrauchshistorie. Entfernen eines Profils löscht keine Fahrtdateien.
 
 Neue Fahrten liegen lokal in einem eigenen Unterordner pro Profil; GPX-Name und JSON-Metadaten tragen Scooter-Name und Profil-ID. Bereits bestehende Dateien bleiben erhalten. Die Einstellungssicherung (Formatversion 2) enthält sämtliche Profile; alte Sicherungen der Version 1 können weiterhin in das aktive Profil geladen werden. Der Einstellungen-Ordner bleibt gemeinsam, Fahrtenordner sind pro Scooter einstellbar. Nach Neuinstallation müssen Zugriffsrechte für externe Ordner neu erteilt werden.
 

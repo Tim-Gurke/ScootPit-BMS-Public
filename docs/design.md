@@ -18,6 +18,14 @@ Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transpar
 
 Der Appkopf integriert Appname und antippbaren Profilnamen, Fahrtenbuch und Zahnrad mit Blitz. Der grüne Punkt zeigt aktive Bereitschaft. Das feste App-Symbol bleibt beim Schemawechsel gleich. Alle Kacheln besitzen passende Symbole mit separat wählbarer Farbe; Symbol, Beschriftung, beides oder keines sind einstellbar.
 
+![Individuell angeordnetes Cockpit im dunklen Farbschema](assets/screenshots/cockpit-dunkel.jpg)
+
+*Dunkles Design mit frei angeordneten Anzeigen und klaren orangefarbenen Akzenten.*
+
+![Dasselbe individuell angeordnete Cockpit im hellen Farbschema](assets/screenshots/cockpit-hell.jpg)
+
+*Das helle Schema nutzt Blau als Akzentfarbe und lässt das persönliche Layout bestehen.*
+
 ## Vorhandene Layouts
 
 Beim ersten Öffnen eines Profils wird das Hochformat auf 1.2.1 umgestellt; Fotos, Texte, persönliche Kacheleinstellungen und Zusatzkacheln werden übernommen. Die vorherige Anordnung steht als `cockpit_board_before_121` in der exportierbaren Einstellungssicherung. Ein gespeichertes Querformat wird auf das doppelt so feine Raster umgerechnet und ebenfalls vorher gesichert. Anschließend lässt sich alles frei ändern.
