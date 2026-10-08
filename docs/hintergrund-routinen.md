@@ -13,12 +13,15 @@ Erreichbare BMS werden nacheinander verbunden und auf Stromentnahme geprüft. Be
 - **Bereitschaft starten:** Hintergrunddienst und BMS-Suche aktivieren. Bluetooth, präziser Standort und Berechtigungen müssen aktiv sein.
 - **Fahrtstart:** Standardmäßig mindestens 0,30 A Entnahme für 1 Sekunde. GPS und Fahrtenbuch starten automatisch.
 - **Ausrollen:** GPS wird auch ohne Stromentnahme weiter ausgewertet. Fehlende Motorleistung setzt den Tacho nicht auf null.
-- **Stillstand:** Nach standardmäßig **45 Sekunden** zuverlässig erkanntem Stillstand die Fahrt speichern, auch bei bestehender BMS-Verbindung. GPS-Ausfall oder schlechte Messungen gelten nicht als bestätigter Stillstand. Unter **Fahrtende nach Stillstand** sind 15–3600 Sekunden möglich; etwa 90 Sekunden verhindern eher eine Aufteilung bei längeren Ampelphasen.
+- **Stillstand:** Nach standardmäßig **45 Sekunden** zuverlässig erkanntem Stillstand pausiert die Fahrt. Die BMS-Verbindung bleibt erhalten. GPS-Ausfall oder schlechte Messungen gelten nicht als bestätigter Stillstand. **Fahrt pausieren nach Stillstand** ist je Scooter einstellbar (15–3600 Sekunden).
+- **Weiterfahrt:** Bewegung oder bestätigte Stromentnahme setzt dieselbe Fahrt fort. Die Pause zählt dann zur Standzeit.
+- **Lange Pause:** Nach standardmäßig **600 Sekunden** Pause wird die Fahrt rückwirkend zum Pausenbeginn abgeschlossen. Die BMS-Verbindung bleibt bestehen, solange das Gerät erreichbar ist. **Fahrtende nach langer Pause** ist von 60–7200 Sekunden einstellbar.
+- **Verbindungsverlust in der Pause:** Die App sucht weiter. Ohne Wiederverbindung bis standardmäßig **120 Sekunden nach Pausenbeginn** wird die Pause als Fahrtende gespeichert. Dieses Zeitfenster ist von 0–7200 Sekunden einstellbar; das Limit für lange Pausen gilt weiterhin.
 - **Entfernung:** Bestätigter Verlust der BMS-Verbindung kann die Fahrt ebenfalls beenden. Schwacher Empfang allein genügt bei frischen BMS-Daten nicht.
 - **Fahrt beenden:** Manuell speichern; Bereitschaft bleibt aktiv. Erneuter Start erst nach Stromruhe, damit der Stop nicht sofort rückgängig gemacht wird.
 - **Bereitschaft beenden:** Suche stoppen und laufende Fahrt speichern.
 
-Nach automatisch erkanntem Fahrtende beginnt die Suche nach ungefähr 1 Sekunde wieder. Fehlende BMS werden mit kurzen Suchpausen weiter gesucht; die früher lange Wartezeit zwischen Fahrten entfällt. Android kann BLE-Suchvorgänge begrenzen; Empfang und tatsächliche Startlatenz am eigenen Handy prüfen.
+Nach automatisch erkanntem Fahrtende bleibt ein erreichbares BMS verbunden. Ist es nicht verbunden, beginnt die Suche nach ungefähr 1 Sekunde wieder. Fehlende BMS werden mit kurzen Suchpausen weiter gesucht; die früher lange Wartezeit zwischen Fahrten entfällt. Android kann BLE-Suchvorgänge begrenzen; Empfang und tatsächliche Startlatenz am eigenen Handy prüfen.
 
 ## Verbindungswerte
 
@@ -43,6 +46,6 @@ In Samsung **Modi und Routinen** zwei Routinen einrichten:
 | `T6E Fahrt gestartet` oder eigener Starttext | Energiesparmodus aus |
 | `T6E Fahrt beendet` oder eigener Endtext | Energiesparmodus an |
 
-Die App kann den globalen Energiesparmodus nicht selbst schalten und richtet die Routinen nicht automatisch ein. Die Aktion stellt den Modus ausdrücklich auf an/aus und stellt keinen vorherigen Zustand wieder her. Eine kurze Pause sendet kein Ende-Signal; der tatsächliche Fahrtabschluss nach Stillstand oder Entfernung schon. Deshalb können längere Ampelphasen mit kurzem Stillstandslimit auch die Routine auslösen.
+Die App kann den globalen Energiesparmodus nicht selbst schalten und richtet die Routinen nicht automatisch ein. Die Aktion stellt den Modus ausdrücklich auf an/aus und stellt keinen vorherigen Zustand wieder her. Eine Pause sendet kein Ende-Signal; erst der tatsächliche Fahrtabschluss nach längerer Pause, bestätigter Entfernung oder manuellem Beenden löst es aus.
 
 Quellen: [Android: Energiesparmodus](https://source.android.com/docs/core/power/routine-battery-saver), [Samsung: Modi und Routinen](https://www.samsung.com/de/support/mobile-devices/modi-und-routinen/).

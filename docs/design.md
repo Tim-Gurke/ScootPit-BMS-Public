@@ -1,17 +1,25 @@
-# Cockpit 1.1.1
+# Cockpit gestalten · 1.2.1
 
-Die Hochformat-Voreinstellung folgt der Referenzanordnung. Foto importieren: **Einstellungen → Cockpit bearbeiten → Bildkachel antippen → Bild auswählen**. Symbolfarben lassen sich je Kachel unabhängig von Wert-, Instrument- und Skalenfarben einstellen. Einheitengröße und Position bleiben einstellbar; „Unter dem Wert / im Tacho“ platziert km/h innerhalb der Skala.
+[← Übersicht](../README.md)
 
-Das erste Öffnen eines vorhandenen Profils ordnet dessen Hochformat neu an. Inhalte und Zusatzkacheln bleiben erhalten. Die vorherige Anordnung wird unter `cockpit_board_before_111` in der exportierbaren Einstellungssicherung aufbewahrt. Gespeicherte Querformatlayouts bleiben unabhängig. Anschließend sind Positionen und Größen frei bearbeitbar.
+## Verbrauch und Leistung im Mittelpunkt
 
-## Weitere Gestaltungsoptionen
+Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m und die aktuelle elektrische Leistung. Im Editor sind Darstellung, Skalenmaximum, Farben und Kreisausschnitt von 90° bis 270° je Kachel einstellbar. 180° zeichnet einen echten Halbkreis; die Kreisgeometrie wird nicht zur Ellipse gestreckt. Die kleinere Geschwindigkeitskachel kann bei Bedarf ebenfalls als Instrument gestaltet werden.
 
-Der Kopf zeigt Appname und antippbaren Profilnamen ohne „Scooter:“-Präfix und ohne grauen Button. Rechts öffnen das Fahrtenbuch-Symbol und das Zahnrad mit Blitz die jeweiligen Menüs. Feine Verlaufslinien trennen den Kopf; Statusleiste und Kameraausschnitte bleiben ausgespart.
+## Frei anordnen und überlagern
 
-Alle Kacheln einschließlich Bild, Freitext, Aktionen und optionaler BMS-Werte besitzen passende skalierbare Liniensymbole. Unter **Cockpit bearbeiten → Kachel antippen → Kachelkopf** wählst du **Nur Symbol**, **Nur Beschriftung**, **Symbol und Beschriftung** oder **Beides ausblenden**. Messwerte, Foto, Freitext und Aktionen bleiben nutzbar; die zugängliche Bezeichnung bleibt auch bei ausgeblendeter Überschrift vorhanden. Die Symbolfarbe lässt sich separat einstellen.
+**Einstellungen → Cockpit bearbeiten** öffnet das Raster mit 24 Spalten und 20-dp-Höheneinheiten. Kacheln lange drücken und ziehen, am Griff die Größe ändern oder genaue Position und Größe eingeben. **Überlappung erlauben** gibt die Platzierung über anderen Kacheln frei. **Ebene (unten → oben)** bestimmt, welche Kachel darüber dargestellt und bedient wird. **Lücken schließen** ordnet ohne Überlappungen neu.
 
-**Einstellungen → App-Farben** bietet Dunkel (Schwarz/Orange) und Hell (Weiß/Blau). Die Auswahl verlangt eine Entscheidung: **Nur App-Farben** erhält eigene Kachelfarben; **Alle Kacheln** übernimmt das Schema auch für Kacheln in Hoch- und Querformat. Transparente Hintergründe, eigene Anordnung, Bilder und Texte bleiben erhalten. Danach sind alle Farben manuell veränderbar. Die Auswahl gilt für das aktuelle Scooter-Profil und wird mit dessen Einstellungen gesichert.
+Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transparenz sowie Innenabstand jeder Kachel separat einstellen. Ein Innenabstand von 0 erlaubt Schrift bis nahe an den Rahmen. Bild- und Freitextkacheln bleiben möglich. Farben werden sichtbar als Vorschau gezeigt; **Farbe auswählen / mischen** bietet Farbton, Sättigung und Helligkeit sowie optional einen Hex-Code.
 
-Das App-Symbol zeigt einen schlanken Scooter mit Blitz auf dunklem Grund. Seine Farben bleiben beim Schemawechsel unverändert, ebenso auf GitHub.
+## Helles und dunkles Design
 
-Im normalen Cockpit öffnet das Antippen der **Tourenzähler**-Kachel eine Rückfrage zum Zurücksetzen. Tages- und Gesamtkilometer bleiben erhalten. Im Cockpit-Editor öffnet derselbe Druck die Kacheleinstellungen.
+**App-Farben** bietet Dunkel/Orange und Hell/Blau. **Nur App-Farben** erhält eigene Kachelfarben; **Alle Kacheln** übernimmt das Schema auch für Hoch- und Querformat. Transparente Kacheln, Anordnung, Bilder und Texte bleiben erhalten. Der Bildschirm kann einen frei wählbaren Verlauf zwischen zwei Farben erhalten. Alle Farben sind danach manuell anpassbar.
+
+Der Appkopf integriert Appname und antippbaren Profilnamen, Fahrtenbuch und Zahnrad mit Blitz. Der grüne Punkt zeigt aktive Bereitschaft. Das feste App-Symbol bleibt beim Schemawechsel gleich. Alle Kacheln besitzen passende Symbole mit separat wählbarer Farbe; Symbol, Beschriftung, beides oder keines sind einstellbar.
+
+## Vorhandene Layouts
+
+Beim ersten Öffnen eines Profils wird das Hochformat auf 1.2.1 umgestellt; Fotos, Texte, persönliche Kacheleinstellungen und Zusatzkacheln werden übernommen. Die vorherige Anordnung steht als `cockpit_board_before_121` in der exportierbaren Einstellungssicherung. Ein gespeichertes Querformat wird auf das doppelt so feine Raster umgerechnet und ebenfalls vorher gesichert. Anschließend lässt sich alles frei ändern.
+
+Das Antippen der Tourenzähler-Kachel öffnet im normalen Cockpit die Rückfrage zum Zurücksetzen. Temperaturkacheln fordern beim Antippen eine Aktualisierung an. Im Editor öffnet das Antippen jeweils die Kacheleinstellungen.
