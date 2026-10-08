@@ -5,7 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 final class CockpitLayout {
-    static final double DEFAULT_SPEED_SCALE_MAX = 22;
+    static final double DEFAULT_SPEED_SCALE_MAX = 20;
     static final String[] KEYS = {"speed","soc","range","distance","total","power","voltage","current","energy","consumption","consumption_500m","trip_time","moving","standing","average","maximum","altitude","ascent","temp1","temp2","outside","max_power","bms_output","ready_start","ready_end","trip_end","log","image","free_text","daily","tour"};
     static final String[] TITLES = {"Geschwindigkeit","Akku","Restreichweite ≈","Fahrtstrecke","Gesamtkilometer","Leistung","Spannung","Strom","Verbrauchte Energie","Verbrauch","Verbrauch · letzte 500 m","Gesamtzeit","Fahrzeit","Standzeit","Durchschnitt","Maximum","Höhe","Höhenmeter","Temp1","Temp2","Außentemperatur","Maximale Fahrtleistung","BMS-Lastausgang","Bereitschaft starten","Bereitschaft beenden","Fahrt beenden","Statusdetails / Log","Bild","Freitext","Tageskilometer","Tourenzähler"};
     static JSONObject tile(String key) {
