@@ -68,7 +68,8 @@ final class CockpitBoard extends FrameLayout {
     }
     private int[][] positions(){int[][] p=new int[tiles.length()][4];for(int i=0;i<tiles.length();i++){JSONObject t=tiles.optJSONObject(i);p[i]=new int[]{t.optInt("x"),t.optInt("y"),t.optInt("w"),t.optInt("h")};}return p;}
     private void restore(int[][] p){if(p==null)return;try{for(int i=0;i<p.length;i++)tiles.getJSONObject(i).put("x",p[i][0]).put("y",p[i][1]).put("w",p[i][2]).put("h",p[i][3]);}catch(Exception ignored){}}
-    void push(JSONObject locked)throws Exception{if(!locked.optBoolean("allow_overlap",false))pack(locked,false);}
+    void push(JSONObject locked)throws Exception{if(locked.optBoolean("allow_overlap",false)||hasOverlaps())return;pack(locked,false);}
+    private boolean hasOverlaps(){for(int i=0;i<tiles.length();i++)if(overlaps(tiles.optJSONObject(i)))return true;return false;}
     void compact(){int[][] before=positions();try{pack(null,true);}catch(Exception e){restore(before);}requestLayout();}
     private void pack(JSONObject locked,boolean compact)throws Exception{
         GridPacking.Cell[] cells=new GridPacking.Cell[tiles.length()];int index=-1;for(int i=0;i<cells.length;i++){JSONObject t=tiles.getJSONObject(i);if(t==locked)index=i;cells[i]=new GridPacking.Cell(i,t.getInt("x"),t.getInt("y"),t.getInt("w"),t.getInt("h"));}
@@ -189,6 +190,7 @@ final class CockpitBoard extends FrameLayout {
         if(tile.has("heading_mode")&&(tile.getInt("heading_mode")<0||tile.getInt("heading_mode")>3))throw new Exception("Ungültige Symbol-/Beschriftungsauswahl");
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
         if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>3))throw new Exception("Ungültige Einheit-Position");
+        if(tile.has("gauge_value_position")&&(tile.getInt("gauge_value_position")<0||tile.getInt("gauge_value_position")>2))throw new Exception("Ungültige Messwertposition");
         for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color","border_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
         if(tile.has("corner_radius")&&(tile.getInt("corner_radius")<0||tile.getInt("corner_radius")>48))throw new Exception("Eckenradius muss zwischen 0 und 48 dp liegen");
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
