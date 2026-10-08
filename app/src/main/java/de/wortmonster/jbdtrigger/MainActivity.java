@@ -253,7 +253,7 @@ public class MainActivity extends Activity {
         l.addView(label("Ebene (unten → oben)",13,muted()));Spinner layer=new Spinner(this);String[] layers=new String[boardTiles.length()];for(int n=0;n<layers.length;n++)layers[n]="Ebene "+(n+1)+(n==0?" · unten":n==layers.length-1?" · oben":"");layer.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,layers));layer.setSelection(index);l.addView(layer);
         CheckBox showNote=new CheckBox(this);showNote.setText("Zusatztext anzeigen");showNote.setTextColor(foreground());showNote.setChecked(cell.optBoolean("show_note",true));l.addView(showNote);
         EditText lines=field(l,"Überschrift / Button: maximal 1–3 Zeilen",""+cell.optInt("lines",2));
-        EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:cell.optString("key").contains("power")?1000:100));
+        EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:cell.optString("key").contains("power")?1400:100));
         EditText font=field(l,"Schriftgröße (12–80)",""+cell.optInt("font",28));
         boolean hasUnit=!personal&&!tileKey.startsWith("ready_")&&!tileKey.equals("trip_end")&&!tileKey.equals("log")&&!tileKey.equals("bms_output");
         EditText unitFont=hasUnit?field(l,"Einheit: Schriftgröße (8–80, leer = wie Wert)",cell.has("unit_font")?""+cell.optInt("unit_font"):""):new EditText(this);
