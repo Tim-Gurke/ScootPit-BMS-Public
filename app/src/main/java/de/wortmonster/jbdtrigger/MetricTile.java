@@ -157,7 +157,7 @@ final class MetricTile extends TextView {
     }
     private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){
-        try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:key.equals("soc")?100:key.contains("power")?1000:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
+        try{double n=Double.parseDouble(value.replace(',','.').split(" ")[0]);double defaultMax=key.equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:key.equals("soc")?100:key.contains("power")?1400:key.equals("voltage")?60:key.equals("current")?30:key.startsWith("temp")?80:100;
             double max=config.optDouble("scale_max",defaultMax);return Double.isFinite(n)&&Double.isFinite(max)?Math.max(0,Math.min(1,n/Math.max(.1,max))):0;}catch(Exception e){return 0;}
     }
     private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?Color.argb(Color.alpha(accent),96,96,96):accent);c.drawRoundRect(x,y,x+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
