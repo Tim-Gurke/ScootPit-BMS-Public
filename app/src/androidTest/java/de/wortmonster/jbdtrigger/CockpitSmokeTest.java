@@ -30,9 +30,9 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(!contains(activity.getWindow().getDecorView(),"123,45 km"))throw new AssertionError("Saved odometer before readiness");
                 if(prefs.contains("device_address")||!contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Fresh installation must require BMS selection");
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
-                    if(board.tiles.length()!=20||board.tiles.getJSONObject(1).getInt("x")!=8||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
-                    if(board.tiles.getJSONObject(0).getInt("w")!=8||board.tiles.getJSONObject(0).getInt("h")!=6||board.tiles.getJSONObject(3).getInt("x")!=8||board.tiles.getJSONObject(3).getInt("y")!=4||board.tiles.getJSONObject(4).getInt("y")!=6)throw new AssertionError("Large transparent gauge and three stacked readings");
-                    if(board.tiles.getJSONObject(0).getDouble("scale_max")!=22)throw new AssertionError("22 km/h default gauge scale");
+                    if(board.tiles.length()!=24||board.tiles.getJSONObject(1).getInt("x")!=12||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
+                    if(board.tiles.getJSONObject(0).getInt("w")!=12||board.tiles.getJSONObject(0).getInt("h")!=8||board.tiles.getJSONObject(0).optInt("gauge_sweep")!=180||board.tiles.getJSONObject(1).getInt("y")!=0||board.tiles.getJSONObject(2).getInt("y")!=8)throw new AssertionError("Twin semicircular gauges and compact speed row");
+                    if(board.tiles.getJSONObject(2).getDouble("scale_max")!=22)throw new AssertionError("22 km/h default gauge scale");
                     org.json.JSONObject legacyGauge=new org.json.JSONObject().put("key","speed");
                     MetricTile probe=new MetricTile(activity,legacyGauge,0xffffffff,0xffffb300,0xff222222,0);
                     Method progress=MetricTile.class.getDeclaredMethod("progress",String.class);progress.setAccessible(true);
@@ -40,14 +40,14 @@ public class CockpitSmokeTest extends Instrumentation {
                     legacyGauge.put("scale_max",40);
                     if(Math.abs((Double)progress.invoke(probe,"11 km/h")-.275)>.001)throw new AssertionError("Custom gauge scale overwritten");
                     org.json.JSONArray previous=new org.json.JSONArray(board.tiles.toString());
-                    previous.getJSONObject(11).put("image_data","test-preserved-marker");
-                    previous.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Meine Notiz"),0,20,12,2));
-                    org.json.JSONArray migrated=CockpitBoard.arrange111(previous);
-                    if(!migrated.getJSONObject(11).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(20).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
+                    previous.getJSONObject(13).put("image_data","test-preserved-marker");
+                    previous.put(CockpitLayout.tile("free_text").put("free_text","Meine Notiz").put("x",0).put("y",20).put("w",12).put("h",2));
+                    org.json.JSONArray migrated=CockpitBoard.arrange121(previous);
+                    if(!migrated.getJSONObject(13).getString("image_data").equals("test-preserved-marker")||!migrated.getJSONObject(24).getString("free_text").equals("Meine Notiz"))throw new AssertionError("Migration lost photo or additional text");
                     org.json.JSONArray full=new org.json.JSONArray();for(int i=0;i<100;i++)full.put(CockpitBoard.position(CockpitLayout.tile("free_text").put("free_text","Notiz "+i),0,i*2,12,2));
                     if(!CockpitBoard.arrange111(full).toString().equals(full.toString()))throw new AssertionError("Full custom board must remain intact when migration cannot fit");
-                    String[][] expected={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
-                    for(int row=0;row<5;row++)for(int col=0;col<3;col++){org.json.JSONObject t=board.tiles.getJSONObject(4+row*3+col);if(!t.getString("key").equals(expected[row][col])||t.getInt("x")!=col*4||t.getInt("y")!=6+row*2||t.getInt("w")!=4)throw new AssertionError("Reference arrangement");}
+                    String[][] expected={{"moving","standing","trip_time"},{"distance","max_power","daily"},{"tour","bms_output","image"},{"total","outside","temp2"},{"temp1","ready_start","trip_end"},{"ready_end","voltage","current"}};
+                    for(int row=0;row<6;row++)for(int col=0;col<3;col++){org.json.JSONObject t=board.tiles.getJSONObject(5+row*3+col);if(!t.getString("key").equals(expected[row][col])||t.getInt("x")!=col*8||t.getInt("y")!=16+row*4||t.getInt("w")!=8)throw new AssertionError("Reference arrangement");}
                     CockpitBoard.validate(board.tiles);
                     if(!contains(activity.getWindow().getDecorView(),"Bereit"))throw new AssertionError("Default readiness labels");
                 }catch(Exception e){throw new RuntimeException(e);}
@@ -453,7 +453,18 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(Math.abs(status.getDoubleExtra("speed_kmh",0)-7.2)>.01||status.getDoubleExtra("distance_m",0)<2)throw new AssertionError("Coasting lost speed/distance without current");
                 RideMotion motion=(RideMotion)member(service,"motion");long now=android.os.SystemClock.elapsedRealtime();motion.reset();for(long at=now-45000;at<=now;at+=1000)motion.fix(at,0,true);
                 ((Runnable)member(service,"clock")).run();
-                if(BmsMonitorService.latestStatus.getBooleanExtra("trip_active",true)||!BmsMonitorService.running)throw new AssertionError("Stillstand must finish trip and retain readiness");
+                if(!BmsMonitorService.latestStatus.getBooleanExtra("trip_active",false)||!BmsMonitorService.latestStatus.getBooleanExtra("trip_paused",false)||!BmsMonitorService.running||member(service,"recorder")!=recorder)throw new AssertionError("Stillstand must pause the same trip and retain readiness");
+                setMember(service,"tripPausedAt",System.currentTimeMillis()-120000);
+                long previousStanding=(Long)member(service,"standingMs");
+                invoke(service,"resumeTrip",new Class[]{long.class},new Object[]{System.currentTimeMillis()});
+                if(member(service,"recorder")!=recorder||(Long)member(service,"tripPausedAt")!=0||(Long)member(service,"standingMs")<previousStanding+119000)throw new AssertionError("Continuation must retain trip and include pause in standing time");
+                setMember(service,"energyWh",12.0);setMember(service,"maxPowerW",500.0);
+                now=android.os.SystemClock.elapsedRealtime();motion.reset();for(long at=now-45000;at<=now;at+=1000)motion.fix(at,0,true);
+                ((Runnable)member(service,"clock")).run();
+                long pauseAt=(Long)member(service,"tripPausedAt");
+                setMember(service,"energyWh",14.0);setMember(service,"pauseEndMs",0L);
+                ((Runnable)member(service,"clock")).run();setMember(service,"pauseEndMs",600000L);
+                if(BmsMonitorService.latestStatus.getBooleanExtra("trip_active",true)||prefs.getLong("last_ended_at",0)!=pauseAt||Double.parseDouble(prefs.getString("last_energy_wh","0"))!=12.0)throw new AssertionError("Long pause must finish at pause start and exclude later idle energy");
                 java.util.List<TripJournal.Ride> rides=TripJournal.list(getTargetContext(),prefs,7);TripJournal.Ride found=null;for(TripJournal.Ride r:rides)if(r.start==start)found=r;
                 if(found==null)throw new AssertionError("Auto-ended ride missing");
                 found.csv.delete();found.gpx.delete();new File(found.csv.getParent(),found.csv.getName().replace(".csv",".json")).delete();
@@ -491,7 +502,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.1.1".equals(version))throw new AssertionError("Official version");
+                if(!"1.2.1".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
