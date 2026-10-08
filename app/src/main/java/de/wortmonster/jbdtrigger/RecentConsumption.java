@@ -20,6 +20,23 @@ final class RecentConsumption {
     }
     private double[] second() { java.util.Iterator<double[]> it=samples.iterator();it.next();return it.next(); }
     boolean ready() { return distance>=250 && energy>0; }
+    double whPerKm(double windowMeters) {
+        if(!Double.isFinite(windowMeters)||windowMeters<=0||energy<=0||samples.size()<2)return Double.NaN;
+        double target=distance-windowMeters;
+        if(target<samples.peekFirst()[0])return Double.NaN;
+        double[] previous=null;
+        for(double[] sample:samples){
+            if(sample[0]>=target){
+                if(previous==null&&Math.abs(sample[0]-target)>1e-9)return Double.NaN;
+                double startEnergy=sample[1];
+                if(previous!=null){double fraction=(target-previous[0])/Math.max(1e-9,sample[0]-previous[0]);startEnergy=previous[1]+fraction*(sample[1]-previous[1]);}
+                double used=energy-startEnergy;
+                return used>0?used/(windowMeters/1000.0):Double.NaN;
+            }
+            previous=sample;
+        }
+        return Double.NaN;
+    }
     double estimate(double reference) {
         if (!ready()) return reference;
         double trip=energy/(distance/1000);

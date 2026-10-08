@@ -12,6 +12,8 @@ public class RecentConsumptionTest {
         c.reset();close(c.estimate(17),17);
         c.add(300,0);close(c.estimate(17),17);
         c.add(300,3);close(c.estimate(17),10);
+        c.reset();for(int m=100;m<=600;m+=100)c.add(m,m*.02);close(c.whPerKm(500),20);
+        c.reset();for(int m=100;m<=400;m+=100)c.add(m,m*.02);if(!Double.isNaN(c.whPerKm(500)))throw new AssertionError("500 m gauge must wait for enough distance");
         c.resetAt(1000,20);c.add(1100,22);close(c.estimate(17),17);c.add(1300,26);close(c.estimate(17),20);
         System.out.println("Recent consumption: OK");
     }
