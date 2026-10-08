@@ -136,8 +136,8 @@ public class CockpitSmokeTest extends Instrumentation {
                     CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());View overlay=board.getChildAt(3);
                     float x=overlay.getWidth()-4,y=overlay.getHeight()-4;long time=android.os.SystemClock.uptimeMillis();
                     android.view.MotionEvent down=android.view.MotionEvent.obtain(time,time,0,x,y,0);overlay.dispatchTouchEvent(down);down.recycle();
-                    android.view.MotionEvent move=android.view.MotionEvent.obtain(time,time+20,2,x+board.getWidth()/12f,y+40*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(move);move.recycle();
-                    android.view.MotionEvent up=android.view.MotionEvent.obtain(time,time+40,1,x+board.getWidth()/12f,y+40*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(up);up.recycle();
+                    android.view.MotionEvent move=android.view.MotionEvent.obtain(time,time+20,2,x+board.getWidth()/24f,y+20*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(move);move.recycle();
+                    android.view.MotionEvent up=android.view.MotionEvent.obtain(time,time+40,1,x+board.getWidth()/24f,y+20*getTargetContext().getResources().getDisplayMetrics().density,0);overlay.dispatchTouchEvent(up);up.recycle();
                     if(board.tiles.getJSONObject(1).getInt("w")!=7 || board.tiles.getJSONObject(1).getInt("h")!=3)throw new AssertionError("Visual tile resize");
                     if(!clickText(activity.getWindow().getDecorView(),"Speichern"))throw new AssertionError("Editor save");CockpitBoard.validate(new org.json.JSONArray(prefs.getString("cockpit_board","")));
                     org.json.JSONObject snapshot=StorageFolders.install(getTargetContext()).snapshot();if(!snapshot.getJSONObject("settings").getString("total_km").equals("123.45"))throw new AssertionError("Settings snapshot");
