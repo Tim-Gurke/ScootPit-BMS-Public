@@ -127,7 +127,8 @@ final class MetricTile extends TextView {
         if(arcHeight>height-headingHeight-dp(12))radius=(height-headingHeight-dp(12))/Math.max(.01f,maxY-minY);
         minY=Float.MAX_VALUE;maxY=-Float.MAX_VALUE;for(int sample=0;sample<=90;sample++){float sy=(float)Math.sin(Math.toRadians(start+sweep*sample/90d));minY=Math.min(minY,sy);maxY=Math.max(maxY,sy);}
         float cy=headingHeight+dp(6)-minY*radius;
-        float valueCenter=cy;
+        int valuePosition=Math.max(0,Math.min(2,config.optInt("gauge_value_position",0)));
+        float valueCenter=cy+(valuePosition==1?-radius*.22f:valuePosition==2?radius*.22f:0);
         double max=config.optDouble("scale_max",CockpitLayout.DEFAULT_SPEED_SCALE_MAX);
         if(!Double.isFinite(max)||max<=0)max=CockpitLayout.DEFAULT_SPEED_SCALE_MAX;
         double progress=progress(value);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;
@@ -152,8 +153,8 @@ final class MetricTile extends TextView {
         if(progress>0){double angle=Math.toRadians(start+sweep*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(accent);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
         float numberSize=Math.min(sp(Math.max(12,Math.min(80,config.optInt("font",72)))),radius*.76f);
         int unitPosition=config.optInt("unit_position",3);float unitSize=sp(config.optInt("unit_font",18));
-        if(!unit.isEmpty()&&unitPosition==3){text(c,value,cx,valueCenter+numberSize*.18f,radius*1.45f,numberSize,true,foreground);text(c,unit,cx,valueCenter+numberSize*.18f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
-        else readingText(c,unit.isEmpty()?value:value+" "+unit,"",cx,valueCenter,radius*1.45f,numberSize,radius*.88f,foreground);
+        if(config.optBoolean("gauge_value_visible",true)){if(!unit.isEmpty()&&unitPosition==3){text(c,value,cx,valueCenter+numberSize*.18f,radius*1.45f,numberSize,true,foreground);text(c,unit,cx,valueCenter+numberSize*.18f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
+        else readingText(c,unit.isEmpty()?value:value+" "+unit,"",cx,valueCenter,radius*1.45f,numberSize,radius*.88f,foreground);}
     }
     private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){
