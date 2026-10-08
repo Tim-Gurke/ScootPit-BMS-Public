@@ -84,7 +84,7 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->{
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());for(int i=0;i<board.tiles.length();i++){org.json.JSONObject t=board.tiles.getJSONObject(i);if(t.getString("key").equals("soc"))t.put("h",2);if(t.getString("key").equals("ready_start"))t.put("caption","Los geht’s");}prefs.edit().putString("header_name","Mein Joyor").apply();invoke(activity,"rebuild",new Class[0],new Object[0]);if(!contains(activity.getWindow().getDecorView(),"ScootPit BMS")||!contains(activity.getWindow().getDecorView(),"Los geht’s"))throw new AssertionError("Custom header/button labels");
                 org.json.JSONArray rides=new org.json.JSONArray();for(int i=0;i<3;i++)rides.put(new org.json.JSONObject().put("temperature",10+i).put("km",5).put("wh",100));TemperatureHistory.validate(rides);if(Math.abs(TemperatureHistory.estimate(rides,11,15)-20)>.01)throw new AssertionError("Temperature start estimate");if(TemperatureHistory.estimate(rides,30,15)!=15)throw new AssertionError("No unsupported extrapolation");
-                CockpitBoard b=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject top=b.tiles.getJSONObject(0);top.put("h",8);b.push(top);CockpitBoard.validate(b.tiles);if(b.tiles.getJSONObject(4).getInt("y")<8)throw new AssertionError("Automatic displacement");top.put("h",6);b.compact();
+                CockpitBoard b=(CockpitBoard)findBoard(activity.getWindow().getDecorView());org.json.JSONObject top=b.tiles.getJSONObject(0);top.put("h",8);b.push(top);CockpitBoard.validate(b.tiles);if(b.tiles.getJSONObject(4).getInt("y")<8)throw new AssertionError("Automatic displacement");org.json.JSONObject upper=b.tiles.getJSONObject(1);upper.put("x",top.getInt("x")).put("y",top.getInt("y")).put("allow_overlap",true);top.put("allow_overlap",true);int[][] before=new int[b.tiles.length()][4];for(int i=0;i<before.length;i++){org.json.JSONObject item=b.tiles.getJSONObject(i);before[i]=new int[]{item.getInt("x"),item.getInt("y"),item.getInt("w"),item.getInt("h")};}b.push(b.tiles.getJSONObject(2));for(int i=0;i<before.length;i++){org.json.JSONObject item=b.tiles.getJSONObject(i);if(item.getInt("x")!=before[i][0]||item.getInt("y")!=before[i][1]||item.getInt("w")!=before[i][2]||item.getInt("h")!=before[i][3])throw new AssertionError("Selecting another tile changed layered layout");}CockpitBoard.validate(b.tiles);top.put("h",6);b.compact();
                 }catch(Exception e){throw new RuntimeException(e);}
             });
             profileCheck(prefs);
@@ -382,10 +382,10 @@ public class CockpitSmokeTest extends Instrumentation {
     private void unitFontRenderCheck(Activity activity) {
         try {
             for(int arrangement:new int[]{1,2})for(int display:new int[]{0,1,2})for(int position:new int[]{0,1,2,3}){
-                org.json.JSONObject config=new org.json.JSONObject().put("key","speed").put("font",40).put("unit_font",10).put("unit_position",position).put("display",display).put("arrangement",arrangement).put("show_title",false).put("show_note",false);
+                org.json.JSONObject config=new org.json.JSONObject().put("key","speed").put("font",40).put("unit_font",8).put("unit_position",position).put("display",display).put("arrangement",arrangement).put("show_title",false).put("show_note",false);
                 MetricTile metric=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);metric.layout(0,0,640,320);metric.reading("18,2","km/h",false);
                 Bitmap small=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888),large=Bitmap.createBitmap(640,320,Bitmap.Config.ARGB_8888);
-                metric.draw(new android.graphics.Canvas(small));config.put("unit_font",32);MetricTile larger=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);larger.layout(0,0,640,320);larger.reading("18,2","km/h",false);larger.draw(new android.graphics.Canvas(large));
+                metric.draw(new android.graphics.Canvas(small));config.put("unit_font",80);MetricTile larger=new MetricTile(activity,config,0xffffffff,0xffffb300,0xff35434d,0);larger.layout(0,0,640,320);larger.reading("18,2","km/h",false);larger.draw(new android.graphics.Canvas(large));
                 int changed=0;for(int y=0;y<320;y++)for(int x=0;x<640;x++)if(small.getPixel(x,y)!=large.getPixel(x,y))changed++;
                 small.recycle();large.recycle();if(changed<20||config.getInt("font")!=40||!metric.getContentDescription().toString().contains("18,2")||!metric.getContentDescription().toString().contains("km/h"))throw new AssertionError("Unit font not independent in layout "+arrangement+"/"+display+"/"+position);
             }
@@ -507,7 +507,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.2.1".equals(version))throw new AssertionError("Official version");
+                if(!"1.3.2".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
