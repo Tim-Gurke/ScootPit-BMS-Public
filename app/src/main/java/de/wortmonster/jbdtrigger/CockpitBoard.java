@@ -7,8 +7,9 @@ import android.widget.FrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Twelve-column responsive dashboard. Editing uses the very same tile views. */
+/** Fine-grid responsive dashboard. Editing uses the very same tile views. */
 final class CockpitBoard extends FrameLayout {
+    static final int GRID_COLUMNS=24, GRID_UNIT_DP=20;
     final JSONArray tiles;
     private final int unit;
     private final boolean editing;
@@ -20,7 +21,7 @@ final class CockpitBoard extends FrameLayout {
     private int[][] initial;
     CockpitBoard(Context context, JSONArray tiles, boolean editing, Runnable changed) {
         super(context);this.tiles=tiles;this.editing=editing;this.changed=changed;
-        unit=Math.round(40*getResources().getDisplayMetrics().density);
+        unit=Math.round(GRID_UNIT_DP*getResources().getDisplayMetrics().density);
         setClipChildren(false);
     }
     void addTile(View view, JSONObject tile, Runnable configure) {
@@ -35,7 +36,7 @@ final class CockpitBoard extends FrameLayout {
             addView(overlay,new FrameLayout.LayoutParams(1,1));
             overlay.setOnClickListener(v->configure.run());
             overlay.setOnTouchListener((v,event)->{
-                int column=Math.max(1,getWidth()/12);
+                int column=Math.max(1,getWidth()/GRID_COLUMNS);
                 if(event.getActionMasked()==MotionEvent.ACTION_DOWN){
                     initial=positions();active=tile;downX=(int)event.getRawX();downY=(int)event.getRawY();
                     oldX=tile.optInt("x");oldY=tile.optInt("y");oldW=tile.optInt("w",6);oldH=tile.optInt("h",3);
@@ -50,8 +51,8 @@ final class CockpitBoard extends FrameLayout {
                     int dx=Math.round((event.getRawX()-downX)/column),dy=Math.round((event.getRawY()-downY)/unit);
                     if(dx!=0||dy!=0)moved=true;
                     restore(initial);
-                    try {if(resizing){tile.put("w",Math.max(1,Math.min(12-oldX,oldW+dx))).put("h",Math.max(2,Math.min(12,oldH+dy)));}
-                    else tile.put("x",Math.max(0,Math.min(12-oldW,oldX+dx))).put("y",Math.max(0,Math.min(300,oldY+dy)));}catch(Exception ignored){}
+                    try {if(resizing){tile.put("w",Math.max(1,Math.min(GRID_COLUMNS-oldX,oldW+dx))).put("h",Math.max(2,Math.min(24,oldH+dy)));}
+                    else tile.put("x",Math.max(0,Math.min(GRID_COLUMNS-oldW,oldX+dx))).put("y",Math.max(0,Math.min(600,oldY+dy)));}catch(Exception ignored){}
                     try{push(tile);}catch(Exception e){restore(initial);}
                     requestLayout();return true;
                 }
@@ -67,7 +68,7 @@ final class CockpitBoard extends FrameLayout {
     }
     private int[][] positions(){int[][] p=new int[tiles.length()][4];for(int i=0;i<tiles.length();i++){JSONObject t=tiles.optJSONObject(i);p[i]=new int[]{t.optInt("x"),t.optInt("y"),t.optInt("w"),t.optInt("h")};}return p;}
     private void restore(int[][] p){if(p==null)return;try{for(int i=0;i<p.length;i++)tiles.getJSONObject(i).put("x",p[i][0]).put("y",p[i][1]).put("w",p[i][2]).put("h",p[i][3]);}catch(Exception ignored){}}
-    void push(JSONObject locked)throws Exception{pack(locked,false);}
+    void push(JSONObject locked)throws Exception{if(!locked.optBoolean("allow_overlap",false))pack(locked,false);}
     void compact(){int[][] before=positions();try{pack(null,true);}catch(Exception e){restore(before);}requestLayout();}
     private void pack(JSONObject locked,boolean compact)throws Exception{
         GridPacking.Cell[] cells=new GridPacking.Cell[tiles.length()];int index=-1;for(int i=0;i<cells.length;i++){JSONObject t=tiles.getJSONObject(i);if(t==locked)index=i;cells[i]=new GridPacking.Cell(i,t.getInt("x"),t.getInt("y"),t.getInt("w"),t.getInt("h"));}
@@ -81,12 +82,12 @@ final class CockpitBoard extends FrameLayout {
     int bottom(){int b=3;for(int i=0;i<tiles.length();i++){JSONObject t=tiles.optJSONObject(i);b=Math.max(b,t.optInt("y")+t.optInt("h",3));}return b;}
     @Override protected void onMeasure(int widthSpec,int heightSpec){
         int width=MeasureSpec.getSize(widthSpec),gap=Math.round(3*getResources().getDisplayMetrics().density);
-        for(int i=0;i<getChildCount();i++){View v=getChildAt(i);JSONObject t=(JSONObject)v.getTag();v.measure(MeasureSpec.makeMeasureSpec(Math.max(1,width*t.optInt("w",6)/12-2*gap),MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(unit*t.optInt("h",3)-2*gap,MeasureSpec.EXACTLY));}
+        for(int i=0;i<getChildCount();i++){View v=getChildAt(i);JSONObject t=(JSONObject)v.getTag();v.measure(MeasureSpec.makeMeasureSpec(Math.max(1,width*t.optInt("w",12)/GRID_COLUMNS-2*gap),MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(unit*t.optInt("h",6)-2*gap,MeasureSpec.EXACTLY));}
         setMeasuredDimension(width,unit*(bottom()+(editing?4:0)));
     }
     @Override protected void onLayout(boolean c,int l,int t,int r,int b){
         int width=r-l,gap=Math.round(3*getResources().getDisplayMetrics().density);
-        for(int i=0;i<getChildCount();i++){View v=getChildAt(i);JSONObject tile=(JSONObject)v.getTag();int x=width*tile.optInt("x")/12+gap,y=unit*tile.optInt("y")+gap;v.layout(x,y,x+v.getMeasuredWidth(),y+v.getMeasuredHeight());}
+        for(int i=0;i<getChildCount();i++){View v=getChildAt(i);JSONObject tile=(JSONObject)v.getTag();int x=width*tile.optInt("x")/GRID_COLUMNS+gap,y=unit*tile.optInt("y")+gap;v.layout(x,y,x+v.getMeasuredWidth(),y+v.getMeasuredHeight());}
     }
     @Override protected void dispatchDraw(android.graphics.Canvas canvas){super.dispatchDraw(canvas);if(!editing)return;
         android.graphics.Paint p=new android.graphics.Paint();p.setColor(CockpitTheme.color(getContext().getSharedPreferences("settings",0),"accent_color","#FF9800"));p.setTextSize(24*getResources().getDisplayMetrics().density);
@@ -94,15 +95,37 @@ final class CockpitBoard extends FrameLayout {
     }
     static JSONArray load(android.content.SharedPreferences prefs){return load(prefs,"cockpit_board");}
     static JSONArray load(android.content.SharedPreferences prefs,String key){
-        if(key.equals("cockpit_board_landscape"))try{JSONArray saved=new JSONArray(prefs.getString(key,""));validate(saved);return saved;}catch(Exception ignored){}
+        if(key.equals("cockpit_board_landscape"))try{
+            String savedText=prefs.getString(key,"");if(savedText.isEmpty()){JSONArray portrait=load(prefs,"cockpit_board");prefs.edit().putString(key,portrait.toString()).putString("cockpit_board_landscape_version","1.2.1").apply();return portrait;}
+            JSONArray saved=new JSONArray(savedText);
+            if(!"1.2.1".equals(prefs.getString("cockpit_board_landscape_version",""))){
+                JSONArray original=new JSONArray(saved.toString());for(int i=0;i<saved.length();i++){JSONObject t=saved.getJSONObject(i);for(String coordinate:new String[]{"x","y","w","h"})t.put(coordinate,t.getInt(coordinate)*2);}
+                validate(saved);prefs.edit().putString("cockpit_board_landscape_before_121",original.toString()).putString(key,saved.toString()).putString("cockpit_board_landscape_version","1.2.1").apply();
+            }validate(saved);return saved;
+        }catch(Exception ignored){}
 
         try{JSONArray saved=new JSONArray(prefs.getString("cockpit_board",""));validate(saved);
-            if(!prefs.getString("cockpit_design_version","").equals("1.1.1")){
-                JSONArray updated=arrange111(saved);validate(updated);
-                prefs.edit().putString("cockpit_board_before_111",saved.toString()).putString("cockpit_board",updated.toString()).putString("cockpit_design_version","1.1.1").apply();return updated;
+            if(!prefs.getString("cockpit_design_version","").equals("1.2.1")){
+                JSONArray updated=arrange121(saved);validate(updated);
+                prefs.edit().putString("cockpit_board_before_121",saved.toString()).putString("cockpit_board",updated.toString()).putString("cockpit_design_version","1.2.1").apply();return updated;
             }return saved;}catch(Exception ignored){}
         JSONArray result=prefs.contains("cockpit_layout")?fromRows(CockpitLayout.load(prefs)):defaults();
-        prefs.edit().putString("cockpit_board",result.toString()).putString("cockpit_design_version","1.1.1").apply();return result;
+        prefs.edit().putString("cockpit_board",result.toString()).putString("cockpit_design_version","1.2.1").apply();return result;
+    }
+    static JSONArray arrange121(JSONArray previous)throws Exception{
+        JSONArray result=defaults();boolean[] used=new boolean[previous.length()];
+        for(int i=0;i<result.length();i++){
+            JSONObject target=result.getJSONObject(i);
+            for(int j=0;j<previous.length();j++)if(!used[j]&&previous.getJSONObject(j).optString("key").equals(target.optString("key"))){
+                JSONObject old=new JSONObject(previous.getJSONObject(j).toString());used[j]=true;
+                for(String coordinate:new String[]{"x","y","w","h"})old.put(coordinate,target.getInt(coordinate));
+                if(old.optString("key").equals("power")){old.put("display",2);if(!old.optBoolean("custom_colors",false))old.put("custom_colors",true).put("background","#00000000");if(!old.has("gauge_sweep"))old.put("gauge_sweep",180);}
+                if(old.optString("key").equals("speed"))old.put("display",0);
+                result.put(i,old);break;
+            }
+        }
+        int bottom=48;for(int j=0;j<previous.length();j++)if(!used[j]){JSONObject extra=new JSONObject(previous.getJSONObject(j).toString());extra.put("x",extra.optInt("x")*2).put("y",bottom).put("w",extra.optInt("w",6)*2).put("h",extra.optInt("h",3)*2);bottom+=extra.optInt("h",6);result.put(extra);}
+        return result.length()>100?defaults():result;
     }
     static JSONArray arrange111(JSONArray previous)throws Exception{
         JSONArray result=defaults();boolean[] used=new boolean[previous.length()];
@@ -125,11 +148,12 @@ final class CockpitBoard extends FrameLayout {
     static JSONArray defaults(){
         JSONArray tiles=new JSONArray();
         try{
-            tiles.put(position(standardTile("speed").put("display",2).put("custom_colors",true).put("background","#00000000").put("font",72).put("unit_font",18).put("unit_position",3).put("show_title",false),0,0,8,6));
-            tiles.put(position(standardTile("soc").put("display",1).put("show_note",false),8,0,4,2));
-            tiles.put(position(standardTile("range").put("show_note",false),8,2,4,2));
-            tiles.put(position(standardTile("power"),8,4,4,2));
-            String[][] rows={{"moving","standing","distance"},{"max_power","daily","tour"},{"bms_output","image","total"},{"outside","temp2","temp1"},{"ready_start","trip_end","ready_end"}};
+            tiles.put(position(standardTile("consumption_500m").put("display",2).put("scale_max",50).put("caption","Verbrauch · letzte 500 m").put("gauge_sweep",180).put("custom_colors",true).put("background","#00000000"),0,0,6,4));
+            tiles.put(position(standardTile("power").put("display",2).put("scale_max",2000).put("caption","Leistung").put("gauge_sweep",180).put("custom_colors",true).put("background","#00000000"),6,0,6,4));
+            tiles.put(position(standardTile("speed").put("display",0).put("font",34).put("unit_font",18).put("caption","Geschwindigkeit"),0,4,6,2));
+            tiles.put(position(standardTile("soc").put("display",1).put("show_note",false),6,4,6,2));
+            tiles.put(position(standardTile("range").put("show_note",false),6,6,6,2));
+            String[][] rows={{"moving","standing","trip_time"},{"distance","max_power","daily"},{"tour","bms_output","image"},{"total","outside","temp2"},{"temp1","ready_start","trip_end"},{"ready_end","voltage","current"}};
             for(int row=0;row<rows.length;row++)for(int col=0;col<3;col++){
                 String key=rows[row][col];JSONObject tile=standardTile(key);
                 if(key.equals("image"))tile.put("heading_mode",3);
@@ -137,9 +161,9 @@ final class CockpitBoard extends FrameLayout {
                 if(key.equals("temp1"))tile.put("caption","BMS-Temp");
                 if(key.equals("bms_output"))tile.put("caption","BMS\nLastausgang");
                 if(key.equals("ready_start")||key.equals("ready_end"))tile.put("caption","Bereit").put("font",14);
-                tiles.put(position(tile,col*4,6+row*2,4,2));
+                tiles.put(position(tile,col*4,8+row*2,4,2));
             }
-            tiles.put(position(standardTile("log"),0,16,12,4));
+            tiles.put(position(standardTile("log"),0,20,12,4));
         }catch(Exception e){throw new IllegalStateException(e);}
         return tiles;
     }
@@ -159,12 +183,14 @@ final class CockpitBoard extends FrameLayout {
         result.put(position(CockpitLayout.tile("log"),0,y,12,4));
         }catch(Exception ignored){}return result;
     }
-    static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x).put("y",y).put("w",w).put("h",h);}
+    static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x*2).put("y",y*2).put("w",w*2).put("h",h*2);}
     private static void validateAppearance(JSONObject tile)throws Exception{
+        if(tile.has("gauge_sweep")&&(tile.getInt("gauge_sweep")<90||tile.getInt("gauge_sweep")>270))throw new Exception("Kreisausschnitt muss zwischen 90° und 270° liegen");
         if(tile.has("heading_mode")&&(tile.getInt("heading_mode")<0||tile.getInt("heading_mode")>3))throw new Exception("Ungültige Symbol-/Beschriftungsauswahl");
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
         if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>3))throw new Exception("Ungültige Einheit-Position");
-        for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
+        for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color","border_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
+        if(tile.has("corner_radius")&&(tile.getInt("corner_radius")<0||tile.getInt("corner_radius")>48))throw new Exception("Eckenradius muss zwischen 0 und 48 dp liegen");
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
         if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");
         if(tile.has("image_data")&&!tile.getString("image_data").isEmpty())TileImage.validate(tile.getString("image_data"));
@@ -173,7 +199,7 @@ final class CockpitBoard extends FrameLayout {
     static void validate(JSONArray tiles)throws Exception{
         if(tiles.length()<1||tiles.length()>100)throw new Exception("1–100 Kacheln erforderlich");
         java.util.HashSet<String> single=new java.util.HashSet<>();
-        for(int i=0;i<tiles.length();i++){JSONObject t=tiles.getJSONObject(i);String key=t.getString("key");if((key.equals("bms_output")||key.equals("log"))&&!single.add(key))throw new Exception("Doppelte Steuerkachel");validateAppearance(t);int x=t.getInt("x"),y=t.getInt("y"),w=t.getInt("w"),h=t.getInt("h");if(x<0||y<0||y>300||w<1||w>12||x+w>12||h<2||h>12||(!java.util.Arrays.asList(CockpitLayout.KEYS).contains(t.getString("key"))&&!BmsExtras.known(key)))throw new Exception("Ungültige Kachel");}
-        for(int i=0;i<tiles.length();i++)for(int j=i+1;j<tiles.length();j++){JSONObject a=tiles.getJSONObject(i),b=tiles.getJSONObject(j);if(a.getInt("x")<b.getInt("x")+b.getInt("w")&&a.getInt("x")+a.getInt("w")>b.getInt("x")&&a.getInt("y")<b.getInt("y")+b.getInt("h")&&a.getInt("y")+a.getInt("h")>b.getInt("y"))throw new Exception("Kacheln überlappen");}
+        for(int i=0;i<tiles.length();i++){JSONObject t=tiles.getJSONObject(i);String key=t.getString("key");if((key.equals("bms_output")||key.equals("log"))&&!single.add(key))throw new Exception("Doppelte Steuerkachel");validateAppearance(t);int x=t.getInt("x"),y=t.getInt("y"),w=t.getInt("w"),h=t.getInt("h");if(x<0||y<0||y>600||w<1||w>GRID_COLUMNS||x+w>GRID_COLUMNS||h<2||h>24||(!java.util.Arrays.asList(CockpitLayout.KEYS).contains(t.getString("key"))&&!BmsExtras.known(key)))throw new Exception("Ungültige Kachel");}
+        for(int i=0;i<tiles.length();i++)for(int j=i+1;j<tiles.length();j++){JSONObject a=tiles.getJSONObject(i),b=tiles.getJSONObject(j);if(a.getInt("x")<b.getInt("x")+b.getInt("w")&&a.getInt("x")+a.getInt("w")>b.getInt("x")&&a.getInt("y")<b.getInt("y")+b.getInt("h")&&a.getInt("y")+a.getInt("h")>b.getInt("y")&&!a.optBoolean("allow_overlap",false)&&!b.optBoolean("allow_overlap",false))throw new Exception("Kacheln überlappen – bei einer Kachel Überlappung aktivieren");}
     }
 }

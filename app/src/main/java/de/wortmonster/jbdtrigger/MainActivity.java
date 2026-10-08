@@ -129,7 +129,7 @@ public class MainActivity extends Activity {
         WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightNavigationBars(CockpitTheme.light(prefs));
         getWindow().setNavigationBarColor(android.os.Build.VERSION.SDK_INT<27?0xff0b1015:color(prefs.getString("app_background","#0B1015"),0xff0b1015));
         LinearLayout root=column();root.setPadding(dp(14),dp(6),dp(14),dp(20));
-        root.setBackgroundColor(color(prefs.getString("app_background","#0B1015"),0xff0b1015));
+        root.setBackgroundColor(prefs.getBoolean("background_gradient_enabled",false)?Color.TRANSPARENT:color(prefs.getString("app_background","#0B1015"),0xff0b1015));
         LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(0,dp(3),0,dp(7));
         ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.app_logo);logo.setContentDescription("ScootPit BMS Logo");header.addView(logo,new LinearLayout.LayoutParams(dp(42),dp(48)));
         LinearLayout identity=column();identity.setPadding(dp(8),0,dp(4),0);
@@ -160,7 +160,9 @@ public class MainActivity extends Activity {
             add.setOnClickListener(v->addTileMenu());
         }
         dashboard=column();root.addView(dashboard);buildTiles();
-        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(true);scroll.setBackgroundColor(color(prefs.getString("app_background","#0B1015"),0xff0c1014));scroll.addView(root);
+        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setClipToPadding(true);
+        if(prefs.getBoolean("background_gradient_enabled",false))try{scroll.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{Color.parseColor(prefs.getString("background_gradient_start","#0B1015")),Color.parseColor(prefs.getString("background_gradient_end","#26384A"))}));}catch(Exception e){scroll.setBackgroundColor(color(prefs.getString("app_background","#0B1015"),0xff0c1014));}
+        else scroll.setBackgroundColor(color(prefs.getString("app_background","#0B1015"),0xff0c1014));scroll.addView(root);
         ViewCompat.setOnApplyWindowInsetsListener(scroll,(view,insets)->{
             androidx.core.graphics.Insets safe=insets.getInsets(WindowInsetsCompat.Type.systemBars()|WindowInsetsCompat.Type.displayCutout());
             view.setPadding(safe.left,safe.top,safe.right,safe.bottom);
@@ -184,7 +186,7 @@ public class MainActivity extends Activity {
             JSONObject cell=boardTiles.optJSONObject(i);if(cell==null)continue;
             String key=cell.optString("key","speed");
             LinearLayout box=column();box.setGravity(Gravity.CENTER);box.setPadding(dp(6),dp(4),dp(6),dp(4));
-            GradientDrawable bg=new GradientDrawable();bg.setCornerRadius(dp(12));bg.setStroke(dp(1),CockpitTheme.color(prefs,"outline_color",CockpitTheme.light(prefs)?"#D5DFEB":"#2C3843"));bg.setColor(color(cell.optBoolean("custom_colors",false)?cell.optString("background"):prefs.getString("tile_background",CockpitTheme.light(prefs)?"#F3F7FC":"#141B22"),0xff1c2228));if(Color.alpha(bg.getColor().getDefaultColor())==0)bg.setStroke(0,Color.TRANSPARENT);box.setBackground(bg);
+            GradientDrawable bg=new GradientDrawable();bg.setCornerRadius(dp(Math.max(0,Math.min(48,cell.optInt("corner_radius",12)))));bg.setStroke(dp(cell.optBoolean("border_enabled",true)?1:0),color(cell.optString("border_color",prefs.getString("outline_color",CockpitTheme.light(prefs)?"#D5DFEB":"#2C3843")),muted()));bg.setColor(color(cell.optBoolean("custom_colors",false)?cell.optString("background"):prefs.getString("tile_background",CockpitTheme.light(prefs)?"#F3F7FC":"#141B22"),0xff1c2228));box.setBackground(bg);
             int text=color(cell.optBoolean("custom_colors",false)?cell.optString("text"):prefs.getString("tile_text",CockpitTheme.light(prefs)?"#172B40":"#FFFFFF"),foreground());
             if(key.equals("ready_start")||key.equals("ready_end")||key.equals("trip_end")){
                 Button action=button(cell.optString("caption",CockpitLayout.title(key)));
@@ -216,6 +218,7 @@ public class MainActivity extends Activity {
 
             }
             if(key.equals("tour")&&!editingBoard){box.setOnClickListener(v->resetTour());box.setContentDescription("Tourenzähler zurücksetzen");}
+            else if(!editingBoard&&Arrays.asList("temp1","temp2","outside").contains(key)){box.setOnClickListener(v->refreshTemperature());box.setContentDescription(CockpitLayout.title(key)+" aktualisieren");}
             final int index=i;board.addTile(box,cell,()->editBoardTile(index));
         }
         if(lastStatus!=null)renderStatus(lastStatus);
@@ -234,9 +237,17 @@ public class MainActivity extends Activity {
         final EditText customText=freeText;final Spinner photoMode=imageMode;
         Spinner arrangement=new Spinner(this);arrangement.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Automatisch","Einzeilig","Untereinander"}));arrangement.setSelection(Math.max(0,Math.min(2,cell.optInt("arrangement",0))));l.addView(arrangement);
         Spinner display=new Spinner(this);display.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Zahl","Balken","Rundinstrument"}));display.setSelection(Math.max(0,Math.min(2,cell.optInt("display",cell.optString("key").equals("speed")?2:cell.optString("key").equals("soc")?1:0))));l.addView(display);
+        TextView sweepLabel=label("Kreisausschnitt: 90°–270°",13,muted());l.addView(sweepLabel);
+        android.widget.SeekBar sweep=new android.widget.SeekBar(this);sweep.setMax(180);sweep.setProgress(Math.max(0,Math.min(180,cell.optInt("gauge_sweep",180)-90)));l.addView(sweep);
+        sweep.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int n,boolean user){sweepLabel.setText("Kreisausschnitt: "+(90+n)+"°");}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});
+        boolean isGauge=cell.optInt("display",cell.optString("key").equals("speed")?2:0)==2;
+        sweepLabel.setVisibility(isGauge?View.VISIBLE:View.GONE);sweep.setVisibility(isGauge?View.VISIBLE:View.GONE);
+        display.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){sweepLabel.setVisibility(pos==2?View.VISIBLE:View.GONE);sweep.setVisibility(pos==2?View.VISIBLE:View.GONE);}public void onNothingSelected(android.widget.AdapterView<?> p){}});
         if(personal){arrangement.setVisibility(View.GONE);display.setVisibility(View.GONE);}
         l.addView(label("Kachelkopf: Symbol / Beschriftung",13,muted()));
         Spinner heading=new Spinner(this);heading.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Nur Symbol","Nur Beschriftung","Symbol und Beschriftung","Beides ausblenden"}));heading.setSelection(CockpitSymbols.mode(cell));l.addView(heading);
+        CheckBox allowOverlap=new CheckBox(this);allowOverlap.setText("Überlappung mit anderen Kacheln zulassen");allowOverlap.setTextColor(foreground());allowOverlap.setChecked(cell.optBoolean("allow_overlap",false));l.addView(allowOverlap);
+        l.addView(label("Ebene (unten → oben)",13,muted()));Spinner layer=new Spinner(this);String[] layers=new String[boardTiles.length()];for(int n=0;n<layers.length;n++)layers[n]="Ebene "+(n+1)+(n==0?" · unten":n==layers.length-1?" · oben":"");layer.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,layers));layer.setSelection(index);l.addView(layer);
         CheckBox showNote=new CheckBox(this);showNote.setText("Zusatztext anzeigen");showNote.setTextColor(foreground());showNote.setChecked(cell.optBoolean("show_note",true));l.addView(showNote);
         EditText lines=field(l,"Überschrift / Button: maximal 1–3 Zeilen",""+cell.optInt("lines",2));
         EditText scale=field(l,"Skalenmaximum (Balken / Rundinstrument)",""+cell.optDouble("scale_max",cell.optString("key").equals("speed")?CockpitLayout.DEFAULT_SPEED_SCALE_MAX:cell.optString("key").contains("power")?1200:100));
@@ -245,14 +256,18 @@ public class MainActivity extends Activity {
         EditText unitFont=hasUnit?field(l,"Einheit: Schriftgröße (8–80, leer = wie Wert)",cell.has("unit_font")?""+cell.optInt("unit_font"):""):new EditText(this);
         Spinner unitPosition=new Spinner(this);unitPosition.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Neben dem Wert","Hochgestellt","Über dem Wert","Unter dem Wert / im Tacho"}));unitPosition.setSelection(Math.max(0,Math.min(3,cell.optInt("unit_position",0))));
         if(hasUnit){l.addView(label("Einheit: Position",12,muted()));l.addView(unitPosition);}
-        EditText x=field(l,"Spalte (0–11)",""+cell.optInt("x")),y=field(l,"Zeile im Raster (0–300)",""+cell.optInt("y"));
-        EditText w=field(l,"Breite (1–12 Rasterspalten)",""+cell.optInt("w")),h=field(l,"Höhe (2–12, je 40 dp)",""+cell.optInt("h"));
+        EditText x=field(l,"Spalte (0–23)",""+cell.optInt("x")),y=field(l,"Zeile im Raster (0–600)",""+cell.optInt("y"));
+        EditText w=field(l,"Breite (1–24 Rasterspalten)",""+cell.optInt("w")),h=field(l,"Höhe (2–24, je 20 dp)",""+cell.optInt("h"));
         EditText bg=textField(l,"Hintergrund (#RRGGBB)",cell.optBoolean("custom_colors",false)?cell.optString("background"):prefs.getString("tile_background",CockpitTheme.light(prefs)?"#F3F7FC":"#141B22"));
         EditText instrument=personal?new EditText(this):textField(l,"Instrument / Balken: Farbe (#RRGGBB)",cell.optString("instrument_color",prefs.getString("accent_color","#FF9800")));
         EditText track=personal?new EditText(this):textField(l,"Skala / Hintergrundbogen: Farbe (#RRGGBB)",cell.optString("scale_color",CockpitTheme.scale(prefs)));
         if(personal){instrument.setText(cell.optString("instrument_color",prefs.getString("accent_color","#FF9800")));track.setText(cell.optString("scale_color",CockpitTheme.scale(prefs)));}
         EditText icon=textField(l,"Symbolfarbe (#RRGGBB)",cell.optString("icon_color",String.format(Locale.ROOT,"#%06X",iconColor(cell)&0xffffff)));
         EditText fg=textField(l,"Textfarbe (#RRGGBB)",cell.optBoolean("custom_colors",false)?cell.optString("text"):prefs.getString("tile_text",CockpitTheme.light(prefs)?"#172B40":"#FFFFFF"));
+        EditText borderColor=textField(l,"Rahmenfarbe (#RRGGBB)",cell.optString("border_color",prefs.getString("outline_color",CockpitTheme.light(prefs)?"#D5DFEB":"#2C3843")));
+        CheckBox borderEnabled=new CheckBox(this);borderEnabled.setText("Kachelrahmen anzeigen");borderEnabled.setTextColor(foreground());borderEnabled.setChecked(cell.optBoolean("border_enabled",true));l.addView(borderEnabled);
+        TextView radiusLabel=label("Eckenradius: "+cell.optInt("corner_radius",12)+" dp",13,muted());l.addView(radiusLabel);android.widget.SeekBar radius=new android.widget.SeekBar(this);radius.setMax(48);radius.setProgress(cell.optInt("corner_radius",12));l.addView(radius);radius.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int n,boolean user){radiusLabel.setText("Eckenradius: "+n+" dp");}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});
+        TextView insetLabel=label("Inhalt-Abstand zum Rahmen: "+cell.optInt("content_inset",6)+" dp",13,muted());l.addView(insetLabel);android.widget.SeekBar inset=new android.widget.SeekBar(this);inset.setMax(32);inset.setProgress(cell.optInt("content_inset",6));l.addView(inset);inset.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int n,boolean user){insetLabel.setText("Inhalt-Abstand zum Rahmen: "+n+" dp");}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});
         android.widget.SeekBar bgAlpha=opacity(l,"Hintergrund",bg.getText().toString());
         android.widget.SeekBar fgAlpha=opacity(l,"Text",fg.getText().toString());
         ScrollView sv=new ScrollView(this);sv.addView(l);
@@ -262,15 +277,19 @@ public class MainActivity extends Activity {
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle(CockpitLayout.title(cell.optString("key"))).setView(content).create();
         tileDialog=dialog;
         back.setOnClickListener(v->dialog.dismiss());remove.setOnClickListener(v->{if(boardTiles.length()>1){boardTiles.remove(index);dialog.dismiss();rebuild();}});
-        apply.setOnClickListener(v->{boolean customUnit=hasUnit&&!unitFont.getText().toString().trim().isEmpty();Double uu=customUnit?valid(unitFont,8,80):null;Double ff=valid(font,12,80),xx=valid(x,0,11),yy=valid(y,0,300),ww=valid(w,1,12),hh=valid(h,2,12);Double ll=valid(lines,1,3),ss=valid(scale,.1,10000000);if((customUnit&&uu==null)||ff==null||xx==null||yy==null||ww==null||hh==null||ll==null||ss==null||!validColor(bg)||!validColor(fg)||!validColor(instrument)||!validColor(track)||!validColor(icon))return;
-            JSONArray before;try{before=new JSONArray(boardTiles.toString());cell.put("x",xx.intValue()).put("y",yy.intValue()).put("w",ww.intValue()).put("h",hh.intValue());try{board.push(cell);CockpitBoard.validate(boardTiles);}catch(Exception e){for(int i=0;i<boardTiles.length();i++){JSONObject target=boardTiles.getJSONObject(i),original=before.getJSONObject(i);target.put("x",original.getInt("x")).put("y",original.getInt("y")).put("w",original.getInt("w")).put("h",original.getInt("h"));}Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();return;}
-                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("heading_mode",heading.getSelectedItemPosition()).put("show_title",heading.getSelectedItemPosition()==1||heading.getSelectedItemPosition()==2).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true).put("instrument_color",instrument.getText().toString()).put("scale_color",track.getText().toString()).put("icon_color",icon.getText().toString());if(hasUnit){cell.put("unit_position",unitPosition.getSelectedItemPosition());if(customUnit)cell.put("unit_font",uu.intValue());else cell.remove("unit_font");}if(customText!=null)cell.put("free_text",customText.getText().toString());if(photoMode!=null)cell.put("image_mode",photoMode.getSelectedItemPosition());dialog.dismiss();rebuild();
+        apply.setOnClickListener(v->{boolean customUnit=hasUnit&&!unitFont.getText().toString().trim().isEmpty();Double uu=customUnit?valid(unitFont,8,80):null;Double ff=valid(font,12,80),xx=valid(x,0,23),yy=valid(y,0,600),ww=valid(w,1,24),hh=valid(h,2,24);Double ll=valid(lines,1,3),ss=valid(scale,.1,10000000);if((customUnit&&uu==null)||ff==null||xx==null||yy==null||ww==null||hh==null||ll==null||ss==null||!validColor(bg)||!validColor(fg)||!validColor(instrument)||!validColor(track)||!validColor(icon)||!validColor(borderColor))return;
+            JSONArray before;try{before=new JSONArray(boardTiles.toString());boolean oldOverlap=cell.optBoolean("allow_overlap",false);cell.put("allow_overlap",allowOverlap.isChecked()).put("x",xx.intValue()).put("y",yy.intValue()).put("w",ww.intValue()).put("h",hh.intValue());try{board.push(cell);CockpitBoard.validate(boardTiles);}catch(Exception e){for(int i=0;i<boardTiles.length();i++){JSONObject target=boardTiles.getJSONObject(i),original=before.getJSONObject(i);target.put("x",original.getInt("x")).put("y",original.getInt("y")).put("w",original.getInt("w")).put("h",original.getInt("h"));}cell.put("allow_overlap",oldOverlap);Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();return;}
+                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("gauge_sweep",90+sweep.getProgress()).put("heading_mode",heading.getSelectedItemPosition()).put("show_title",heading.getSelectedItemPosition()==1||heading.getSelectedItemPosition()==2).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true).put("instrument_color",instrument.getText().toString()).put("scale_color",track.getText().toString()).put("icon_color",icon.getText().toString()).put("border_color",borderColor.getText().toString()).put("border_enabled",borderEnabled.isChecked()).put("corner_radius",radius.getProgress()).put("content_inset",inset.getProgress());if(hasUnit){cell.put("unit_position",unitPosition.getSelectedItemPosition());if(customUnit)cell.put("unit_font",uu.intValue());else cell.remove("unit_font");}if(customText!=null)cell.put("free_text",customText.getText().toString());if(photoMode!=null)cell.put("image_mode",photoMode.getSelectedItemPosition());moveTileToLayer(index,layer.getSelectedItemPosition());dialog.dismiss();rebuild();
             }catch(Exception e){Toast.makeText(this,"Kachel konnte nicht geändert werden",Toast.LENGTH_SHORT).show();}});dialog.show();
         dialog.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*.9f));
         if(chooseImage!=null)chooseImage.setOnClickListener(v->{apply.performClick();if(dialog.isShowing())return;try{
             if(!cell.has("tile_id"))cell.put("tile_id",UUID.randomUUID().toString());pendingImageTile=cell.getString("tile_id");pendingImageLayout=boardKey();
             startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),93);
         }catch(Exception e){Toast.makeText(this,"Bildauswahl nicht verfügbar",Toast.LENGTH_LONG).show();}});
+    }
+    private void moveTileToLayer(int from,int to){
+        if(from==to||from<0||from>=boardTiles.length())return;
+        try{java.util.ArrayList<JSONObject> ordered=new java.util.ArrayList<>();for(int i=0;i<boardTiles.length();i++)ordered.add(boardTiles.getJSONObject(i));JSONObject tile=ordered.remove(from);ordered.add(Math.max(0,Math.min(ordered.size(),to)),tile);JSONArray result=new JSONArray();for(JSONObject item:ordered)result.put(item);boardTiles=result;}catch(Exception ignored){}
     }
     private android.widget.SeekBar opacity(LinearLayout parent,String name,String color){
         TextView value=label(name+" – Transparenz",12,muted());parent.addView(value);
@@ -324,6 +343,8 @@ public class MainActivity extends Activity {
                 case "current":value=packet==0?"–":f(intent.getDoubleExtra("current",0),"%.2f A");break;
                 case "energy":value=f(intent.getDoubleExtra("energy_wh",0),"%.1f Wh");break;
                 case "consumption":value=f(intent.getDoubleExtra("wh_km",Double.NaN),"%.1f Wh/km");break;
+                case "consumption_500m":value=f(intent.getDoubleExtra("wh_500m",Double.NaN),"%.1f Wh/km");note="letzte 500 m";break;
+                case "trip_time":value=formatDuration(intent.getLongExtra("trip_time_ms",intent.getLongExtra("moving_ms",0)+intent.getLongExtra("standing_ms",0)));note="Fahrzeit + Standzeit";break;
                 case "moving":value=formatDuration(intent.getLongExtra("moving_ms",0));break;
                 case "standing":value=formatDuration(intent.getLongExtra("standing_ms",0));break;
                 case "average":value=f(intent.getDoubleExtra("average_speed_kmh",0),"%.1f km/h");break;
@@ -358,6 +379,11 @@ public class MainActivity extends Activity {
         dischargeSwitch.setEnabled(fresh && !pending);
         String message=intent.getStringExtra("control_message");
         dischargeNote.setText(pending?"Schaltbefehl gesendet · Bestätigung wird geprüft":!fresh?"Bereitschaft starten / auf frische BMS-Daten warten":message==null||message.startsWith("Bereitschaft starten")?"Wegfahrsperre · nur im Stand schalten":message);
+    }
+    private void refreshTemperature(){
+        if(!BmsMonitorService.running){Toast.makeText(this,"Bereitschaft starten, um aktuelle Temperaturwerte abzurufen",Toast.LENGTH_SHORT).show();return;}
+        startService(new Intent(this,BmsMonitorService.class).setAction(BmsMonitorService.ACTION_REFRESH_TEMPERATURE));
+        Toast.makeText(this,"Temperaturwerte werden aktualisiert",Toast.LENGTH_SHORT).show();
     }
     private void requestDischarge(boolean on){
         if(!BmsMonitorService.running)return;
@@ -449,13 +475,16 @@ public class MainActivity extends Activity {
         EditText tileBg=textField(l,"Kachelhintergrund (#RRGGBB)",prefs.getString("tile_background",CockpitTheme.light(prefs)?"#F3F7FC":"#141B22"));
         EditText sc=textField(l,"Skalenfarbe (#RRGGBB)",CockpitTheme.scale(prefs));EditText outline=textField(l,"Trennlinien / Kachelrahmen (#RRGGBB)",prefs.getString("outline_color",CockpitTheme.light(prefs)?"#D5DFEB":"#2C3843"));
         EditText tileText=textField(l,"Kacheltext (#RRGGBB)",prefs.getString("tile_text",CockpitTheme.light(prefs)?"#172B40":"#FFFFFF"));
+        CheckBox gradient=new CheckBox(this);gradient.setText("Farbverlauf für App-Hintergrund verwenden");gradient.setTextColor(foreground());gradient.setChecked(prefs.getBoolean("background_gradient_enabled",false));l.addView(gradient);
+        EditText gradientStart=textField(l,"Verlauf Anfang (#RRGGBB)",prefs.getString("background_gradient_start",prefs.getString("app_background","#0B1015")));
+        EditText gradientEnd=textField(l,"Verlauf Ende (#RRGGBB)",prefs.getString("background_gradient_end",CockpitTheme.light(prefs)?"#DCEBFA":"#26384A"));
         l.addView(label("Einzeln eingefärbte Kacheln behalten ihre eigenen Farben.",12,muted()));
         ScrollView sv=new ScrollView(this);sv.addView(l);
         AlertDialog d=new AlertDialog.Builder(this).setTitle("App-Farben").setView(sv).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();
         colorDialog=d;d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
-            if(!validColor(bg)||!validColor(ac)||!validColor(hc)||!validColor(tileBg)||!validColor(tileText)||!validColor(sc)||!validColor(outline))return;
+            if(!validColor(bg)||!validColor(ac)||!validColor(hc)||!validColor(tileBg)||!validColor(tileText)||!validColor(sc)||!validColor(outline)||!validColor(gradientStart)||!validColor(gradientEnd))return;
             prefs.edit().putString("app_background",bg.getText().toString()).putString("accent_color",ac.getText().toString())
-                .putString("header_color",hc.getText().toString()).putString("tile_background",tileBg.getText().toString()).putString("tile_text",tileText.getText().toString()).putString("scale_color",sc.getText().toString()).putString("outline_color",outline.getText().toString()).apply();
+                .putString("header_color",hc.getText().toString()).putString("tile_background",tileBg.getText().toString()).putString("tile_text",tileText.getText().toString()).putString("scale_color",sc.getText().toString()).putString("outline_color",outline.getText().toString()).putBoolean("background_gradient_enabled",gradient.isChecked()).putString("background_gradient_start",gradientStart.getText().toString()).putString("background_gradient_end",gradientEnd.getText().toString()).apply();
             d.dismiss();rebuild();
         }));d.show();
     }
@@ -465,11 +494,20 @@ public class MainActivity extends Activity {
     private Double valid(EditText e,double min,double max){try{double n=Double.parseDouble(e.getText().toString().replace(',','.'));if(!Double.isFinite(n)||n<min||n>max)throw new Exception();return n;}catch(Exception ex){e.setError("Wert zwischen "+min+" und "+max);return null;}}
     private EditText textField(LinearLayout l,String title,String value){l.addView(label(title,13,muted()));EditText e=new EditText(this);e.setText(value);e.setTextColor(foreground());l.addView(e);
         if(title.contains("#RRGGBB")){
-            Button choose=button("Farbe auswählen");l.addView(choose);
-            choose.setOnClickListener(v->{String[] names={"Schwarz","Dunkelblau","Anthrazit","Weiß","Gelb","Orange","Rot","Grün","Blau","Türkis","Violett"};String[] colors={"#0C1014","#10283F","#1C2228","#FFFFFF","#FFB300","#FF8A00","#EF5350","#66BB6A","#42A5F5","#26C6DA","#AB47BC"};
-                new AlertDialog.Builder(this).setTitle("Farbe auswählen").setItems(names,(d,w)->e.setText(colors[w])).setNegativeButton("Zurück",null).show();});
+            Button choose=button("●  Farbe auswählen / mischen");l.addView(choose);updateColorButton(choose,value);
+            choose.setOnClickListener(v->showColorPicker(e,choose));
         }
         return e;
+    }
+    private void updateColorButton(Button button,String hex){try{int c=Color.parseColor(hex),swatch=0xff000000|(c&0xffffff);double lum=Color.red(swatch)*.2126+Color.green(swatch)*.7152+Color.blue(swatch)*.0722;button.setText("●  "+String.format(Locale.ROOT,"#%06X",c&0xffffff));button.setTextColor(lum>145?0xff102030:Color.WHITE);button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(swatch));}catch(Exception ignored){}}
+    private void showColorPicker(EditText target,Button preview){
+        LinearLayout panel=column();TextView sample=panel("Eigene Farbe mischen");panel.addView(sample);
+        String[] labels={"Farbton","Sättigung","Helligkeit"};android.widget.SeekBar[] sliders=new android.widget.SeekBar[3];float[] hsv=new float[]{28,100,100};
+        try{Color.colorToHSV(Color.parseColor(target.getText().toString()),hsv);}catch(Exception ignored){}
+        android.widget.EditText hex=new android.widget.EditText(this);hex.setSingleLine(true);hex.setHint("#RRGGBB");hex.setText(target.getText());hex.setTextColor(foreground());panel.addView(hex);
+        for(int i=0;i<3;i++){final int index=i;int initial=index==0?Math.round(hsv[index]):Math.round(hsv[index]*100);TextView label=label(labels[i]+": "+initial,12,muted());panel.addView(label);android.widget.SeekBar s=new android.widget.SeekBar(this);s.setMax(i==0?360:100);s.setProgress(initial);sliders[i]=s;panel.addView(s);s.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int value,boolean fromUser){hsv[index]=index==0?value:value/100f;label.setText(labels[index]+": "+value);int color=Color.HSVToColor(hsv);sample.setBackgroundColor(color);hex.setText(String.format(Locale.ROOT,"#%06X",color&0xffffff));}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});}
+        Runnable sync=()->{try{int color=Color.parseColor(hex.getText().toString());Color.colorToHSV(color,hsv);for(int i=0;i<3;i++)sliders[i].setProgress(i==0?Math.round(hsv[i]):Math.round(hsv[i]*100));sample.setBackgroundColor(color);}catch(Exception ignored){}};hex.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}public void onTextChanged(CharSequence s,int st,int before,int count){sync.run();}public void afterTextChanged(android.text.Editable e){}});
+        AlertDialog picker=new AlertDialog.Builder(this).setTitle("Farbe auswählen").setView(panel).setPositiveButton("Übernehmen",null).setNegativeButton("Zurück",null).create();picker.setOnShowListener(v->picker.getButton(-1).setOnClickListener(b->{try{int c=Color.parseColor(hex.getText().toString());target.setText(String.format(Locale.ROOT,"#%06X",c&0xffffff));updateColorButton(preview,target.getText().toString());picker.dismiss();}catch(Exception ex){hex.setError("Bitte eine gültige Farbe eingeben");}}));picker.show();picker.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*.7f));
     }
     private void editBattery(){LinearLayout l=column();String[] keys={"capacity_ah","nominal_voltage","reserve_percent","reference_wh_km"};String[] titles={"Kapazität (Ah, Ersatzwert ohne BMS-Kapazität)","Nennspannung (V)","Restreserve (%)","Startwert Verbrauch (Wh/km)"};String[] values={"26","48","10","20"};List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++)es.add(field(l,titles[i],prefs.getString(keys[i],values[i])));
         l.addView(label("Ab 250 m wird der aktuelle Fahrtverbrauch verwendet; die jüngsten ungefähr 800 m werden stärker gewichtet. Reichweite ist eine Schätzung.",12,muted()));
@@ -479,13 +517,13 @@ public class MainActivity extends Activity {
     private void editBms(){LinearLayout l=column();TextView selected=panel(hasSelectedBms()?"Ausgewählt: "+prefs.getString("device_name","BMS")+"\n"+prefs.getString("device_address",""):"Noch kein BMS ausgewählt");l.addView(selected);
         Button scan=button(hasSelectedBms()?"Anderes BMS auswählen":"BMS auswählen");scan.setOnClickListener(v->openBmsPicker());l.addView(scan);
         CheckBox automatic=new CheckBox(this);automatic.setText("Gespeicherte Scooter automatisch erkennen und auswählen");automatic.setTextColor(foreground());automatic.setChecked(prefs.getBoolean("auto_scooter",true));l.addView(automatic);
-        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","connect_confirm_seconds","stop_seconds"};
-        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)","Starken Empfang vor Erstverbindung bestätigen (s)","Fahrtende nach Stillstand (s)"};
-        String[] defs={"0.30","1","5","90","-75","-95","5","15","2","2","30","45","3","45"};
+        String[] keys={"active_current","active_seconds","idle_seconds","monitor_timeout","connect_rssi","departure_rssi","scan_absent","scan_weak","scan_good","scan_pause","departure_seconds","gps_max_kmh","connect_confirm_seconds","stop_seconds","pause_end_seconds","pause_disconnect_seconds"};
+        String[] titles={"Fahrt ab Entladestrom (A)","Startverzögerung (s)","Pause ohne Entnahme nach (s)","Ohne Fahrt zurück zur Suche nach (s)","Verbinden ab Empfang (dBm)","Entfernung unter Empfang (dBm)","Suchpause: BMS fehlt (s)","Suchpause: schwacher Empfang (s)","Suchpause: guter Empfang (s)","Wiederverbindung während Fahrtpause (s)","Entfernung bestätigen ohne BMS-Daten (s)","Maximal plausible GPS-Geschwindigkeit (km/h)","Starken Empfang vor Erstverbindung bestätigen (s)","Fahrt pausieren nach Stillstand (s)","Fahrtende nach langer Pause (s)","Wiederverbindung erlauben bis nach Pausenbeginn (s)"};
+        String[] defs={"0.30","1","5","90","-75","-95","5","15","2","2","30","45","3","45","600","120"};
         List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++){EditText input=field(l,titles[i],prefs.getString(keys[i],defs[i]));if(i==4||i==5)input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER|android.text.InputType.TYPE_NUMBER_FLAG_SIGNED|android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);es.add(input);}
-        l.addView(label("Erstverbindung nach mindestens drei stabilen Empfangsmessungen. Automatik prüft nur gespeicherte, eindeutig zugeordnete BMS und hält das Profil während einer Fahrt fest. Ausrollen wird weiter aufgezeichnet. Fahrtende bei bestätigter Entfernung oder zuverlässig erkanntem Stillstand (Standard 45 s). Längere Ampelphasen können eine Fahrt teilen; dafür z. B. 90 s einstellen. GPS-Ausfall zählt nicht als Stillstand. Änderungen der Erkennung gelten nach Neustart der Bereitschaft.",12,muted()));ScrollView sv=new ScrollView(this);sv.addView(l);
+        l.addView(label("Erstverbindung nach mindestens drei stabilen Empfangsmessungen. Automatik prüft nur gespeicherte, eindeutig zugeordnete BMS und hält das Profil während einer Fahrt fest. Ausrollen wird weiter aufgezeichnet. Nach 45 s Stillstand pausiert die Fahrtaufzeichnung; die BMS-Verbindung bleibt bestehen. Bei Weiterfahrt wird dieselbe Fahrt fortgesetzt. Nach 10 Minuten endet sie rückwirkend ab Pausenbeginn. Bei bestätigter Entfernung wird die Pause ebenfalls als Fahrtende gewertet. GPS-Ausfall zählt nicht als Stillstand. Änderungen der Erkennung gelten nach Neustart der Bereitschaft.",12,muted()));ScrollView sv=new ScrollView(this);sv.addView(l);
         AlertDialog d=new AlertDialog.Builder(this).setTitle("BMS und Fahrt-Erkennung").setView(sv).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
-            double[] mins={.01,1,1,1,-110,-120,5,5,1,1,10,10,1,15},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150,15,3600};
+            double[] mins={.01,1,1,1,-110,-120,5,5,1,1,10,10,1,15,60,0},maxs={100,3600,3600,3600,-30,-30,3600,3600,3600,60,600,150,15,3600,7200,7200};
             Double[] values=new Double[keys.length];for(int i=0;i<keys.length;i++){values[i]=valid(es.get(i),mins[i],maxs[i]);if(values[i]==null)return;}
             if(values[5]>values[4]){es.get(5).setError("Entfernungsschwelle muss gleich oder schwächer als Verbindungsschwelle sein");return;}
             SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++)edit.putString(keys[i],values[i].toString());edit.putBoolean("auto_scooter",automatic.isChecked()).putString("connection_policy_version","3");edit.apply();d.dismiss();

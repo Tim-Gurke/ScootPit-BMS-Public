@@ -20,8 +20,11 @@ final class WeatherClient {
     private volatile boolean closed;
     WeatherClient(Handler handler) { this.handler = handler; }
     void update(double lat, double lon, Callback callback) {
+        update(lat,lon,false,callback);
+    }
+    void update(double lat,double lon,boolean force,Callback callback) {
         long now = System.currentTimeMillis();
-        if(closed || busy || now-lastAttempt<300_000 || now-lastSuccess<900_000)return;
+        if(closed || busy || (!force&&(now-lastAttempt<300_000 || now-lastSuccess<900_000)))return;
         busy=true; lastAttempt=now;
         worker.execute(() -> {
             double value=Double.NaN;

@@ -9,7 +9,7 @@ final class GridPacking {
         List<Cell> placed=new ArrayList<>();if(locked>=0)placed.add(cells[locked]);
         for(Cell cell:order){if(cell.id==locked)continue;if(compact)cell.y=0;
             boolean moved;do{moved=false;for(Cell other:placed)if(overlaps(cell,other)){cell.y=other.y+other.h;moved=true;}}while(moved);
-            if(cell.y>300)throw new IllegalArgumentException("Raster ist voll");placed.add(cell);
+            if(cell.y>600)throw new IllegalArgumentException("Raster ist voll");placed.add(cell);
         }
     }
 }

@@ -41,8 +41,8 @@ final class CockpitSymbols extends Drawable {
             case "voltage":return "voltage";
             case "current":return "current";
             case "energy":return "energy";
-            case "consumption":return "consumption";
-            case "moving":return "clock";
+            case "consumption":case "consumption_500m":return "consumption";
+            case "moving":case "trip_time":return "clock";
             case "standing":return "pause";
             case "altitude":case "ascent":return "mountain";
             case "temp1":case "temp2":return "thermometer";

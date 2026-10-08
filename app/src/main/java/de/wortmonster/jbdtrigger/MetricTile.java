@@ -61,7 +61,8 @@ final class MetricTile extends TextView {
     }
     @Override protected void onDraw(Canvas c){
         int foreground=inactive?Color.argb(Color.alpha(this.foreground),120,120,120):this.foreground,accent=inactive?0xff606060:this.accent;
-        float width=getWidth()-dp(12),height=getHeight(),cx=getWidth()/2f;
+        float inset=dp(Math.max(0,Math.min(32,config.optInt("content_inset",6))));
+        float width=getWidth()-2*inset,height=getHeight(),cx=getWidth()/2f;
         if(width<=0||height<=0)return;
         String value=getText().toString(),caption=CockpitSymbols.title(config)?CockpitSymbols.caption(config):"";
         String displayNote=note;
@@ -69,8 +70,8 @@ final class MetricTile extends TextView {
             value+=" km/h";displayNote="";
         }
         int layout=config.optInt("arrangement",0),style=config.optInt("display",key.equals("speed")?2:key.equals("soc")?1:0);
-        if(key.equals("speed")&&style==2&&height>=dp(110)&&width>=dp(100)){
-            gauge(c,value.replace(" km/h",""),cx,width,height,foreground,accent);return;
+        if(style==2&&height>=dp(90)&&width>=dp(100)){
+            gauge(c,value.replace(" km/h",""),cx,width,height,foreground,accent,key.equals("speed")?"km/h":"");return;
         }
         boolean single=layout==1||(layout==0&&height<dp(95));
         float valueSize=sp(Math.max(12,Math.min(80,config.optInt("font",28))));
@@ -95,15 +96,16 @@ final class MetricTile extends TextView {
         float bottom=height-(showNote?sp(23):dp(8)),middle=(top+bottom)/2;
         float valueWidth=width;
         if(style==2&&bottom-top>=dp(85)&&width>=dp(100)){
+            float sweep=Math.max(90,Math.min(270,config.optInt("gauge_sweep",180)));
             float radius=Math.min(width/2-dp(10),(bottom-top)/2-dp(6));paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(6));paint.setStrokeCap(Paint.Cap.ROUND);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);
-            RectF arc=new RectF(cx-radius,middle-radius,cx+radius,middle+radius);c.drawArc(arc,140,260,false,paint);paint.setColor(accent);c.drawArc(arc,140,(float)(260*progress(value)),false,paint);
+            RectF arc=new RectF(cx-radius,middle-radius,cx+radius,middle+radius);float start=270-sweep/2;c.drawArc(arc,start,sweep,false,paint);paint.setColor(accent);c.drawArc(arc,start,(float)(sweep*progress(value)),false,paint);
             valueWidth=radius*1.55f;valueSize=Math.min(valueSize,radius*.60f);
         }else if(style!=0){bar(c,dp(8),bottom-dp(5),getWidth()-dp(16),progress(value));bottom-=dp(12);middle=(top+bottom)/2;}
         float available=Math.max(dp(12),bottom-top);valueSize=Math.min(valueSize,available*.65f);
         readingText(c,value,"",cx,middle,valueWidth,valueSize,available*.65f,foreground);
         if(showNote)text(c,displayNote.replace('\n',' '),cx,height-dp(8),width,sp(10),false,foreground);
     }
-    private void gauge(Canvas c,String value,float cx,float width,float height,int foreground,int accent){
+    private void gauge(Canvas c,String value,float cx,float width,float height,int foreground,int accent,String unit){
         float headingHeight=0;
         if(CockpitSymbols.icon(config)||CockpitSymbols.title(config)){
             String caption=CockpitSymbols.title(config)?CockpitSymbols.caption(config).replace('\n',' '):"";
@@ -112,27 +114,41 @@ final class MetricTile extends TextView {
             if(!caption.isEmpty())text(c,caption,cx+(CockpitSymbols.icon(config)?dp(14):0),dp(5)+sp(15),width-(CockpitSymbols.icon(config)?dp(30):0),sp(12),false,foreground);
             headingHeight=dp(30);
         }
-        float radius=Math.min(width/2-dp(8),(height-headingHeight)/2-dp(10)),cy=(height+headingHeight)/2;
+        float sweep=Math.max(90,Math.min(270,config.optInt("gauge_sweep",180)));
+        float radius=Math.max(dp(8),width/2-dp(8));
+        float start=270-sweep/2;
+        // Keep the instrument circular. Fit the actual arc into the available tile, never squash it.
+        float minY=Float.MAX_VALUE,maxY=-Float.MAX_VALUE;
+        for(int sample=0;sample<=90;sample++){
+            double a=Math.toRadians(start+sweep*sample/90d);float y=(float)Math.sin(a);
+            minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+        }
+        float arcHeight=(maxY-minY)*radius;
+        if(arcHeight>height-headingHeight-dp(12))radius=(height-headingHeight-dp(12))/Math.max(.01f,maxY-minY);
+        minY=Float.MAX_VALUE;maxY=-Float.MAX_VALUE;for(int sample=0;sample<=90;sample++){float sy=(float)Math.sin(Math.toRadians(start+sweep*sample/90d));minY=Math.min(minY,sy);maxY=Math.max(maxY,sy);}
+        float cy=headingHeight+dp(6)-minY*radius;
+        float valueCenter=cy+(maxY+minY)*radius/2;
         double max=config.optDouble("scale_max",CockpitLayout.DEFAULT_SPEED_SCALE_MAX);
         if(!Double.isFinite(max)||max<=0)max=CockpitLayout.DEFAULT_SPEED_SCALE_MAX;
         double progress=progress(value);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;
         RectF bounds=new RectF(cx-radius,cy-radius,cx+radius,cy+radius);
-        paint.setStyle(Paint.Style.STROKE);paint.setStrokeCap(Paint.Cap.BUTT);paint.setStrokeWidth(dp(3));paint.setColor(track);c.drawArc(bounds,140,260,false,paint);
-        paint.setColor(accent);paint.setStrokeWidth(dp(4));if(progress>0)c.drawArc(bounds,140,(float)(260*progress),false,paint);
-        for(int i=0;i<=40;i++){
-            double angle=Math.toRadians(140+260*i/40d);boolean major=i%10==0;
+        paint.setStyle(Paint.Style.STROKE);paint.setStrokeCap(Paint.Cap.BUTT);paint.setStrokeWidth(dp(3));paint.setColor(track);c.drawArc(bounds,start,sweep,false,paint);
+        paint.setColor(accent);paint.setStrokeWidth(dp(4));if(progress>0)c.drawArc(bounds,start,(float)(sweep*progress),false,paint);
+        int tickCount=Math.max(10,Math.round(sweep/6));
+        for(int i=0;i<=tickCount;i++){
+            double angle=Math.toRadians(start+sweep*i/(double)tickCount);boolean major=i%(Math.max(1,tickCount/4))==0;
             float outer=radius-dp(7),inner=outer-dp(major?10:5);
-            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(major?1.3f:.8f));paint.setColor(i/40d<=progress&&progress>0?accent:track);
+            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(major?1.3f:.8f));paint.setColor(i/(double)tickCount<=progress&&progress>0?accent:track);
             c.drawLine(cx+(float)Math.cos(angle)*inner,cy+(float)Math.sin(angle)*inner,cx+(float)Math.cos(angle)*outer,cy+(float)Math.sin(angle)*outer,paint);
-            if(major){double number=max*i/40d;String label=Math.abs(number-Math.rint(number))<.001?String.format(Locale.GERMANY,"%.0f",number):String.format(Locale.GERMANY,"%.1f",number);
+            if(major){double number=max*i/(double)tickCount;String label=Math.abs(number-Math.rint(number))<.001?String.format(Locale.GERMANY,"%.0f",number):String.format(Locale.GERMANY,"%.1f",number);
                 float labelRadius=radius-dp(30);text(c,label,cx+(float)Math.cos(angle)*labelRadius,cy+(float)Math.sin(angle)*labelRadius+sp(4),dp(36),sp(11),false,foreground);
             }
         }
-        if(progress>0){double angle=Math.toRadians(140+260*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(accent);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
+        if(progress>0){double angle=Math.toRadians(start+sweep*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(accent);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
         float numberSize=Math.min(sp(Math.max(12,Math.min(80,config.optInt("font",72)))),radius*.76f);
         int unitPosition=config.optInt("unit_position",3);float unitSize=sp(config.optInt("unit_font",18));
-        if(unitPosition==3){text(c,value,cx,cy+numberSize*.26f,radius*1.45f,numberSize,true,foreground);text(c,"km/h",cx,cy+numberSize*.26f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
-        else readingText(c,value+" km/h","",cx,cy,radius*1.45f,numberSize,radius*.88f,foreground);
+        if(!unit.isEmpty()&&unitPosition==3){text(c,value,cx,valueCenter+numberSize*.18f,radius*1.45f,numberSize,true,foreground);text(c,unit,cx,valueCenter+numberSize*.18f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
+        else readingText(c,unit.isEmpty()?value:value+" "+unit,"",cx,valueCenter,radius*1.45f,numberSize,radius*.88f,foreground);
     }
     private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){

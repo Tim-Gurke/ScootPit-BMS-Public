@@ -47,6 +47,7 @@ public class BmsMonitorService extends Service implements LocationListener {
     public static final String ACTION_STATUS = "de.wortmonster.jbdtrigger.STATUS";
 
     public static final String ACTION_END_TRIP = "de.wortmonster.jbdtrigger.END_TRIP";
+    public static final String ACTION_REFRESH_TEMPERATURE = "de.wortmonster.jbdtrigger.REFRESH_TEMPERATURE";
     public static final String ACTION_SET_DISCHARGE = "de.wortmonster.jbdtrigger.SET_DISCHARGE";
     private PowerManager.WakeLock wakeLock;
     private long wakeRenewed, quietSince;
@@ -63,6 +64,9 @@ public class BmsMonitorService extends Service implements LocationListener {
     private double[] temperatures = new double[0];
     private double outsideTemperature = Double.NaN;
     private long weatherAt, movingMs, standingMs, lastClock, gpsAt;
+    private long tripPausedAt;
+    private long pauseEndMs=600_000, disconnectedPauseGraceMs=120_000;
+    private double pausedEnergyWh, pausedMaxPowerW;
     private boolean manualHold;
     private final java.io.ByteArrayOutputStream packetBuffer = new java.io.ByteArrayOutputStream();
     private double averageConsumption;
@@ -70,16 +74,18 @@ public class BmsMonitorService extends Service implements LocationListener {
         @Override public void run() {
             long now = System.currentTimeMillis();
             if(wakeLock!=null && (!wakeLock.isHeld() || now-wakeRenewed>300000)){wakeLock.acquire(600000);wakeRenewed=now;}
-            if (recorder != null && lastClock > 0) {
+            if (recorder != null && tripPausedAt==0 && lastClock > 0) {
                 long elapsed = Math.min(5000, Math.max(0, now - lastClock));
                 if (now - gpsAt < 5000 && currentSpeedKmh >= 2) movingMs += elapsed;
                 else standingMs += elapsed;
             }
-            if(recorder!=null && motion.stopped(android.os.SystemClock.elapsedRealtime(),stopMs)){
-                active=false;manualHold=true;activeSince=0;idleSince=0;
-                finishTrip();closeGatt();near=false;departureMode=false;missingSince=0;
-                tried.clear();scheduleScan(1000);emit(ACTION_IDLE);
-                setState("Fahrt nach Stillstand beendet – Suche wird fortgesetzt");
+            if(recorder!=null && tripPausedAt==0 && motion.stopped(android.os.SystemClock.elapsedRealtime(),stopMs)){
+                active=false;activeSince=0;idleSince=0;tripPausedAt=now;pausedEnergyWh=energyWh;pausedMaxPowerW=maxPowerW;motion.reset();
+                emit(ACTION_IDLE);setState("Fahrt pausiert – BMS-Verbindung bleibt aktiv");
+            }
+            if(recorder!=null && tripPausedAt>0 && ((gatt==null&&now-tripPausedAt>=disconnectedPauseGraceMs)||now-tripPausedAt>=pauseEndMs)){
+                long endAt=tripPausedAt;active=false;activeSince=0;idleSince=0;
+                finishTrip(endAt);if(gatt==null)scheduleScan(1000);setState("Fahrt nach längerer Pause beendet");
             }
             lastClock = now;
             sendStatus();
@@ -185,11 +191,19 @@ public class BmsMonitorService extends Service implements LocationListener {
         if((!autoSelection&&!BluetoothAdapter.checkBluetoothAddress(prefs.getString("device_address",""))) || (autoSelection&&knownBms.isEmpty())){
             setState("Bitte zuerst ein BMS auswählen");stopSelf();return START_NOT_STICKY;
         }
+        if(intent!=null&&ACTION_REFRESH_TEMPERATURE.equals(intent.getAction())){
+            requestBasicInfo();
+            if(prefs.getBoolean("weather_enabled",true)&&lastLocation!=null){
+                weather.update(lastLocation.getLatitude(),lastLocation.getLongitude(),true,(temp,at)->{outsideTemperature=temp;weatherAt=at;prefs.edit().putString("outside_temperature",Double.toString(temp)).putLong("weather_at",at).apply();sendStatus();});
+            }
+            sendStatus();return START_STICKY;
+        }
         if(intent!=null && ACTION_SET_DISCHARGE.equals(intent.getAction())){
             setDischarge(intent.getBooleanExtra("enabled",true));return START_STICKY;
         }
         if (intent != null && ACTION_END_TRIP.equals(intent.getAction())) {
             active = false; manualHold = true; activeSince = 0;
+            tripPausedAt=0;
             finishTrip();
             closeGatt();
             near = false;
@@ -239,6 +253,8 @@ public class BmsMonitorService extends Service implements LocationListener {
         reconnectMs=(long)(setting("scan_pause",2,1,60)*1000);
         departureGraceMs=(long)(setting("departure_seconds",30,10,600)*1000);
         stopMs=(long)(setting("stop_seconds",45,15,3600)*1000);
+        pauseEndMs=(long)(setting("pause_end_seconds",600,60,7200)*1000);
+        disconnectedPauseGraceMs=(long)(setting("pause_disconnect_seconds",120,0,7200)*1000);
         gpsMaxKmh=setting("gps_max_kmh",45,10,150);
         averageConsumption=number(prefs.getString("learned_wh_km","0"),0);
         outsideTemperature=number(prefs.getString("outside_temperature","NaN"),Double.NaN);weatherAt=prefs.getLong("weather_at",0);
@@ -661,6 +677,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         if (!active && dischargeAmps >= activeAmps) {
             if (activeSince == 0) activeSince = now;
             if (now - activeSince >= activeMs) {
+                if(recorder!=null&&tripPausedAt>0)resumeTrip(now);
                 active = true;
                 idleSince = 0;
                 farConfirmations = 0;
@@ -709,9 +726,16 @@ public class BmsMonitorService extends Service implements LocationListener {
         lastPowerAt = now;
         lastLocation = null;
         movingMs = standingMs = 0;
+        tripPausedAt=0;
         lastClock = now;motion.reset();
         startLocationTracking();
         rideNotification(true);
+    }
+
+    private void resumeTrip(long now){
+        if(recorder==null||tripPausedAt==0)return;
+        standingMs+=Math.max(0,now-tripPausedAt);tripPausedAt=0;lastClock=now;activeSince=0;idleSince=0;motion.reset();
+        setState("Fahrt nach Pause fortgesetzt");
     }
 
     private void completeDeparture() {
@@ -726,15 +750,20 @@ public class BmsMonitorService extends Service implements LocationListener {
             near = false;
             emit(ACTION_FAR);
         }
+        if(tripPausedAt>0){near=false;closeGatt();scheduleScan(1000);setState("BMS nicht erreichbar – suche während der Fahrtpause weiter");return;}
         finishTrip();
         closeGatt();
         scheduleScan(1000);
     }
 
     private void finishTrip() {
+        finishTrip(System.currentTimeMillis());
+    }
+    private void finishTrip(long endedAt) {
         if (recorder == null) return;
         stopLocationTracking();
-        long endedAt = System.currentTimeMillis();
+        if(tripPausedAt>0 && endedAt==tripPausedAt){energyWh=pausedEnergyWh;maxPowerW=pausedMaxPowerW;}
+        tripPausedAt=0;
         double averageTemperature=temperatureSamples>0?temperatureSum/temperatureSamples:Double.NaN;
         double temp1=sensorSamples[0]>0?sensorSums[0]/sensorSamples[0]:Double.NaN,temp2=sensorSamples[1]>0?sensorSums[1]/sensorSamples[1]:Double.NaN;
         TripRecorder.Summary summary = recorder.finish(endedAt, distanceMeters,
@@ -801,6 +830,8 @@ public class BmsMonitorService extends Service implements LocationListener {
         double elapsedSeconds=lastLocation==null?0:(location.getElapsedRealtimeNanos()-lastLocation.getElapsedRealtimeNanos())/1e9;
         if(!GpsPlausibility.accept(speedKmh, location.hasSpeed(), deltaMeters, elapsedSeconds,
                 location.getAccuracy(), lastLocation==null?location.getAccuracy():lastLocation.getAccuracy(), currentSpeedKmh, gpsMaxKmh)) return;
+        if(tripPausedAt>0&&speedKmh>=2)resumeTrip(now);
+        if(tripPausedAt>0){gpsAt=now;currentSpeedKmh=0;lastLocation=new Location(location);sendStatus();return;}
         if (lastLocation != null) {
             long elapsed = location.getTime() - lastLocation.getTime();
             float delta = lastLocation.distanceTo(location);
@@ -913,9 +944,11 @@ public class BmsMonitorService extends Service implements LocationListener {
                 .putExtra("average_speed_kmh", movingMs > 0 ? distanceMeters / movingMs * 3600 : 0)
                 .putExtra("total_km", number(prefs.getString("total_km", "0"), 0))
                 .putExtra("wh_km", consumption())
+                .putExtra("wh_500m", recentConsumption.whPerKm(500))
+                .putExtra("trip_time_ms", movingMs + standingMs + (tripPausedAt>0?Math.max(0,System.currentTimeMillis()-tripPausedAt):0))
                 .putExtra("range_km", rangeKm())
                 .putExtra("trip_active", recorder != null)
-                .putExtra("trip_paused", recorder != null && System.currentTimeMillis()-gpsAt<8000 && currentSpeedKmh<1.5)
+                .putExtra("trip_paused", recorder != null && tripPausedAt>0)
                 .putExtra("timestamp", System.currentTimeMillis());
     }
 
