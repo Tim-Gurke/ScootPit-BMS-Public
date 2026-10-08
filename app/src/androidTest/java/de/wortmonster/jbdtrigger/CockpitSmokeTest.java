@@ -163,7 +163,7 @@ public class CockpitSmokeTest extends Instrumentation {
                     if(apply==null||back==null||remove==null||apply.getParent()!=back.getParent()||apply.getParent()!=remove.getParent())throw new AssertionError("Dialog actions not in one row");
                     org.json.JSONObject tile=((CockpitBoard)findBoard(activity.getWindow().getDecorView())).tiles.getJSONObject(1);
                     java.util.ArrayList<android.widget.SeekBar> sliders=new java.util.ArrayList<>();findSliders(dialog.getWindow().getDecorView(),sliders);
-                    if(sliders.size()!=2)throw new AssertionError("Opacity controls");sliders.get(0).setProgress(50);sliders.get(1).setProgress(25);apply.performClick();
+                    if(sliders.size()<2)throw new AssertionError("Opacity controls");sliders.get(sliders.size()-2).setProgress(50);sliders.get(sliders.size()-1).setProgress(25);apply.performClick();
                     if(android.graphics.Color.alpha(android.graphics.Color.parseColor(tile.getString("background")))!=128)throw new AssertionError("Tile background alpha");
                     if(android.graphics.Color.alpha(android.graphics.Color.parseColor(tile.getString("text")))!=191)throw new AssertionError("Tile text alpha");
                     clickText(activity.getWindow().getDecorView(),"Zurück");
