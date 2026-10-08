@@ -1,0 +1,1 @@
+Customizable 90°–270° gauge arcs, rounded scale values, movable or hidden gauge readings, stable overlapping tiles, light and dark themes, and editable background gradients.
