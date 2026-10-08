@@ -153,8 +153,7 @@ final class MetricTile extends TextView {
         if(progress>0){double angle=Math.toRadians(start+sweep*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(accent);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
         float numberSize=Math.min(sp(Math.max(12,Math.min(80,config.optInt("font",72)))),radius*.76f);
         int unitPosition=config.optInt("unit_position",3);float unitSize=sp(config.optInt("unit_font",18));
-        if(config.optBoolean("gauge_value_visible",true)){if(!unit.isEmpty()&&unitPosition==3){text(c,value,cx,valueCenter+numberSize*.18f,radius*1.45f,numberSize,true,foreground);text(c,unit,cx,valueCenter+numberSize*.18f+Math.min(radius*.39f,unitSize+dp(10)),radius,Math.min(unitSize,radius*.22f),false,foreground);}
-        else readingText(c,unit.isEmpty()?value:value+" "+unit,"",cx,valueCenter,radius*1.45f,numberSize,radius*.88f,foreground);}
+        if(config.optBoolean("gauge_value_visible",true))readingText(c,unit.isEmpty()?value:value+" "+unit,"",cx,valueCenter,radius*1.45f,numberSize,radius*.88f,foreground);
     }
     private int parseColor(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private double progress(String value){
