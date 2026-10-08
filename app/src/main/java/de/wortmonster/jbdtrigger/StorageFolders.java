@@ -62,14 +62,17 @@ final class StorageFolders {
         }
     }
     void importSettings(String tree)throws Exception{
+        importing=true;main.removeCallbacks(saveTask);
+        try{importSettingsNow(tree);}finally{main.post(()->importing=false);}
+    }
+    private void importSettingsNow(String tree)throws Exception{
         Uri file=document(context,tree,NAME,false,"application/json");if(file==null)throw new IOException("Keine Einstellungsdatei in diesem Ordner");
         JSONObject root=new JSONObject(read(context,file));if(!root.optString("format").equals("Joyor Cockpit settings")||(root.optInt("version")!=1&&root.optInt("version")!=2))throw new IOException("Unbekanntes Einstellungsformat");
         JSONObject values=root.getJSONObject("settings");
         validateValues(values,false);
         JSONArray profiles=null;String active="";
         if(root.getInt("version")==2){profiles=root.getJSONArray("profiles");active=root.getString("active_profile");validateProfiles(profiles,active);}
-        importing=true;main.removeCallbacks(saveTask);
-        try{synchronized(ScooterProfiles.class){if(BmsMonitorService.running)throw new IOException("Zuerst Bereitschaft beenden");SharedPreferences.Editor editor=prefs.edit();
+        synchronized(ScooterProfiles.class){if(BmsMonitorService.running)throw new IOException("Zuerst Bereitschaft beenden");SharedPreferences.Editor editor=prefs.edit();
             if(profiles!=null){for(String key:prefs.getAll().keySet())if(ScooterProfiles.scoped(key))editor.remove(key);
                 for(int i=0;i<profiles.length();i++)if(profiles.getJSONObject(i).getString("id").equals(active))ScooterProfiles.put(editor,profiles.getJSONObject(i).getJSONObject("settings"));
                 editor.putString(ScooterProfiles.LIST,profiles.toString()).putString(ScooterProfiles.ACTIVE,active);
@@ -80,7 +83,7 @@ final class StorageFolders {
                 for(String key:KEYS)if(values.has(key)){Object v=values.get(key);if(v instanceof Boolean)editor.putBoolean(key,(Boolean)v);else editor.putString(key,(String)v);}
             }
             if(!editor.commit())throw new IOException("Einstellungen konnten nicht gespeichert werden");
-        }}finally{main.post(()->importing=false);}
+        }
     }
     static void validateProfiles(JSONArray profiles,String active)throws Exception{
         if(profiles.length()<1||profiles.length()>20)throw new IOException("1–20 Scooter-Profile erforderlich");Set<String> ids=new HashSet<>();boolean found=false;
@@ -138,3 +141,4 @@ final class StorageFolders {
     }
     void retryAsync(){worker.execute(()->{retry();save();});}
 }
+
