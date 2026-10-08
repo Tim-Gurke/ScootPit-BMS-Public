@@ -274,7 +274,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 clickText(activity.getWindow().getDecorView(),"Speichern");
                 org.json.JSONObject exported=StorageFolders.install(getTargetContext()).snapshot();StorageFolders.validateValues(exported.getJSONObject("settings"),false);
                 org.json.JSONArray saved=new org.json.JSONArray(exported.getJSONObject("settings").getString("cockpit_board"));
-                if(saved.getJSONObject(0).getInt("unit_font")!=16||saved.getJSONObject(0).getInt("font")!=72||saved.getJSONObject(0).getInt("unit_position")!=2)throw new AssertionError("Unit size/position missing from backup");
+                if(saved.getJSONObject(2).getInt("unit_font")!=16||saved.getJSONObject(2).getInt("font")!=72||saved.getJSONObject(2).getInt("unit_position")!=2)throw new AssertionError("Unit size/position missing from backup");
                 if(!saved.getJSONObject(saved.length()-1).getString("image_data").equals(portablePhoto)||!saved.getJSONObject(saved.length()-2).getString("free_text").contains("T6e"))throw new AssertionError("Personal tiles absent from backup");
                 ScooterProfiles.add(prefs,"Foto-Kopie",true);
                 if(!prefs.getString("cockpit_board","").equals(saved.toString()))throw new AssertionError("Photo/text design not copied across profiles");
