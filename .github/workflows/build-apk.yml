@@ -119,7 +119,7 @@ jobs:
       - name: Publish release for a new app version
         if: github.ref == 'refs/heads/main'
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(sed -nE "s/^[[:space:]]*versionName[[:space:]]+['\"]([^'\"]+)['\"].*/\1/p" app/build.gradle | head -n 1)
           if [ -z "$VERSION" ]; then
