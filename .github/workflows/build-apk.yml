@@ -1,9 +1,11 @@
 name: Build ScootPit BMS APK
 
+
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+
 
 jobs:
   build:
@@ -86,7 +88,7 @@ jobs:
           from pathlib import Path
           config = Path('app/build.gradle').read_text()
           code = re.search(r'versionCode\s+(\d+)', config)[1]
-          version = re.search(r'versionName\s+"([^"]+)"', config)[1]
+          version = re.search(r"""versionName\s+['"]([^'"]+)['"]""", config)[1]
           badging = Path('/tmp/apk-version.txt').read_text()
           expected = f"name='de.wortmonster.jbdtrigger' versionCode='{code}' versionName='{version}'"
           if expected not in badging or 'application-debuggable' in badging:
