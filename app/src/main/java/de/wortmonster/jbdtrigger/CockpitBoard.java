@@ -149,7 +149,7 @@ final class CockpitBoard extends FrameLayout {
         JSONArray tiles=new JSONArray();
         try{
             tiles.put(position(standardTile("consumption_500m").put("display",2).put("scale_max",50).put("caption","Verbrauch · letzte 500 m").put("gauge_sweep",180).put("custom_colors",true).put("background","#00000000"),0,0,6,4));
-            tiles.put(position(standardTile("power").put("display",2).put("scale_max",2000).put("caption","Leistung").put("gauge_sweep",180).put("custom_colors",true).put("background","#00000000"),6,0,6,4));
+            tiles.put(position(standardTile("power").put("display",2).put("scale_max",1400).put("caption","Leistung").put("gauge_sweep",180).put("custom_colors",true).put("background","#00000000"),6,0,6,4));
             tiles.put(position(standardTile("speed").put("display",0).put("font",34).put("unit_font",18).put("caption","Geschwindigkeit"),0,4,6,2));
             tiles.put(position(standardTile("soc").put("display",1).put("show_note",false),6,4,6,2));
             tiles.put(position(standardTile("range").put("show_note",false),6,6,6,2));
