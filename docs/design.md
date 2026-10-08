@@ -1,14 +1,14 @@
-# Cockpit gestalten · 1.2.1
+# Cockpit gestalten · 1.3.2
 
 [← Übersicht](../README.md)
 
 ## Verbrauch und Leistung im Mittelpunkt
 
-Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m und die aktuelle elektrische Leistung. Im Editor sind Darstellung, Skalenmaximum, Farben und Kreisausschnitt von 90° bis 270° je Kachel einstellbar. 180° zeichnet einen echten Halbkreis; die Kreisgeometrie wird nicht zur Ellipse gestreckt. Die kleinere Geschwindigkeitskachel kann bei Bedarf ebenfalls als Instrument gestaltet werden.
+Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m und die aktuelle elektrische Leistung. Im Editor sind Darstellung, Skalenmaximum, Farben und Kreisausschnitt von 90° bis 270° je Kachel einstellbar. Den Messwert kannst du je Rundinstrument ausblenden oder zwischen mittiger, höherer und tieferer Position wählen. 180° zeichnet einen echten Halbkreis; die Kreisgeometrie wird nicht zur Ellipse gestreckt. Die kleinere Geschwindigkeitskachel kann bei Bedarf ebenfalls als Instrument gestaltet werden.
 
 ## Frei anordnen und überlagern
 
-**Einstellungen → Cockpit bearbeiten** öffnet das Raster mit 24 Spalten und 20-dp-Höheneinheiten. Kacheln lange drücken und ziehen, am Griff die Größe ändern oder genaue Position und Größe eingeben. **Überlappung erlauben** gibt die Platzierung über anderen Kacheln frei. **Ebene (unten → oben)** bestimmt, welche Kachel darüber dargestellt und bedient wird. **Lücken schließen** ordnet ohne Überlappungen neu.
+**Einstellungen → Cockpit bearbeiten** öffnet das Raster mit 24 Spalten und 20-dp-Höheneinheiten. Kacheln lange drücken und ziehen, am Griff die Größe ändern oder genaue Position und Größe eingeben. **Überlappung erlauben** gibt die Platzierung über anderen Kacheln frei. **Ebene (unten → oben)** bestimmt, welche Kachel darüber dargestellt und bedient wird. Bewusste Überlappungen bleiben beim Bearbeiten anderer Kacheln unverändert. **Lücken schließen** ordnet auf Wunsch ohne Überlappungen neu.
 
 Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transparenz sowie Innenabstand jeder Kachel separat einstellen. Ein Innenabstand von 0 erlaubt Schrift bis nahe an den Rahmen. Bild- und Freitextkacheln bleiben möglich. Farben werden sichtbar als Vorschau gezeigt; **Farbe auswählen / mischen** bietet Farbton, Sättigung und Helligkeit sowie optional einen Hex-Code.
 
