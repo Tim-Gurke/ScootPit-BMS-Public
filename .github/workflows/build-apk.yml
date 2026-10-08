@@ -126,29 +126,41 @@ jobs:
             echo "Could not read versionName from app/build.gradle." >&2
             exit 1
           fi
-          TAG="v${VERSION}"
-          NOTES="RELEASE-NOTES-${VERSION}.md"
+          TAG="v$VERSION"
+          NOTES="RELEASE-NOTES-$VERSION.md"
+          APK_NAME="ScootPit-BMS-v$VERSION.apk"
           if [ ! -f "$NOTES" ]; then
             echo "No $NOTES found; keeping the successful build as an artifact without publishing a release."
             exit 0
           fi
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; nothing to publish."
-            exit 0
-          fi
           cp "$NOTES" "dist/$NOTES"
+          cp dist/ScootPit-BMS.apk "dist/$APK_NAME"
           (
             cd dist
-            sha256sum ScootPit-BMS.apk > "SHA256SUMS-${VERSION}.txt"
-            zip -q "ScootPit-BMS-v${VERSION}-Paket.zip" ScootPit-BMS.apk signing-mode.txt "$NOTES" "SHA256SUMS-${VERSION}.txt"
+            sha256sum "$APK_NAME" > "SHA256SUMS-$VERSION.txt"
+            zip -q "ScootPit-BMS-v$VERSION-Paket.zip" "$APK_NAME" signing-mode.txt "$NOTES" "SHA256SUMS-$VERSION.txt"
           )
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            ASSET_NAMES=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+            gh release upload "$TAG" \
+              "dist/$APK_NAME" \
+              "dist/ScootPit-BMS-v$VERSION-Paket.zip" \
+              "dist/$NOTES" \
+              "dist/SHA256SUMS-$VERSION.txt" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+            if printf '%s\n' "$ASSET_NAMES" | grep -Fxq "ScootPit-BMS.apk"; then
+              gh release delete-asset "$TAG" "ScootPit-BMS.apk" --repo "$GITHUB_REPOSITORY" --yes
+            fi
+            echo "Updated the existing $TAG release assets."
+            exit 0
+          fi
           gh release create "$TAG" \
-            "dist/ScootPit-BMS.apk" \
-            "dist/ScootPit-BMS-v${VERSION}-Paket.zip" \
+            "dist/$APK_NAME" \
+            "dist/ScootPit-BMS-v$VERSION-Paket.zip" \
             "dist/$NOTES" \
-            "dist/SHA256SUMS-${VERSION}.txt" \
+            "dist/SHA256SUMS-$VERSION.txt" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "ScootPit BMS ${VERSION}" \
+            --title "ScootPit BMS $VERSION" \
             --notes-file "$NOTES" \
             --target "$GITHUB_SHA"
-
