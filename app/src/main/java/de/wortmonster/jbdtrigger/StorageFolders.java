@@ -95,7 +95,7 @@ final class StorageFolders {
             if(key.equals("weather_at")||key.equals("last_started_at")||key.equals("last_ended_at")){if(!(value instanceof Number)||((Number)value).doubleValue()<0)throw new IOException("Ungültiger Zeitpunkt");continue;}
             if(!(value instanceof String))throw new IOException("Ungültiger Wert: "+key);String text=(String)value;
             if((key.equals("cockpit_board")||key.equals("cockpit_board_landscape")||key.equals("cockpit_board_before_111")||key.equals("cockpit_board_before_121")||key.equals("cockpit_board_landscape_before_121"))){CockpitBoard.validate(new JSONArray(text));continue;}
-            if(key.equals("cockpit_design_version")){if(!text.matches("[0-9]+\\.[0-9]+\\.[0-9]+"))throw new IOException("Ungültige Designversion");continue;}
+            if(key.equals("cockpit_design_version")||key.equals("cockpit_board_landscape_version")){if(!text.matches("[0-9]+\\.[0-9]+\\.[0-9]+"))throw new IOException("Ungültige Designversion");continue;}
             if(key.equals("cockpit_layout")){JSONArray rows=new JSONArray(text);if(rows.length()<1||rows.length()>30)throw new IOException("Ungültiges altes Layout");for(int i=0;i<rows.length();i++){JSONArray tiles=rows.getJSONObject(i).getJSONArray("tiles");if(tiles.length()<1||tiles.length()>6)throw new IOException("Ungültige Zeile");}continue;}
             if(key.endsWith("color")||key.equals("app_background")||key.equals("tile_background")||key.equals("tile_text")||key.equals("background_gradient_start")||key.equals("background_gradient_end")){android.graphics.Color.parseColor(text);continue;}
             if(key.equals("device_address")){if(!android.bluetooth.BluetoothAdapter.checkBluetoothAddress(text))throw new IOException("Ungültige BMS-Adresse");continue;}
