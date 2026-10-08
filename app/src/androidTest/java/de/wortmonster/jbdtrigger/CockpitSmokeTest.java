@@ -232,7 +232,7 @@ public class CockpitSmokeTest extends Instrumentation {
             android.app.AlertDialog menu=(android.app.AlertDialog)member(activity,"settingsDialog");
             if(!menu.isShowing())throw new AssertionError("Back did not return to settings");menu.dismiss();
             invoke(activity,"editLayout",new Class[0],new Object[0]);
-            invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{0});
+            invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{2});
             android.app.AlertDialog dialog=(android.app.AlertDialog)member(activity,"tileDialog");
             if(Double.parseDouble(inputAfterLabel(dialog.getWindow().getDecorView(),"Skalenmaximum (Balken / Rundinstrument)").getText().toString())!=22)throw new AssertionError("Gauge editor default scale");
             android.widget.EditText unitSize=inputAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Schriftgröße (8–80, leer = wie Wert)");
@@ -244,7 +244,12 @@ public class CockpitSmokeTest extends Instrumentation {
             inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");
             MetricTile gauge=findMetric(activity.getWindow().getDecorView(),"speed");gauge.reading("20","km/h",false);gauge.layout(0,0,320,360);
-            Bitmap rendered=Bitmap.createBitmap(320,360,Bitmap.Config.ARGB_8888);gauge.draw(new android.graphics.Canvas(rendered));
+            Bitmap rendered=Bitmap.createBitmap(320,360,Bitmap.Config.ARGB_8888);
+            // The compact speed tile defaults to a number; use a gauge only during this colour check.
+            int originalDisplay=gauge.config.optInt("display",0);
+            try{gauge.config.put("display",2);gauge.draw(new android.graphics.Canvas(rendered));}
+            catch(Exception e){throw new RuntimeException(e);}
+            finally{try{gauge.config.put("display",originalDisplay);}catch(Exception ignored){}}
             int fill=0,track=0;for(int y=0;y<360;y++)for(int x=0;x<320;x++){int pixel=rendered.getPixel(x,y);if(pixel==android.graphics.Color.parseColor("#26C6DA"))fill++;if(pixel==android.graphics.Color.parseColor("#AB47BC"))track++;}rendered.recycle();
             if(fill<10||track<10)throw new AssertionError("Independent instrument/scale colours not drawn");
             invoke(activity,"addTile",new Class[]{String.class},new Object[]{"free_text"});
