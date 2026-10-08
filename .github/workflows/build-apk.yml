@@ -3,7 +3,7 @@ name: Build ScootPit BMS APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, release-1.1.1 ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -58,6 +58,8 @@ jobs:
           if any(present) and not all(present):
               raise SystemExit('Signing configuration incomplete: provide all four APP signing secrets.')
           signed = all(present)
+          if not signed:
+              raise SystemExit('Official builds require the four APP signing secrets.')
           if signed:
               path = Path(os.environ['RUNNER_TEMP']) / 'scootpit-release.keystore'
               path.write_bytes(base64.b64decode(os.environ['APP_KEYSTORE_BASE64'], validate=True))
@@ -73,6 +75,23 @@ jobs:
           APP_KEY_ALIAS: ${{ secrets.APP_KEY_ALIAS }}
           APP_KEY_PASSWORD: ${{ secrets.APP_KEY_PASSWORD }}
         run: gradle assembleRelease
+      - name: Verify update signature and version
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk | tee /tmp/apk-signature.txt
+          grep -F 'Signer #1 certificate SHA-256 digest: c58abf26de59344a21efbc0576e391a36b6179724a0b4fad27a35de03de184fb' /tmp/apk-signature.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/release/app-release.apk > /tmp/apk-version.txt
+          sed -n '1p' /tmp/apk-version.txt
+          python3 - <<'PYTHON'
+          import re
+          from pathlib import Path
+          config = Path('app/build.gradle').read_text()
+          code = re.search(r'versionCode\s+(\d+)', config)[1]
+          version = re.search(r'versionName\s+"([^"]+)"', config)[1]
+          badging = Path('/tmp/apk-version.txt').read_text()
+          expected = f"name='de.wortmonster.jbdtrigger' versionCode='{code}' versionName='{version}'"
+          if expected not in badging or 'application-debuggable' in badging:
+              raise SystemExit('Release package or version verification failed.')
+          PYTHON
       - name: Prepare APK artifact
         env:
           SIGNED: ${{ steps.signing.outputs.signed }}
@@ -82,8 +101,8 @@ jobs:
             cp app/build/outputs/apk/release/app-release.apk dist/ScootPit-BMS.apk
             echo 'signed-release' > dist/signing-mode.txt
           else
-            cp app/build/outputs/apk/debug/app-debug.apk dist/ScootPit-BMS.apk
-            echo 'temporary-debug' > dist/signing-mode.txt
+            echo 'Refusing to publish an APK without the release signature.' >&2
+            exit 1
           fi
       - name: Remove temporary signing material
         if: always()
