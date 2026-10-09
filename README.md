@@ -16,9 +16,13 @@ Mehrere gespeicherte Scooter? Die App prüft erreichbare BMS nacheinander und ü
 
 Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Verbrauch der letzten 500 Meter und aktuelle elektrische Leistung stehen im Mittelpunkt. Akku, Restreichweite, Kilometer und Temperaturen ergänzen die Übersicht; GPS-Geschwindigkeit bleibt als kleinere Anzeige verfügbar.
 
-![Aktives ScootPit-Cockpit mit Akku, Restreichweite, Temperaturen und BMS-Status](docs/assets/screenshots/cockpit-livewerte.jpg)
+![ScootPit-Cockpit im dunklen Farbschema mit aktuellen Messwerten](docs/assets/screenshots/cockpit-dunkel.jpg)
 
-*Das Cockpit zeigt verbundene BMS-Werte, Bereitschaft und Statusmeldungen auf einen Blick.*
+<em>Das aktuelle Cockpit im dunklen Farbschema mit überlagerten Anzeigen und Statuswerten.</em>
+
+![ScootPit-Cockpit im hellen Farbschema mit aktuellen Messwerten](docs/assets/screenshots/cockpit-hell.jpg)
+
+<em>Dasselbe aktuelle Cockpit im hellen Farbschema.</em>
 
 ## Was bringt dir ScootPit?
 
@@ -36,13 +40,13 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Verbrauch der let
 ## Fahrtenbuch in Bildern
 
 <p><img src="docs/assets/screenshots/fahrtenbuch-route.jpg" width="260" alt="Fahrtkarte mit Route, grünem Startpunkt und rotem Zielpunkt"></p>
-*Die Karte zeigt die aufgezeichnete Route mit grünem Start und rotem Ziel. Sichtbare OpenStreetMap-Kartenausschnitte werden bei Bedarf online geladen.*
+<em>Die Karte zeigt die aufgezeichnete Route mit grünem Start und rotem Ziel. Sichtbare OpenStreetMap-Kartenausschnitte werden bei Bedarf online geladen.</em>
 
 <p><img src="docs/assets/screenshots/fahrtenbuch-statistik.jpg" width="260" alt="Fahrtstatistik mit Strecke, Zeit, Geschwindigkeit, Verbrauch, Leistung und Temperaturen"></p>
-*Die Einzelstatistik fasst Strecke, Fahr- und Standzeit, Energieverbrauch, Leistung sowie Temperaturwerte zusammen.*
+<em>Die Einzelstatistik fasst Strecke, Fahr- und Standzeit, Energieverbrauch, Leistung sowie Temperaturwerte zusammen.</em>
 
 <p><img src="docs/assets/screenshots/fahrtenbuch-ordnerimport.jpg" width="260" alt="Fahrtenbuch mit Zeitraumwahl sowie Import des kompletten Ordners oder einzelner Fahrten"></p>
-*Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.*
+<em>Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.</em>
 
 
 ## Neu in 1.4.3

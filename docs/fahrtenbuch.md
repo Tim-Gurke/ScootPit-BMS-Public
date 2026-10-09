@@ -15,7 +15,7 @@ Für den vollständigen Bestand **Komplettes Fahrtenbuch aus Ordner importieren*
 
 ![Fahrtenbuch mit Import des kompletten Ordners und einzelner CSV-/GPX-Fahrten](assets/screenshots/fahrtenbuch-ordnerimport.jpg)
 
-*Die Ordnerauswahl übernimmt den vollständigen Fahrtenbestand; über **Alle** werden auch ältere Fahrten sichtbar.*
+<em>Die Ordnerauswahl übernimmt den vollständigen Fahrtenbestand; über <strong>Alle</strong> werden auch ältere Fahrten sichtbar.</em>
 
 ## Karte
 
@@ -23,7 +23,7 @@ Start ist grün mit S, Ziel rot mit Z. Verschieben mit dem Finger, zoomen per Ge
 
 ![Fahrtkarte mit Route, grünem Startpunkt und rotem Zielpunkt](assets/screenshots/fahrtenbuch-route.jpg)
 
-*Die Karte markiert den Start grün und das Ziel rot. Die Fahrtdatei bleibt auf dem Handy; online werden nur sichtbare Kartenkacheln angefragt.*
+<em>Die Karte markiert den Start grün und das Ziel rot. Die Fahrtdatei bleibt auf dem Handy; online werden nur sichtbare Kartenkacheln angefragt.</em>
 
 OpenStreetMap erhält IP-Adresse und angefragte Kartenausschnitte, keine Fahrtdatei. [OpenStreetMap-Lizenz und Mitwirkende](https://www.openstreetmap.org/copyright), [Kachelnutzung](https://operations.osmfoundation.org/policies/tiles/).
 ## Statistiken auswählen
@@ -36,7 +36,7 @@ Die Diagramme zeigen Geschwindigkeit, elektrische Leistung und GPS-Höhe über d
 
 ![Fahrtstatistik mit Strecke, Fahr- und Standzeit, Verbrauch, Leistung und Temperaturen](assets/screenshots/fahrtenbuch-statistik.jpg)
 
-*Die Einzelansicht fasst die aufgezeichneten Kennwerte der Fahrt zusammen.*
+<em>Die Einzelansicht fasst die aufgezeichneten Kennwerte der Fahrt zusammen.</em>
 ## Zeitraum auswerten
 
 **Zeitraum auswerten / Fahrten vergleichen** zeigt Anzahl, Summen und passende ausgewählte Kennwerte. Kilometer pro Tag werden mit Balken visualisiert. Einzelne Fahrten sind darunter mit Strecke, Dauer und – je nach Auswahl – Verbrauch und Höchstgeschwindigkeit vergleichbar. Anklicken öffnet wieder die Fahrtansicht. Statistiken funktionieren ohne Internet.

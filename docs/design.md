@@ -1,4 +1,4 @@
-# Cockpit gestalten · 1.4.2
+# Cockpit gestalten
 
 [← Übersicht](../README.md)
 
@@ -20,11 +20,11 @@ Der Appkopf integriert Appname und antippbaren Profilnamen, Fahrtenbuch und Zahn
 
 ![Individuell angeordnetes Cockpit im dunklen Farbschema](assets/screenshots/cockpit-dunkel.jpg)
 
-*Dunkles Design mit frei angeordneten Anzeigen und klaren orangefarbenen Akzenten.*
+<em>Das aktuelle Cockpit im dunklen Farbschema mit überlagerten Anzeigen und Statuswerten.</em>
 
 ![Dasselbe individuell angeordnete Cockpit im hellen Farbschema](assets/screenshots/cockpit-hell.jpg)
 
-*Das helle Schema nutzt Blau als Akzentfarbe und lässt das persönliche Layout bestehen.*
+<em>Dasselbe aktuelle Cockpit im hellen Farbschema.</em>
 
 ## Vorhandene Layouts
 
