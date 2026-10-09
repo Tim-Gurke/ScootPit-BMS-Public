@@ -168,6 +168,12 @@ final class CockpitBoard extends FrameLayout {
         }catch(Exception e){throw new IllegalStateException(e);}
         return tiles;
     }
+    static JSONArray standardDefaults(android.content.Context context,String key){
+        try(java.io.InputStream in=context.getAssets().open("default_cockpit_settings.json")){
+            java.io.ByteArrayOutputStream buffer=new java.io.ByteArrayOutputStream();byte[] chunk=new byte[4096];int count;while((count=in.read(chunk))!=-1)buffer.write(chunk,0,count);
+            JSONObject root=new JSONObject(new String(buffer.toByteArray(),java.nio.charset.StandardCharsets.UTF_8));JSONArray layout=root.getJSONArray(key);validate(layout);return layout;
+        }catch(Exception e){android.util.Log.e("ScootPit","Standardlayout konnte nicht geladen werden: "+key,e);return defaults();}
+    }
     private static JSONObject standardTile(String key)throws Exception{return CockpitLayout.tile(key).put("arrangement",2);}
     private static JSONArray fromRows(JSONArray rows){
         JSONArray result=new JSONArray();int y=3;

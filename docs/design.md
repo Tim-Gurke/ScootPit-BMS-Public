@@ -1,4 +1,4 @@
-# Cockpit gestalten · 1.4.1
+# Cockpit gestalten · 1.4.2
 
 [← Übersicht](../README.md)
 
@@ -35,4 +35,4 @@ Das Antippen der Tourenzähler-Kachel öffnet im normalen Cockpit die Rückfrage
 
 ## Standardgestaltung ab 1.4.1
 
-Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie Hoch- und Querformatlayout aus der bereinigten Cockpit-Voreinstellung. Bestehende Installationen und Profileinstellungen werden dabei nicht überschrieben.
+Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie Hoch- und Querformatlayout aus der bereinigten Cockpit-Voreinstellung. **Standardlayout** stellt diese Layouts einschließlich der bewusst überlappenden Instrumente wieder her. Bestehende Installationen und Profileinstellungen werden bei der Installation nicht überschrieben.

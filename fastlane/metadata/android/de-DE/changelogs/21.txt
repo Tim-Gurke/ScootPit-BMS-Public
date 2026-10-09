@@ -1,0 +1,2 @@
+Neu in 1.4.2:
+„Standardlayout“ stellt jetzt das überlappende ScootPit-Design wieder her. Hoch- und Querformat haben jeweils ihre passende Voreinstellung.

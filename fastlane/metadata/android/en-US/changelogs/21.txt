@@ -1,0 +1,2 @@
+New in 1.4.2:
+“Standard layout” now restores the overlapping ScootPit design. Portrait and landscape each use their matching preset.

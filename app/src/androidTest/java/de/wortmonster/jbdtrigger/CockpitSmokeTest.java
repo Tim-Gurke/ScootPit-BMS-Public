@@ -31,6 +31,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(prefs.contains("device_address")||!contains(activity.getWindow().getDecorView(),"BMS auswählen"))throw new AssertionError("Fresh installation must require BMS selection");
                 try{CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());CockpitBoard.validate(board.tiles);
                     if(board.tiles.length()!=22||!board.tiles.getJSONObject(0).getString("key").equals("consumption_500m")||!board.tiles.getJSONObject(0).getString("background").equals("#00000000"))throw new AssertionError("Screenshot default layout");
+                    if(!board.tiles.toString().equals(CockpitBoard.standardDefaults(activity,"cockpit_board").toString())||CockpitBoard.standardDefaults(activity,"cockpit_board_landscape").length()!=25)throw new AssertionError("Standardlayout must use the saved overlapping portrait and landscape presets");
                     org.json.JSONObject leadGauge=board.tiles.getJSONObject(0),powerGauge=board.tiles.getJSONObject(1);
                     if(leadGauge.getInt("w")!=24||leadGauge.getInt("h")!=14||leadGauge.optInt("gauge_sweep")!=240||leadGauge.optInt("display")!=2||powerGauge.optInt("display")!=2||powerGauge.optInt("gauge_sweep")!=240)throw new AssertionError("User cockpit gauges");
                     if(!prefs.getBoolean("background_gradient_enabled",false)||!prefs.getString("accent_color","").equals("#FF981F")||!prefs.getString("background_gradient_start","").equals("#14232D")||!prefs.getString("background_gradient_end","").equals("#071018"))throw new AssertionError("User cockpit color defaults");
@@ -511,7 +512,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.4.1".equals(version))throw new AssertionError("Official version");
+                if(!"1.4.2".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
@@ -552,5 +553,4 @@ public class CockpitSmokeTest extends Instrumentation {
         try(FileOutputStream out=new FileOutputStream(new File(dir,name))){bitmap.compress(Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();
     }
 }
-
 
