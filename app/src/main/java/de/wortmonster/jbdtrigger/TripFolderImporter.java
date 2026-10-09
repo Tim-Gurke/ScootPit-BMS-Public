@@ -30,7 +30,7 @@ final class TripFolderImporter {
         Map<String,Entry> byPath=new HashMap<>();for(Entry e:entries)byPath.put(e.path,e);
         List<RideFile> candidates=new ArrayList<>();int skipped=0;long[] budget={0};
         for(Entry e:entries){if(!e.name.toLowerCase(Locale.ROOT).endsWith(".json"))continue;
-            JSONObject metadata;try{metadata=new JSONObject(read(context,tree,e.id,1024*1024,budget));}catch(Exception invalid){continue;}
+            JSONObject metadata;try{metadata=new JSONObject(new String(read(context,tree,e.id,1024*1024,budget),StandardCharsets.UTF_8));}catch(Exception invalid){continue;}
             if(!metadata.has("started_at")||!metadata.has("ended_at")||!metadata.has("distance_m"))continue;
             String stem=e.name.substring(0,e.name.length()-5),base=parent(e.path);Entry csv=byPath.get(join(base,stem+".csv")),gpx=byPath.get(join(base,stem+".gpx"));
             if(csv==null){skipped++;continue;}
