@@ -14,7 +14,7 @@ Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transpar
 
 ## Skalenfarben
 
-Balken und Rundinstrumente können je Kachel ein- oder mehrfarbig dargestellt werden. Wähle zwei oder drei Farben und lege mit Schiebereglern die Schwelle für die hohe und niedrige Vollfarbe fest. Dazwischen blendet ScootPit stufenlos; bei drei Farben liegt die Mittelfarbe in der Mitte. Farben und Schwellen werden im jeweiligen Scooter-Layout gespeichert.
+Balken und Rundinstrumente können je Kachel einfarbig, zweifarbig oder dreifarbig dargestellt werden. Anfangsfarbe und Endfarbe sind frei wählbar; im Dreifarbenmodus ist auch die Mittelfarbe wählbar. Schieberegler legen fest, bis zu welchem Wert die Anfangsfarbe und ab welchem Wert die Endfarbe voll erscheint. Dazwischen blendet ScootPit stufenlos. Farben und Schwellen werden im jeweiligen Scooter-Layout gespeichert.
 
 ## Helles und dunkles Design
 

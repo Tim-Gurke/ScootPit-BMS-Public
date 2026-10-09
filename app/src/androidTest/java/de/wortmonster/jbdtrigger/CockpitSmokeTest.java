@@ -244,9 +244,9 @@ public class CockpitSmokeTest extends Instrumentation {
             if(!dialog.isShowing())throw new AssertionError("Invalid unit font accepted");unitSize.setText("16");
             spinnerAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Position").setSelection(2);
             spinnerAfterLabel(dialog.getWindow().getDecorView(),"Farbverlauf für Balken und Rundinstrument").setSelection(2);
-            inputAfterLabel(dialog.getWindow().getDecorView(),"Farbe bei hohem Wert (#RRGGBB)").setText("#00FF00");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Endfarbe am Skalenende / hoher Wert (#RRGGBB)").setText("#00FF00");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Mittelfarbe (#RRGGBB)").setText("#FF8000");
-            inputAfterLabel(dialog.getWindow().getDecorView(),"Farbe bei niedrigem Wert (#RRGGBB)").setText("#FF0000");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Startfarbe am Skalenanfang / niedriger Wert (#RRGGBB)").setText("#FF0000");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Instrument / Balken: Farbe (#RRGGBB)").setText("#26C6DA");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");

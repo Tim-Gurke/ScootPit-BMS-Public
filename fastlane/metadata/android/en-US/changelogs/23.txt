@@ -1,4 +1,4 @@
 New in 1.5.0:
-- Custom two- or three-color scale gradients for gauges and bars
-- Choose colors and thresholds for smooth transitions
+- Custom start, middle, and end colors for scale gradients
+- Choose thresholds for smooth transitions
 - Set live consumption distance per scooter from 100 to 1000 m

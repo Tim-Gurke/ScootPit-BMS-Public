@@ -51,7 +51,7 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch ein
 
 ## Neu in 1.5.0
 
-Skalen von Balken und Rundinstrumenten lassen sich pro Kachel einfarbig, zweifarbig oder dreifarbig gestalten. Farben sind frei wählbar; Schieberegler legen fest, ab welchem Prozentwert die obere Farbe voll gilt und bis zu welchem Wert die untere Farbe voll gilt. Dazwischen verläuft der Übergang stufenlos. Der Verbrauch der letzten Strecke lässt sich für jeden Scooter zwischen 100 und 1000 m einstellen.
+Skalen von Balken und Rundinstrumenten lassen sich pro Kachel einfarbig, zweifarbig oder dreifarbig gestalten. Anfangsfarbe und Endfarbe sind frei wählbar; im Dreifarbenmodus kommt eine frei wählbare Mittelfarbe hinzu. Schieberegler legen fest, bis zu welchem Prozentwert die Anfangsfarbe und ab welchem Wert die Endfarbe voll angezeigt wird. Dazwischen verläuft der Übergang stufenlos. Der Verbrauch der letzten Strecke lässt sich für jeden Scooter zwischen 100 und 1000 m einstellen.
 
 ## Neu in 1.4.3
 
