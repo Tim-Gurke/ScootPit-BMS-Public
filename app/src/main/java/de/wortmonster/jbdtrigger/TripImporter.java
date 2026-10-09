@@ -32,7 +32,7 @@ final class TripImporter {
         if(points.size()<2)throw new IOException("Die Datei enthält weniger als zwei gültige GPS-Punkte.");
         points.sort(Comparator.comparingLong(a->a.time));
         String digest=sha256(bytes);File folder=folder(context,prefs);if(!folder.exists()&&!folder.mkdirs())throw new IOException("Fahrtenordner konnte nicht angelegt werden.");
-        File[] old=folder.listFiles((dir,file)->file.endsWith(".json"));if(old!=null)for(File f:old)try{if(digest.equals(new JSONObject(read(f)).optString("import_source_sha256")))throw new IOException("Diese Fahrt wurde bereits importiert.");}catch(IOException e){if(e.getMessage()!=null&&e.getMessage().contains("bereits importiert"))throw e;}catch(Exception ignored){}
+        File[] old=folder.listFiles((dir,file)->file.endsWith(".json"));if(old!=null)for(File f:old)try{if(digest.equals(new JSONObject(new String(read(f),StandardCharsets.UTF_8)).optString("import_source_sha256")))throw new IOException("Diese Fahrt wurde bereits importiert.");}catch(IOException e){if(e.getMessage()!=null&&e.getMessage().contains("bereits importiert"))throw e;}catch(Exception ignored){}
         Stats stats=stats(points);String stamp=new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss",Locale.ROOT).format(new Date(stats.start));
         String stem="ScootPit_import_"+stamp+"_"+digest.substring(0,8);File csvFile=new File(folder,stem+".csv"),gpxFile=new File(folder,stem+".gpx"),jsonFile=new File(folder,stem+".json");
         String csvText=csvText(points);write(csvFile,csvText.getBytes(StandardCharsets.UTF_8));

@@ -114,11 +114,11 @@ public class MainActivity extends Activity {
         if(prefs.contains(ScooterProfiles.LIST)||prefs.contains("cockpit_board")||prefs.contains("cockpit_layout"))return;
         try(java.io.InputStream in=getAssets().open("default_cockpit_settings.json")){
             java.io.ByteArrayOutputStream buffer=new java.io.ByteArrayOutputStream();byte[] chunk=new byte[4096];int count;while((count=in.read(chunk))!=-1)buffer.write(chunk,0,count);byte[] bytes=buffer.toByteArray();if(bytes.length==0)return;
-            JSONObject root=new JSONObject(new String(bytes,0,n,java.nio.charset.StandardCharsets.UTF_8));JSONObject settings=root.getJSONObject("settings");
+            JSONObject root=new JSONObject(new String(bytes,java.nio.charset.StandardCharsets.UTF_8));JSONObject settings=root.getJSONObject("settings");
             JSONArray portrait=root.getJSONArray("cockpit_board"),landscape=root.getJSONArray("cockpit_board_landscape");
             CockpitBoard.validate(portrait);CockpitBoard.validate(landscape);
             SharedPreferences.Editor edit=prefs.edit().putString("cockpit_board",portrait.toString()).putString("cockpit_board_landscape",landscape.toString()).putString("cockpit_design_version",root.optString("cockpit_design_version","1.2.1")).putString("cockpit_board_landscape_version",root.optString("cockpit_board_landscape_version","1.2.1"));
-            for(String key:settings.keySet()){Object value=settings.get(key);if(value instanceof Boolean)edit.putBoolean(key,(Boolean)value);else if(value instanceof String)edit.putString(key,(String)value);}
+            java.util.Iterator<String> settingKeys=settings.keys();while(settingKeys.hasNext()){String key=settingKeys.next();Object value=settings.get(key);if(value instanceof Boolean)edit.putBoolean(key,(Boolean)value);else if(value instanceof String)edit.putString(key,(String)value);}
             if(!edit.commit())throw new java.io.IOException("Standard-Cockpit konnte nicht gespeichert werden");
         }catch(Exception e){android.util.Log.e("ScootPit","Standard-Cockpit konnte nicht geladen werden",e);}
     }
