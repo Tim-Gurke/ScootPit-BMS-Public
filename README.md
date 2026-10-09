@@ -4,6 +4,8 @@
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
+**ScootPit – für alle, die ihren Roller überwachen wollen, ohne selbst überwacht zu werden.**
+
 **Version 1.3.2 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
@@ -68,7 +70,6 @@ Vorhandene Profile, Kilometer, Layouts und Fahrten bleiben bei einem kompatiblen
 Die App speichert Fahrtdateien, Profile und persönliche Bilder lokal und überträgt sie nicht an GitHub. Wetterdaten sind optional: Dafür werden gerundete Standortkoordinaten bei automatischen Aktualisierungen höchstens alle 15 Minuten an Open-Meteo gesendet; Antippen einer Temperaturkachel kann zusätzlich eine manuelle Abfrage auslösen. Beim Öffnen einer Karte werden die sichtbaren Hintergrundkacheln von OpenStreetMap geladen; der Anbieter erhält deine IP-Adresse und die angefragten Kartenausschnitte. Die Route selbst wird lokal gezeichnet, die Fahrtdatei wird nicht hochgeladen. Statistiken benötigen kein Internet.
 
 Der Quellcode enthält keine persönlichen Geräteadressen, Fahrtdateien oder Signierschlüssel. **ScootPit** verbindet **Scooter** und **Cockpit**; **BMS** steht für Batteriemanagementsystem.
-
 
 ## Lizenz
 
