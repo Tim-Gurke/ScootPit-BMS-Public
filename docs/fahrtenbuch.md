@@ -13,9 +13,17 @@ Für eine einzelne Route **Einzelne Fahrt aus CSV oder GPX importieren** wählen
 
 Für den vollständigen Bestand **Komplettes Fahrtenbuch aus Ordner importieren** wählen und danach den Scooter-Fahrtenordner auswählen. ScootPit liest Metadaten (`.json`), CSV-Aufzeichnungen und vorhandene GPX-Dateien; Unterordner werden mit durchsucht. Der Ordner kann direkt aus der von ScootPit verwendeten Fahrtenbuch-Sicherung stammen. Die importierten Fahrten werden dem gerade aktiven Scooter-Profil zugeordnet. Bestehende Fahrten werden nicht ersetzt; bereits vorhandene Fahrten werden anhand von Startzeit, Endzeit und CSV-Inhalt erkannt und übersprungen. Unterstützt werden bis zu 5.000 Dateien, höchstens 32 MB je Datei und 512 MB insgesamt. Danach **Alle** öffnen, um auch ältere importierte Fahrten anzuzeigen.
 
+![Fahrtenbuch mit Import des kompletten Ordners und einzelner CSV-/GPX-Fahrten](assets/screenshots/fahrtenbuch-ordnerimport.jpg)
+
+*Die Ordnerauswahl übernimmt den vollständigen Fahrtenbestand; über **Alle** werden auch ältere Fahrten sichtbar.*
+
 ## Karte
 
 Start ist grün mit S, Ziel rot mit Z. Verschieben mit dem Finger, zoomen per Geste oder +/−, mit **Route** wieder die gesamte Strecke einpassen. Die Route wird auf dem Handy gezeichnet. Nur sichtbare OpenStreetMap-Hintergrundkacheln werden aus dem Internet geladen und zwischengespeichert. Bei fehlendem Internet bleibt die Route auf einem einfachen Hintergrund sichtbar; bereits vorhandene Kartenkacheln können aus dem Cache erscheinen. Es gibt keinen Download ganzer Offline-Gebiete.
+
+![Fahrtkarte mit Route, grünem Startpunkt und rotem Zielpunkt](assets/screenshots/fahrtenbuch-route.jpg)
+
+*Die Karte markiert den Start grün und das Ziel rot. Die Fahrtdatei bleibt auf dem Handy; online werden nur sichtbare Kartenkacheln angefragt.*
 
 OpenStreetMap erhält IP-Adresse und angefragte Kartenausschnitte, keine Fahrtdatei. [OpenStreetMap-Lizenz und Mitwirkende](https://www.openstreetmap.org/copyright), [Kachelnutzung](https://operations.osmfoundation.org/policies/tiles/).
 ## Statistiken auswählen
@@ -25,6 +33,10 @@ OpenStreetMap erhält IP-Adresse und angefragte Kartenausschnitte, keine Fahrtda
 Durchschnittsgeschwindigkeit bezieht sich auf die Fahrzeit in Bewegung. Verbrauch = Wh je gefahrenem Kilometer. Leistung ist elektrisch am BMS gemessen. Temperaturen sind gespeicherte Fahrtmittelwerte; Höhe und Anstieg bleiben GPS-Schätzungen. Bei alten Aufzeichnungen ohne gespeicherte Zeitaufteilung kann sie für die Einzelansicht aus vorhandenen CSV-Punkten angenähert werden.
 
 Die Diagramme zeigen Geschwindigkeit, elektrische Leistung und GPS-Höhe über die Zeit seit Fahrtbeginn. Eine fehlende Messung wird nicht als erfundener Nullwert gezeichnet. Lange Aufzeichnungen werden für die Darstellung ausgedünnt.
+
+![Fahrtstatistik mit Strecke, Fahr- und Standzeit, Verbrauch, Leistung und Temperaturen](assets/screenshots/fahrtenbuch-statistik.jpg)
+
+*Die Einzelansicht fasst die aufgezeichneten Kennwerte der Fahrt zusammen.*
 ## Zeitraum auswerten
 
 **Zeitraum auswerten / Fahrten vergleichen** zeigt Anzahl, Summen und passende ausgewählte Kennwerte. Kilometer pro Tag werden mit Balken visualisiert. Einzelne Fahrten sind darunter mit Strecke, Dauer und – je nach Auswahl – Verbrauch und Höchstgeschwindigkeit vergleichbar. Anklicken öffnet wieder die Fahrtansicht. Statistiken funktionieren ohne Internet.

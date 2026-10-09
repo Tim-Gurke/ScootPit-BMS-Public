@@ -12,10 +12,6 @@ Das Raster hat **24 Spalten und 20-dp-Höheneinheiten**: Breite 24 = ganze Zeile
 
 Bis zu 100 Kacheln, individuelle Höhen von 40–480 dp. Im Kacheleditor **Überlappung erlauben** aktivieren, um Kacheln gezielt übereinander anzuordnen. **Ebene (unten → oben)** legt die Zeichen- und Bedienreihenfolge fest. Ohne erlaubte Überlappung weichen betroffene Kacheln nach unten aus. Bestehende Überlappungen bleiben beim Bearbeiten einer anderen Kachel unverändert. **Lücken schließen** ordnet das Layout bewusst ohne Überlappungen neu.
 
-![Frei gestaltetes Cockpit mit großem Rundinstrument und überlagertem Leistungsinstrument](assets/screenshots/rundinstrumente-layout.jpg)
-
-*Ein großes Verbrauchsinstrument, ein eingebettetes Leistungsinstrument sowie Akku und Restreichweite zeigen, wie sich Kacheln kombinieren lassen.*
-
 Messkacheln unterstützen **Zahl, Balken und Rundinstrument** mit einstellbarem Skalenmaximum. Rundinstrumente verwenden einen echten Kreis mit wählbarem **Kreisausschnitt von 90°–270°**, standardmäßig 180° als Halbkreis. Der Zahlenwert lässt sich pro Instrument ausblenden und mittig, höher oder tiefer positionieren. Verbrauch und Leistung sind in der Voreinstellung rund, Akku mit Balken; Geschwindigkeit steht kompakt daneben. Anordnung: automatisch, einzeilig oder untereinander. Überschrift und Zusatztext sind einzeln ausblendbar. Eigene Zeilenumbrüche und maximal 1–3 Überschriftzeilen werden berücksichtigt; Werte passen ihre Schrift an die verfügbare Fläche an. Bei zu kleinen Rundkacheln erscheint eine kompakte Balkenansicht.
 
 Bereitschaft starten/beenden, manuelles Fahrtende, BMS-Lastausgang und Log sind ebenfalls verschiebbare Kacheln. Eigene Button-Beschriftungen erscheinen in der Ansicht. Start bleibt grün, Ende rot. Das zunächst eingeklappte Log besitzt einen eigenen Scrollbereich und zeigt maximal 60 Zustandswechsel.
@@ -53,9 +49,6 @@ Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** un
 
 Die Grundeinstellung zeigt oben zwei transparente Halbkreisinstrumente für 500-m-Verbrauch und Leistung. Darunter folgen kompakte Geschwindigkeit, Akku und Restreichweite sowie Zeitwerte, Kilometerzähler, Bild, BMS-Lastausgang und Temperaturen. Alle Werte und Aktionen bleiben frei platzierbar. Das Log nimmt unten die gesamte Breite ein. **Standardlayout → Zurücksetzen → Speichern** übernimmt diese Anordnung.
 
-![Standardcockpit mit Verbrauchs- und Leistungsinstrumenten sowie Kilometer- und Zeitkacheln](assets/screenshots/cockpit-standard.jpg)
-
-*Das Standardlayout ordnet die beiden Rundinstrumente über Geschwindigkeit, Akku, Restreichweite und weiteren Fahrtdaten an.*
 
 Zurück aus einem Einstellungs-Untermenü führt zum Hauptmenü der Einstellungen. Beschriftungen von Schaltflächen behalten ihre Groß-/Kleinschreibung.
 

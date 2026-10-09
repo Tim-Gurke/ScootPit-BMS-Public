@@ -32,6 +32,19 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Verbrauch der let
 - **Samsung-Routinen nutzen:** Editierbare Fahrtstart-/Fahrtende-Nachrichten können eingerichtete Routinen zum Umschalten des Energiesparmodus auslösen. Die App richtet die Routinen nicht selbst ein.
 - **Daten behalten:** Fahrten und Einstellungen lokal speichern, zusätzliche Sicherungsordner auswählen. Keine Anmeldung erforderlich.
 
+
+## Fahrtenbuch in Bildern
+
+<p><img src="docs/assets/screenshots/fahrtenbuch-route.jpg" width="260" alt="Fahrtkarte mit Route, grünem Startpunkt und rotem Zielpunkt"></p>
+*Die Karte zeigt die aufgezeichnete Route mit grünem Start und rotem Ziel. Sichtbare OpenStreetMap-Kartenausschnitte werden bei Bedarf online geladen.*
+
+<p><img src="docs/assets/screenshots/fahrtenbuch-statistik.jpg" width="260" alt="Fahrtstatistik mit Strecke, Zeit, Geschwindigkeit, Verbrauch, Leistung und Temperaturen"></p>
+*Die Einzelstatistik fasst Strecke, Fahr- und Standzeit, Energieverbrauch, Leistung sowie Temperaturwerte zusammen.*
+
+<p><img src="docs/assets/screenshots/fahrtenbuch-ordnerimport.jpg" width="260" alt="Fahrtenbuch mit Zeitraumwahl sowie Import des kompletten Ordners oder einzelner Fahrten"></p>
+*Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.*
+
+
 ## Neu in 1.4.3
 
 Das vollständige ScootPit-Fahrtenbuch lässt sich aus einem ausgewählten Ordner importieren. Fahrt-Metadaten und CSV-/GPX-Dateien werden dem aktiven Scooter zugeordnet; vorhandene Fahrten bleiben erhalten und Duplikate werden übersprungen. Die neue Ansicht **Alle** zeigt den gesamten importierten Zeitraum.
