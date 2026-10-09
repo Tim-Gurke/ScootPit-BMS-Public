@@ -33,6 +33,7 @@ final class JournalUi {
         LinearLayout l=column();l.addView(text("Scooter: "+ScooterProfiles.name(prefs)));
         LinearLayout range=new LinearLayout(activity);
         range.addView(button("Letzte 7 Tage",()->reload(7)),new LinearLayout.LayoutParams(0,-2,1));range.addView(button("Letzte 30 Tage",()->reload(30)),new LinearLayout.LayoutParams(0,-2,1));l.addView(range);
+        l.addView(button("Fahrt aus CSV oder GPX importieren",()->{if(activity instanceof MainActivity)((MainActivity)activity).chooseTripImport(this);}));
         TextView loading=text("Fahrten werden geladen …");l.addView(loading);listDialog=dialog("Fahrtenbuch · "+days+" Tage",l);
         AlertDialog target=listDialog;String profile=prefs.getString(ScooterProfiles.ACTIVE,"");final List<TripJournal.Ride> rides=new ArrayList<>();
         StorageFolders.install(activity).run(()->{try{rides.addAll(TripJournal.list(activity,prefs,days));}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{
@@ -44,6 +45,7 @@ final class JournalUi {
             for(TripJournal.Ride ride:rides)l.addView(button(date(ride.start)+"\n"+format(ride.meters/1000,"km")+" · "+duration(ride.end-ride.start),()->openRide(ride)));
         });
     }
+    void refreshAfterImport(){if(listDialog!=null)listDialog.dismiss();show();}
     private void reload(int amount){days=amount;if(listDialog!=null)listDialog.dismiss();show();}
     private void openRide(TripJournal.Ride ride){
         LinearLayout l=column();l.addView(text(date(ride.start)+" – "+date(ride.end)));
@@ -113,3 +115,4 @@ final class JournalUi {
         }catch(Exception e){Toast.makeText(activity,e.getMessage(),Toast.LENGTH_LONG).show();}
     }
 }
+

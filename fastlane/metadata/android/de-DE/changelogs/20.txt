@@ -1,0 +1,5 @@
+Neu in 1.4.1:
+• Fahrtenbuchimport aus CSV und GPX mit GPS-Route
+• Rundinstrumente stufenlos drehen; Messwerte bleiben waagerecht
+• ScootPit-Cockpitdesign als Voreinstellung bei Neuinstallationen
+• Vorhandene Profile und ihre Cockpiteinstellungen bleiben erhalten

@@ -507,7 +507,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.3.2".equals(version))throw new AssertionError("Official version");
+                if(!"1.4.1".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
@@ -548,3 +548,4 @@ public class CockpitSmokeTest extends Instrumentation {
         try(FileOutputStream out=new FileOutputStream(new File(dir,name))){bitmap.compress(Bitmap.CompressFormat.PNG,100,out);}bitmap.recycle();
     }
 }
+

@@ -1,10 +1,10 @@
-# Cockpit gestalten · 1.3.2
+# Cockpit gestalten · 1.4.1
 
 [← Übersicht](../README.md)
 
 ## Verbrauch und Leistung im Mittelpunkt
 
-Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m und die aktuelle elektrische Leistung. Im Editor sind Darstellung, Skalenmaximum, Farben und Kreisausschnitt von 90° bis 270° je Kachel einstellbar. Den Messwert kannst du je Rundinstrument ausblenden oder zwischen mittiger, höherer und tieferer Position wählen. 180° zeichnet einen echten Halbkreis; die Kreisgeometrie wird nicht zur Ellipse gestreckt. Die kleinere Geschwindigkeitskachel kann bei Bedarf ebenfalls als Instrument gestaltet werden.
+Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m und die aktuelle elektrische Leistung. Im Editor sind Darstellung, Skalenmaximum, Farben und Kreisausschnitt von 90° bis 270° je Kachel einstellbar. Den Messwert kannst du je Rundinstrument ausblenden oder zwischen mittiger, höherer und tieferer Position wählen. Ein zusätzlicher Drehregler richtet den Bogen frei aus; die Messwerte bleiben waagerecht. 180° zeichnet einen echten Halbkreis; die Kreisgeometrie wird nicht zur Ellipse gestreckt. Die kleinere Geschwindigkeitskachel kann bei Bedarf ebenfalls als Instrument gestaltet werden.
 
 ## Frei anordnen und überlagern
 
@@ -31,3 +31,8 @@ Der Appkopf integriert Appname und antippbaren Profilnamen, Fahrtenbuch und Zahn
 Beim ersten Öffnen eines Profils wird das Hochformat auf 1.2.1 umgestellt; Fotos, Texte, persönliche Kacheleinstellungen und Zusatzkacheln werden übernommen. Die vorherige Anordnung steht als `cockpit_board_before_121` in der exportierbaren Einstellungssicherung. Ein gespeichertes Querformat wird auf das doppelt so feine Raster umgerechnet und ebenfalls vorher gesichert. Anschließend lässt sich alles frei ändern.
 
 Das Antippen der Tourenzähler-Kachel öffnet im normalen Cockpit die Rückfrage zum Zurücksetzen. Temperaturkacheln fordern beim Antippen eine Aktualisierung an. Im Editor öffnet das Antippen jeweils die Kacheleinstellungen.
+
+
+## Standardgestaltung ab 1.4.1
+
+Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie Hoch- und Querformatlayout aus der bereinigten Cockpit-Voreinstellung. Bestehende Installationen und Profileinstellungen werden dabei nicht überschrieben.

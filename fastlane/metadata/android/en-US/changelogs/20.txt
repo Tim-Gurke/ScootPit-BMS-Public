@@ -1,0 +1,5 @@
+New in 1.4.1:
+• Import rides from CSV and GPX files, including GPS routes
+• Rotate round gauges smoothly while keeping readings horizontal
+• ScootPit dashboard design as the default for new installs
+• Existing profiles and dashboard settings are preserved

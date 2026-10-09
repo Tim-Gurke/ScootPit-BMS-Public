@@ -187,6 +187,7 @@ final class CockpitBoard extends FrameLayout {
     static JSONObject position(JSONObject t,int x,int y,int w,int h)throws Exception{return t.put("x",x*2).put("y",y*2).put("w",w*2).put("h",h*2);}
     private static void validateAppearance(JSONObject tile)throws Exception{
         if(tile.has("gauge_sweep")&&(tile.getInt("gauge_sweep")<90||tile.getInt("gauge_sweep")>270))throw new Exception("Kreisausschnitt muss zwischen 90° und 270° liegen");
+        if(tile.has("gauge_rotation")&&(tile.getInt("gauge_rotation")<0||tile.getInt("gauge_rotation")>359))throw new Exception("Drehwinkel muss zwischen 0° und 359° liegen");
         if(tile.has("heading_mode")&&(tile.getInt("heading_mode")<0||tile.getInt("heading_mode")>3))throw new Exception("Ungültige Symbol-/Beschriftungsauswahl");
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
         if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>3))throw new Exception("Ungültige Einheit-Position");
@@ -205,3 +206,4 @@ final class CockpitBoard extends FrameLayout {
         for(int i=0;i<tiles.length();i++)for(int j=i+1;j<tiles.length();j++){JSONObject a=tiles.getJSONObject(i),b=tiles.getJSONObject(j);if(a.getInt("x")<b.getInt("x")+b.getInt("w")&&a.getInt("x")+a.getInt("w")>b.getInt("x")&&a.getInt("y")<b.getInt("y")+b.getInt("h")&&a.getInt("y")+a.getInt("h")>b.getInt("y")&&!a.optBoolean("allow_overlap",false)&&!b.optBoolean("allow_overlap",false))throw new Exception("Kacheln überlappen – bei einer Kachel Überlappung aktivieren");}
     }
 }
+

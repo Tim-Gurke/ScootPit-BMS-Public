@@ -7,6 +7,10 @@
 Im Cockpit **Fahrtenbuch** oder unter Einstellungen **Fahrtenbuch / Karte / Statistiken** öffnen. Zwischen **Letzte 7 Tage** und **Letzte 30 Tage** wählen. Die Liste enthält abgeschlossene, lokal gespeicherte Fahrten des aktiven Scooter-Profils mit Datum, Startzeit, Strecke und Dauer. Auf eine Fahrt tippen und **Statistiken**, **Karte** oder **GPX und CSV teilen** wählen.
 
 Es gibt keine automatische Löschung nach 30 Tagen; die Anzeige begrenzt nur den Zeitraum. Bereits vorhandene lokale Aufzeichnungen werden anhand ihrer JSON-Zusammenfassung und CSV-Datei gelesen. Externe Sicherungen werden nicht automatisch zurückimportiert; nach einer Neuinstallation sind lokal entfernte Fahrten nicht allein durch Auswahl des Exportordners wiederhergestellt.
+## Fahrten importieren
+
+Im Fahrtenbuch **Fahrt aus CSV oder GPX importieren** wählen und die Datei im Android-Dateiauswahldialog öffnen. Unterstützt werden ScootPit-CSV-Dateien sowie CSV-Dateien mit Zeitstempel und GPS-Koordinaten (Breite/Länge oder latitude/longitude) und GPX-Tracks mit Zeitangaben. Die Fahrt wird lokal dem aktiven Scooter-Profil hinzugefügt und erscheint in der Liste, sobald sie im gewählten Zeitraum liegt. Der Import wird auf 32 MB und 200.000 GPS-Punkte begrenzt; dieselbe Datei kann nicht doppelt importiert werden. Eine Fahrt benötigt mindestens zwei gültige GPS-Punkte.
+
 ## Karte
 
 Start ist grün mit S, Ziel rot mit Z. Verschieben mit dem Finger, zoomen per Geste oder +/−, mit **Route** wieder die gesamte Strecke einpassen. Die Route wird auf dem Handy gezeichnet. Nur sichtbare OpenStreetMap-Hintergrundkacheln werden aus dem Internet geladen und zwischengespeichert. Bei fehlendem Internet bleibt die Route auf einem einfachen Hintergrund sichtbar; bereits vorhandene Kartenkacheln können aus dem Cache erscheinen. Es gibt keinen Download ganzer Offline-Gebiete.
@@ -22,3 +26,4 @@ Die Diagramme zeigen Geschwindigkeit, elektrische Leistung und GPS-Höhe über d
 ## Zeitraum auswerten
 
 **Zeitraum auswerten / Fahrten vergleichen** zeigt Anzahl, Summen und passende ausgewählte Kennwerte. Kilometer pro Tag werden mit Balken visualisiert. Einzelne Fahrten sind darunter mit Strecke, Dauer und – je nach Auswahl – Verbrauch und Höchstgeschwindigkeit vergleichbar. Anklicken öffnet wieder die Fahrtansicht. Statistiken funktionieren ohne Internet.
+

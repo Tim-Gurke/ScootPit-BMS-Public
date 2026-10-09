@@ -4,10 +4,11 @@ ScootPit BMS automatically records electric scooter rides with a compatible Blue
 <li>Connects to a configured BMS and records rides when the configured riding conditions are met</li>
 <li>Tracks GPS route, distance, moving and stopped time, and trip statistics</li>
 <li>Shows battery level, voltage, current, power, energy use, estimated range, and temperatures</li>
-<li>Customizes the dashboard with gauges, bars, number tiles, photos, and text</li>
-<li>Exports rides as GPX and CSV and reviews routes and statistics</li>
+<li>Customizes the dashboard with gauges, bars, number tiles, photos, and text; gauges rotate while readings stay horizontal</li>
+<li>Imports and exports rides as GPX and CSV, and reviews routes and statistics</li>
 </ul>
 
 Requires Android 8 or later and a compatible JBD/Jiabaida Bluetooth BMS. The app was developed with the Joyor T6e Pro and JBD SP14S004; compatibility with other BMS models is not guaranteed. Bluetooth and location permissions are used for device scanning and GPS ride recording. The app interface is currently in German.
 
 Privacy: Profiles and ride files are stored locally. Optional weather updates send rounded location coordinates to Open-Meteo. Opening a map loads the visible map tiles from OpenStreetMap.
+

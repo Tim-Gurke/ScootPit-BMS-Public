@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
     private AlertDialog tileDialog, settingsDialog, batteryDialog, batteryConfigDialog, colorDialog, tourDialog;
     private boolean editorFromSettings;
     private String displayedProfile="";
+    private JournalUi journalAfterImport;
     private String pendingImageTile="", pendingImageLayout="", draftCacheFile="";
 
     private final java.util.HashMap<String,String> orientationDrafts=new java.util.HashMap<>(),orientationSaved=new java.util.HashMap<>();
@@ -79,6 +80,7 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
         prefs=getSharedPreferences("settings",MODE_PRIVATE);
+        installDefaultCockpit();
         ScooterProfiles.install(prefs);
         boardTiles=loadBoard();displayedProfile=prefs.getString(ScooterProfiles.ACTIVE,"");
         if(state!=null){
@@ -107,6 +109,18 @@ public class MainActivity extends Activity {
         StorageFolders.install(this);
         requestNeededPermissions(); rebuild();
         if(state!=null&&state.getBoolean("settings_open",false)&&!editingBoard)showSettings();
+    }
+    private void installDefaultCockpit(){
+        if(prefs.contains(ScooterProfiles.LIST)||prefs.contains("cockpit_board")||prefs.contains("cockpit_layout"))return;
+        try(java.io.InputStream in=getAssets().open("default_cockpit_settings.json")){
+            java.io.ByteArrayOutputStream buffer=new java.io.ByteArrayOutputStream();byte[] chunk=new byte[4096];int count;while((count=in.read(chunk))!=-1)buffer.write(chunk,0,count);byte[] bytes=buffer.toByteArray();if(bytes.length==0)return;
+            JSONObject root=new JSONObject(new String(bytes,0,n,java.nio.charset.StandardCharsets.UTF_8));JSONObject settings=root.getJSONObject("settings");
+            JSONArray portrait=root.getJSONArray("cockpit_board"),landscape=root.getJSONArray("cockpit_board_landscape");
+            CockpitBoard.validate(portrait);CockpitBoard.validate(landscape);
+            SharedPreferences.Editor edit=prefs.edit().putString("cockpit_board",portrait.toString()).putString("cockpit_board_landscape",landscape.toString()).putString("cockpit_design_version",root.optString("cockpit_design_version","1.2.1")).putString("cockpit_board_landscape_version",root.optString("cockpit_board_landscape_version","1.2.1"));
+            for(String key:settings.keySet()){Object value=settings.get(key);if(value instanceof Boolean)edit.putBoolean(key,(Boolean)value);else if(value instanceof String)edit.putString(key,(String)value);}
+            if(!edit.commit())throw new java.io.IOException("Standard-Cockpit konnte nicht gespeichert werden");
+        }catch(Exception e){android.util.Log.e("ScootPit","Standard-Cockpit konnte nicht geladen werden",e);}
     }
     private int color(String value,int fallback){try{return Color.parseColor(value);}catch(Exception e){return fallback;}}
     private int accent(){return color(prefs.getString("accent_color","#FF9800"),0xffff9800);}
@@ -138,7 +152,7 @@ public class MainActivity extends Activity {
         TextView profile=label(ScooterProfiles.name(prefs),14,foreground());profile.setSingleLine(true);profile.setEllipsize(android.text.TextUtils.TruncateAt.END);profileRow.addView(profile,new LinearLayout.LayoutParams(0,-2,1));TextView arrow=label("⌄",18,accent());arrow.setPadding(dp(5),0,0,0);profileRow.addView(arrow);identity.addView(profileRow);
         header.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
         LinearLayout.LayoutParams divider=new LinearLayout.LayoutParams(dp(1),dp(38));divider.setMargins(dp(4),0,dp(4),0);header.addView(separator(true),divider);
-        header.addView(headerAction("journal","Fahrtenbuch",()->new JournalUi(this,prefs).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));
+        header.addView(headerAction("journal","Fahrtenbuch",()->{journalAfterImport=new JournalUi(this,prefs);journalAfterImport.show();}),new LinearLayout.LayoutParams(dp(48),dp(48)));
         header.addView(headerAction("settings","Einstellungen öffnen",()->showSettings()),new LinearLayout.LayoutParams(dp(48),dp(56)));root.addView(header);
         LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,dp(1));rule.setMargins(0,0,0,dp(8));root.addView(separator(false),rule);
         LinearLayout stateRow=new LinearLayout(this);stateRow.setGravity(Gravity.CENTER_VERTICAL);stateRow.setPadding(0,dp(7),0,dp(10));
@@ -243,12 +257,15 @@ public class MainActivity extends Activity {
         android.widget.SeekBar sweep=new android.widget.SeekBar(this);sweep.setMax(180);sweep.setProgress(Math.max(0,Math.min(180,cell.optInt("gauge_sweep",180)-90)));l.addView(sweep);
         sweep.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int n,boolean user){if(user)sweepDegrees.setText(""+(90+n));}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});
         sweepDegrees.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int start,int count,int after){}public void onTextChanged(CharSequence s,int start,int before,int count){try{int degrees=Integer.parseInt(s.toString());if(degrees>=90&&degrees<=270)sweep.setProgress(degrees-90);}catch(NumberFormatException ignored){}}public void afterTextChanged(android.text.Editable e){}});
+        TextView rotationLabel=label("Instrument drehen: "+cell.optInt("gauge_rotation",0)+"°",13,muted());l.addView(rotationLabel);
+        android.widget.SeekBar rotation=new android.widget.SeekBar(this);rotation.setMax(359);rotation.setProgress(Math.floorMod(cell.optInt("gauge_rotation",0),360));l.addView(rotation);
+        rotation.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int n,boolean user){rotationLabel.setText("Instrument drehen: "+n+"°");}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});
         boolean isGauge=cell.optInt("display",cell.optString("key").equals("speed")?2:0)==2;
         CheckBox showGaugeValue=new CheckBox(this);showGaugeValue.setText("Messwert im Instrument anzeigen");showGaugeValue.setTextColor(foreground());showGaugeValue.setChecked(cell.optBoolean("gauge_value_visible",true));l.addView(showGaugeValue);
         Spinner gaugeValuePosition=new Spinner(this);gaugeValuePosition.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Zentriert","Weiter oben","Weiter unten"}));gaugeValuePosition.setSelection(Math.max(0,Math.min(2,cell.optInt("gauge_value_position",0))));l.addView(label("Messwertposition",12,muted()));l.addView(gaugeValuePosition);
-        sweepDegrees.setVisibility(isGauge?View.VISIBLE:View.GONE);sweep.setVisibility(isGauge?View.VISIBLE:View.GONE);
+        sweepDegrees.setVisibility(isGauge?View.VISIBLE:View.GONE);sweep.setVisibility(isGauge?View.VISIBLE:View.GONE);rotationLabel.setVisibility(isGauge?View.VISIBLE:View.GONE);rotation.setVisibility(isGauge?View.VISIBLE:View.GONE);
         showGaugeValue.setVisibility(isGauge?View.VISIBLE:View.GONE);gaugeValuePosition.setVisibility(isGauge?View.VISIBLE:View.GONE);
-        display.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){sweepDegrees.setVisibility(pos==2?View.VISIBLE:View.GONE);sweep.setVisibility(pos==2?View.VISIBLE:View.GONE);showGaugeValue.setVisibility(pos==2?View.VISIBLE:View.GONE);gaugeValuePosition.setVisibility(pos==2?View.VISIBLE:View.GONE);}public void onNothingSelected(android.widget.AdapterView<?> p){}});
+        display.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){sweepDegrees.setVisibility(pos==2?View.VISIBLE:View.GONE);sweep.setVisibility(pos==2?View.VISIBLE:View.GONE);rotationLabel.setVisibility(pos==2?View.VISIBLE:View.GONE);rotation.setVisibility(pos==2?View.VISIBLE:View.GONE);showGaugeValue.setVisibility(pos==2?View.VISIBLE:View.GONE);gaugeValuePosition.setVisibility(pos==2?View.VISIBLE:View.GONE);}public void onNothingSelected(android.widget.AdapterView<?> p){}});
         if(personal){arrangement.setVisibility(View.GONE);display.setVisibility(View.GONE);}
         l.addView(label("Kachelkopf: Symbol / Beschriftung",13,muted()));
         Spinner heading=new Spinner(this);heading.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Nur Symbol","Nur Beschriftung","Symbol und Beschriftung","Beides ausblenden"}));heading.setSelection(CockpitSymbols.mode(cell));l.addView(heading);
@@ -285,7 +302,7 @@ public class MainActivity extends Activity {
         back.setOnClickListener(v->dialog.dismiss());remove.setOnClickListener(v->{if(boardTiles.length()>1){boardTiles.remove(index);dialog.dismiss();rebuild();}});
         apply.setOnClickListener(v->{boolean customUnit=hasUnit&&!unitFont.getText().toString().trim().isEmpty();Double uu=customUnit?valid(unitFont,8,80):null;Double ff=valid(font,12,80),xx=valid(x,0,23),yy=valid(y,0,600),ww=valid(w,1,24),hh=valid(h,2,24),angle=valid(sweepDegrees,90,270);Double ll=valid(lines,1,3),ss=valid(scale,.1,10000000);if(angle!=null&&angle!=Math.rint(angle)){sweepDegrees.setError("Bitte eine ganze Gradzahl eingeben");angle=null;}if((customUnit&&uu==null)||ff==null||xx==null||yy==null||ww==null||hh==null||angle==null||ll==null||ss==null||!validColor(bg)||!validColor(fg)||!validColor(instrument)||!validColor(track)||!validColor(icon)||!validColor(borderColor))return;
             JSONArray before;try{before=new JSONArray(boardTiles.toString());boolean oldOverlap=cell.optBoolean("allow_overlap",false);cell.put("allow_overlap",allowOverlap.isChecked()).put("x",xx.intValue()).put("y",yy.intValue()).put("w",ww.intValue()).put("h",hh.intValue());try{board.push(cell);CockpitBoard.validate(boardTiles);}catch(Exception e){for(int i=0;i<boardTiles.length();i++){JSONObject target=boardTiles.getJSONObject(i),original=before.getJSONObject(i);target.put("x",original.getInt("x")).put("y",original.getInt("y")).put("w",original.getInt("w")).put("h",original.getInt("h"));}cell.put("allow_overlap",oldOverlap);Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();return;}
-                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("gauge_sweep",angle.intValue()).put("heading_mode",heading.getSelectedItemPosition()).put("show_title",heading.getSelectedItemPosition()==1||heading.getSelectedItemPosition()==2).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true).put("instrument_color",instrument.getText().toString()).put("scale_color",track.getText().toString()).put("icon_color",icon.getText().toString()).put("border_color",borderColor.getText().toString()).put("border_enabled",borderEnabled.isChecked()).put("corner_radius",radius.getProgress()).put("content_inset",inset.getProgress());if(display.getSelectedItemPosition()==2){cell.put("gauge_value_visible",showGaugeValue.isChecked()).put("gauge_value_position",gaugeValuePosition.getSelectedItemPosition());}if(hasUnit){cell.put("unit_position",unitPosition.getSelectedItemPosition());if(customUnit)cell.put("unit_font",uu.intValue());else cell.remove("unit_font");}if(customText!=null)cell.put("free_text",customText.getText().toString());if(photoMode!=null)cell.put("image_mode",photoMode.getSelectedItemPosition());moveTileToLayer(index,layer.getSelectedItemPosition());dialog.dismiss();rebuild();
+                cell.put("arrangement",arrangement.getSelectedItemPosition()).put("display",display.getSelectedItemPosition()).put("gauge_sweep",angle.intValue()).put("heading_mode",heading.getSelectedItemPosition()).put("show_title",heading.getSelectedItemPosition()==1||heading.getSelectedItemPosition()==2).put("show_note",showNote.isChecked()).put("lines",ll.intValue()).put("scale_max",ss).put("caption",caption.getText().toString()).put("font",ff.intValue()).put("background",alphaColor(bg.getText().toString(),bgAlpha.getProgress())).put("text",alphaColor(fg.getText().toString(),fgAlpha.getProgress())).put("custom_colors",true).put("instrument_color",instrument.getText().toString()).put("scale_color",track.getText().toString()).put("icon_color",icon.getText().toString()).put("border_color",borderColor.getText().toString()).put("border_enabled",borderEnabled.isChecked()).put("corner_radius",radius.getProgress()).put("content_inset",inset.getProgress());if(display.getSelectedItemPosition()==2){cell.put("gauge_sweep",angle.intValue()).put("gauge_rotation",rotation.getProgress()).put("gauge_value_visible",showGaugeValue.isChecked()).put("gauge_value_position",gaugeValuePosition.getSelectedItemPosition());}if(hasUnit){cell.put("unit_position",unitPosition.getSelectedItemPosition());if(customUnit)cell.put("unit_font",uu.intValue());else cell.remove("unit_font");}if(customText!=null)cell.put("free_text",customText.getText().toString());if(photoMode!=null)cell.put("image_mode",photoMode.getSelectedItemPosition());moveTileToLayer(index,layer.getSelectedItemPosition());dialog.dismiss();rebuild();
             }catch(Exception e){Toast.makeText(this,"Kachel konnte nicht geändert werden",Toast.LENGTH_SHORT).show();}});dialog.show();
         dialog.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*.9f));
         if(chooseImage!=null)chooseImage.setOnClickListener(v->{apply.performClick();if(dialog.isShowing())return;try{
@@ -407,7 +424,7 @@ public class MainActivity extends Activity {
         settingsDialog.getListView().setOnItemClickListener((parent,view,w,id)->{
             switch(w){case 0:editorFromSettings=true;settingsDialog.dismiss();editLayout();break;case 1:editColors();break;case 2:editOdometer();break;
                 case 3:editBms();break;case 4:editBattery();break;case 5:notificationSettings();break;
-                case 6:weatherSettings();break;case 7:tripDialog();break;case 8:requestBatteryExemption();break;case 9:storageSettings();break;case 10:profileMenu();break;case 11:editTemperatures();break;case 12:new JournalUi(this,prefs).show();break;case 13:resetTour();break;case 14:editRoutineMessages();break;}
+                case 6:weatherSettings();break;case 7:tripDialog();break;case 8:requestBatteryExemption();break;case 9:storageSettings();break;case 10:profileMenu();break;case 11:editTemperatures();break;case 12:journalAfterImport=new JournalUi(this,prefs);journalAfterImport.show();break;case 13:resetTour();break;case 14:editRoutineMessages();break;}
         });
     }
     private void returnAfterEditor(){if(!draftCacheFile.isEmpty()){new File(getCacheDir(),draftCacheFile).delete();draftCacheFile="";}if(editorFromSettings){editorFromSettings=false;showSettings();}}
@@ -550,8 +567,17 @@ public class MainActivity extends Activity {
         l.addView(label("Fahrten werden während der Aufzeichnung lokal gepuffert und nach Abschluss in den gewählten Ordner kopiert. Ordnerwechsel gilt ab der nächsten Fahrt. Die lokale Kopie bleibt zum Teilen erhalten.",12,muted()));
         new AlertDialog.Builder(this).setTitle("Separate Speicherorte").setView(l).setNegativeButton("Schließen",null).show();
     }
+    void chooseTripImport(JournalUi journal){
+        journalAfterImport=journal;
+        Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"text/csv","text/comma-separated-values","application/gpx+xml","application/xml","text/xml"}).addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivityForResult(intent,94);
+    }
+    private void importTrip(Uri uri){
+        String name="Fahrtdatei";try(android.database.Cursor cursor=getContentResolver().query(uri,new String[]{android.provider.OpenableColumns.DISPLAY_NAME},null,null,null)){if(cursor!=null&&cursor.moveToFirst())name=cursor.getString(0);}catch(Exception ignored){}
+        final String displayName=name;StorageFolders.install(this).run(()->{try{TripImporter.importFile(this,prefs,uri,displayName);}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{if(error==null&&journalAfterImport!=null)journalAfterImport.refreshAfterImport();Toast.makeText(this,error==null?"Fahrt ins Fahrtenbuch importiert":error,Toast.LENGTH_LONG).show();});
+    }
     private void chooseFolder(int request){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,request);}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==93){receiveTileImage(result,data);return;}if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==93){receiveTileImage(result,data);return;}if(request==94){if(result==RESULT_OK&&data!=null&&data.getData()!=null)importTrip(data.getData());return;}if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
         Uri tree=data.getData();int required=Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION;try{if((data.getFlags()&required)!=required)throw new SecurityException("Lese- und Schreibzugriff erforderlich");getContentResolver().takePersistableUriPermission(tree,Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(Exception e){Toast.makeText(this,"Dauerhafter Ordnerzugriff fehlgeschlagen",Toast.LENGTH_LONG).show();return;}
         String key=request==91?StorageFolders.SETTINGS:StorageFolders.TRIPS;
         StorageFolders store=StorageFolders.install(this);
@@ -765,3 +791,4 @@ public class MainActivity extends Activity {
     @Override public void onBackPressed(){if(editingBoard){new AlertDialog.Builder(this).setMessage("Ungespeicherten Layoutentwurf verwerfen?").setPositiveButton("Verwerfen",(d,w)->{boardTiles=savedBoard;editingBoard=false;orientationDrafts.clear();orientationSaved.clear();rebuild();returnAfterEditor();}).setNegativeButton("Weiter bearbeiten",null).show();}else super.onBackPressed();}
     @Override protected void onDestroy() {super.onDestroy();handler.removeCallbacksAndMessages(null);if(picker!=null)picker.close();}
 }
+

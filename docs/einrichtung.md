@@ -18,7 +18,7 @@ Bei einer frischen Installation ist kein BMS vorbelegt. Über **BMS auswählen �
 
 *Der Kandidat lässt sich vor der Verbindung prüfen; die Bluetooth-Adresse ist im Screenshot geschwärzt.*
 
-Das Standardlayout zeigt oben zwei transparente Halbkreisinstrumente für Verbrauch der letzten 500 m und aktuelle Leistung. Darunter stehen kompakte Geschwindigkeit, Akku, Restreichweite, Fahr-/Stand-/Gesamtzeit, Kilometerzähler, Foto, BMS-Lastausgang und Temperaturen. Die Bereitschaftsschaltflächen heißen **Bereit**; **Fahrt beenden** schließt die aktuelle Aufzeichnung ab. Der Appkopf bleibt ScootPit BMS.
+Bei einer Neuinstallation ist das dunkle Cockpit mit orangefarbenen Akzenten und deinem bereinigten Hoch- und Querformatlayout voreingestellt. Oben stehen Verbrauch der letzten 500 m und aktuelle Leistung als Rundinstrumente; die übrigen Messwerte und Bedienelemente folgen deiner Konfiguration. Die Bereitschaftsschaltflächen heißen **Bereit**; **Fahrt beenden** schließt die aktuelle Aufzeichnung ab. Der Appkopf bleibt ScootPit BMS. Bestehende Installationen behalten ihr eigenes Design.
 
 Version 1.2.1 stellt vorhandene Hochformatlayouts einmalig auf die neue Anordnung um und sichert den vorherigen Stand in den Einstellungen. Fotos, eigene Texte und zusätzliche Kacheln werden übernommen. Gespeicherte Querformatlayouts werden auf das feinere Raster umgerechnet. Das Standardlayout lässt sich jederzeit unter **Einstellungen → Cockpit bearbeiten → Standardlayout → Zurücksetzen → Speichern** übernehmen.
 
@@ -39,3 +39,4 @@ Neue Fahrten liegen lokal in einem eigenen Unterordner pro Profil; GPX-Name und 
 **Einstellungen → Speicherorte**: Ordner für Einstellungen und Fahrtenbuch unabhängig mit Androids Ordnerauswahl bestimmen. Einstellungen bleiben lokal als Arbeitsstand und werden automatisch im gewählten Ordner gesichert. Die Datei **Joyor-Cockpit-settings.json** und ihre Formatkennung bleiben für bestehende Sicherungen kompatibel. Eine vorhandene Datei ausdrücklich laden oder überschreiben; Import wird vor Änderungen validiert. Kacheln für beide Ausrichtungen, Farben, Verbindungsparameter und Temperatur-Lerndaten sind enthalten. Android-Ordnerberechtigungen bleiben gerätebezogen; kein ungefragter Import beim Start.
 
 Laufende Fahrten werden lokal gepuffert. Nach Abschluss werden GPX, CSV und JSON in den bei Fahrtbeginn gewählten Fahrtenordner kopiert. Bei Fehlern bleiben lokale Dateien und Kopieraufträge erhalten; erneuter Versuch unter Speicherorte. Lokale GPX-/CSV-Dateien lassen sich über **Letzte Fahrt / Export** teilen. Ordnerwechsel gilt ab der nächsten Fahrt.
+
