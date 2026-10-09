@@ -333,7 +333,9 @@ public class CockpitSmokeTest extends Instrumentation {
         storage.choose(StorageFolders.SETTINGS,tree,false);
         android.net.Uri uri=StorageFolders.document(getTargetContext(),tree,StorageFolders.NAME,false,"application/json");
         if(uri==null)throw new AssertionError("SAF settings snapshot missing");
-        org.json.JSONObject document=new org.json.JSONObject(StorageFolders.read(getTargetContext(),uri));
+        String written="";for(int attempt=0;attempt<40&&written.trim().isEmpty();attempt++){written=StorageFolders.read(getTargetContext(),uri);if(written.trim().isEmpty())Thread.sleep(50);}
+        if(written.trim().isEmpty())throw new AssertionError("SAF settings snapshot remained empty after write");
+        org.json.JSONObject document=new org.json.JSONObject(written);
         if(!document.getJSONObject("settings").getString("header_name").equals("Mein Joyor"))throw new AssertionError("Header stored in settings");
         if(!document.getJSONObject("settings").getString("total_km").equals("123.45"))throw new AssertionError("SAF settings write");
         if(document.getInt("version")!=2||document.getJSONArray("profiles").length()!=2)throw new AssertionError("Multi-scooter backup");
