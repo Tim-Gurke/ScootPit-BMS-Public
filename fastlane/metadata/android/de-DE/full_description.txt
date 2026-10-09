@@ -5,7 +5,8 @@ ScootPit BMS zeichnet Fahrten mit einem kompatiblen JBD/Jiabaida-Bluetooth-Batte
 <li>Erfasst GPS-Route, Strecke, Fahr- und Standzeit sowie Fahrtenstatistiken</li>
 <li>Zeigt Akkustand, Spannung, Strom, Leistung, Energieverbrauch, geschätzte Reichweite und Temperaturen</li>
 <li>Gestaltet das Cockpit mit Rundinstrumenten, Balken, Zahlenkacheln, Fotos und Text; Bögen lassen sich drehen, Messwerte bleiben waagerecht</li>
-<li>Importiert und exportiert Fahrten als GPX und CSV, zeigt Routen und Statistiken</li>
+<li>Importiert einzelne Fahrten als GPX oder CSV und stellt komplette Fahrtenbücher aus Ordnern wieder her</li>
+<li>Überspringt beim Sammelimport bereits vorhandene Fahrten; die Ansicht „Alle“ zeigt den vollständigen Zeitraum</li>
 </ul>
 
 Benötigt Android 8 oder neuer und ein kompatibles JBD/Jiabaida-Bluetooth-BMS. Entwickelt wurde die App mit dem Joyor T6e Pro und JBD SP14S004; die Kompatibilität anderer BMS-Modelle ist nicht garantiert. Bluetooth und Standortberechtigungen werden für die Gerätesuche und GPS-Aufzeichnung verwendet.

@@ -1,0 +1,2 @@
+Neu in 1.4.3:
+Komplettes Fahrtenbuch aus einem Ordner importieren, Duplikate überspringen und unter „Alle“ den gesamten Zeitraum ansehen.

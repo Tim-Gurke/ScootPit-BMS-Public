@@ -32,16 +32,17 @@ final class JournalUi {
     void show(){
         LinearLayout l=column();l.addView(text("Scooter: "+ScooterProfiles.name(prefs)));
         LinearLayout range=new LinearLayout(activity);
-        range.addView(button("Letzte 7 Tage",()->reload(7)),new LinearLayout.LayoutParams(0,-2,1));range.addView(button("Letzte 30 Tage",()->reload(30)),new LinearLayout.LayoutParams(0,-2,1));l.addView(range);
-        l.addView(button("Fahrt aus CSV oder GPX importieren",()->{if(activity instanceof MainActivity)((MainActivity)activity).chooseTripImport(this);}));
-        TextView loading=text("Fahrten werden geladen …");l.addView(loading);listDialog=dialog("Fahrtenbuch · "+days+" Tage",l);
+        range.addView(button("7 Tage",()->reload(7)),new LinearLayout.LayoutParams(0,-2,1));range.addView(button("30 Tage",()->reload(30)),new LinearLayout.LayoutParams(0,-2,1));range.addView(button("Alle",()->reload(0)),new LinearLayout.LayoutParams(0,-2,1));l.addView(range);
+        l.addView(button("Komplettes Fahrtenbuch aus Ordner importieren",()->{if(activity instanceof MainActivity)((MainActivity)activity).chooseTripFolderImport(this);}));
+        l.addView(button("Einzelne Fahrt aus CSV oder GPX importieren",()->{if(activity instanceof MainActivity)((MainActivity)activity).chooseTripImport(this);}));
+        TextView loading=text("Fahrten werden geladen …");l.addView(loading);listDialog=dialog("Fahrtenbuch · "+(days==0?"alle":"letzte "+days+" Tage"),l);
         AlertDialog target=listDialog;String profile=prefs.getString(ScooterProfiles.ACTIVE,"");final List<TripJournal.Ride> rides=new ArrayList<>();
         StorageFolders.install(activity).run(()->{try{rides.addAll(TripJournal.list(activity,prefs,days));}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{
             if(!target.isShowing()||activity.isFinishing())return;
             if(!profile.equals(prefs.getString(ScooterProfiles.ACTIVE,""))){loading.setText("Scooter wurde gewechselt. Fahrtenbuch erneut öffnen.");return;}
             l.removeView(loading);if(error!=null){l.addView(text(error));return;}
-            l.addView(button("Zeitraum auswerten / Fahrten vergleichen",()->overview(rides)));
-            if(rides.isEmpty())l.addView(text("In diesem Zeitraum wurden noch keine Fahrten für diesen Scooter gespeichert."));
+            l.addView(button(days==0?"Gesamtes Fahrtenbuch auswerten / Fahrten vergleichen":"Zeitraum auswerten / Fahrten vergleichen",()->overview(rides)));
+            if(rides.isEmpty())l.addView(text(days==0?"Für diesen Scooter wurden noch keine Fahrten gespeichert.":"In diesem Zeitraum wurden noch keine Fahrten für diesen Scooter gespeichert."));
             for(TripJournal.Ride ride:rides)l.addView(button(date(ride.start)+"\n"+format(ride.meters/1000,"km")+" · "+duration(ride.end-ride.start),()->openRide(ride)));
         });
     }
@@ -80,7 +81,7 @@ final class JournalUi {
     }
     private void overview(List<TripJournal.Ride> rides){
         LinearLayout l=column();Set<String> s=selected();AlertDialog[] current=new AlertDialog[1];
-        l.addView(button("Angezeigte Werte auswählen",()->chooseStats(()->{current[0].dismiss();overview(rides);})));l.addView(text(rides.size()+" Fahrten · letzte "+days+" Tage"));
+        l.addView(button("Angezeigte Werte auswählen",()->chooseStats(()->{current[0].dismiss();overview(rides);})));l.addView(text(rides.size()+" Fahrten · "+(days==0?"gesamter Zeitraum":"letzte "+days+" Tage")));
         double meters=0,energy=0,maxSpeed=0,maxPower=0,ascent=0;long elapsed=0,moving=0,standing=0;boolean allEnergy=true,allTimes=true;
         Map<String,Double> byDay=new TreeMap<>();
         for(TripJournal.Ride r:rides){meters+=r.meters;elapsed+=Math.max(0,r.end-r.start);if(Double.isFinite(r.energy))energy+=r.energy;else allEnergy=false;

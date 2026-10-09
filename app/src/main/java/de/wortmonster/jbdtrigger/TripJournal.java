@@ -27,11 +27,11 @@ final class TripJournal {
         if(root==null)root=new File(c.getFilesDir(),"trips");
         File folder=new File(new File(root,"ScootPit-BMS"),prefs.getString(ScooterProfiles.ACTIVE,"legacy"));
         File[] files=folder.listFiles((d,n)->n.endsWith(".json"));if(files==null)return result;
-        Calendar cutoff=Calendar.getInstance();cutoff.add(Calendar.DAY_OF_YEAR,-days);long from=cutoff.getTimeInMillis();
+        long from=Long.MIN_VALUE;if(days>0){Calendar cutoff=Calendar.getInstance();cutoff.add(Calendar.DAY_OF_YEAR,-days);from=cutoff.getTimeInMillis();}
         for(File file:files){
             if(file.length()>1000000)continue;
             try{JSONObject m=new JSONObject(new String(java.nio.file.Files.readAllBytes(file.toPath()),StandardCharsets.UTF_8));
-                if(m.optLong("started_at",0)<from)continue;
+                if(days>0&&m.optLong("started_at",0)<from)continue;
                 Ride ride=new Ride();ride.metadata=m;ride.start=m.getLong("started_at");ride.end=m.getLong("ended_at");
                 ride.meters=m.optDouble("distance_m",0);ride.energy=m.optDouble("energy_wh",Double.NaN);
                 ride.maxSpeed=m.optDouble("max_speed_kmh",Double.NaN);ride.ascent=m.optDouble("ascent_m",Double.NaN);
@@ -66,3 +66,4 @@ final class TripJournal {
     }
     static double number(String value){try{return Double.parseDouble(value.replace(',','.'));}catch(Exception e){return Double.NaN;}}
 }
+

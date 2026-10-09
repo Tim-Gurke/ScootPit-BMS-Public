@@ -1,0 +1,2 @@
+New in 1.4.3:
+Import a complete ride journal from a folder, skip duplicates, and view all dates with “All”.

@@ -572,12 +572,22 @@ public class MainActivity extends Activity {
         Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"text/csv","text/comma-separated-values","application/gpx+xml","application/xml","text/xml"}).addCategory(Intent.CATEGORY_OPENABLE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         startActivityForResult(intent,94);
     }
+    void chooseTripFolderImport(JournalUi journal){
+        journalAfterImport=journal;
+        new AlertDialog.Builder(this).setTitle("Fahrtenbuch aus Ordner importieren")
+            .setMessage("Wähle den ScootPit-Fahrtenordner mit den JSON- und CSV-Dateien deiner Fahrten. Unterordner werden mit durchsucht. Bestehende Fahrten bleiben erhalten; Duplikate werden übersprungen.")
+            .setPositiveButton("Ordner wählen",(d,w)->{Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,95);})
+            .setNegativeButton("Zurück",null).show();
+    }
     private void importTrip(Uri uri){
         String name="Fahrtdatei";try(android.database.Cursor cursor=getContentResolver().query(uri,new String[]{android.provider.OpenableColumns.DISPLAY_NAME},null,null,null)){if(cursor!=null&&cursor.moveToFirst())name=cursor.getString(0);}catch(Exception ignored){}
         final String displayName=name;StorageFolders.install(this).run(()->{try{TripImporter.importFile(this,prefs,uri,displayName);}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{if(error==null&&journalAfterImport!=null)journalAfterImport.refreshAfterImport();Toast.makeText(this,error==null?"Fahrt ins Fahrtenbuch importiert":error,Toast.LENGTH_LONG).show();});
     }
+    private void importTripFolder(Uri tree){
+        TripFolderImporter.Summary[] summary=new TripFolderImporter.Summary[1];StorageFolders.install(this).run(()->{try{summary[0]=TripFolderImporter.importFolder(this,prefs,tree);}catch(Exception e){throw new IllegalStateException(e.getMessage());}},error->{if(error==null&&journalAfterImport!=null)journalAfterImport.refreshAfterImport();Toast.makeText(this,error==null?summary[0].message():error,Toast.LENGTH_LONG).show();});
+    }
     private void chooseFolder(int request){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,request);}
-    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==93){receiveTileImage(result,data);return;}if(request==94){if(result==RESULT_OK&&data!=null&&data.getData()!=null)importTrip(data.getData());return;}if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==93){receiveTileImage(result,data);return;}if(request==94){if(result==RESULT_OK&&data!=null&&data.getData()!=null)importTrip(data.getData());return;}if(request==95){if(result==RESULT_OK&&data!=null&&data.getData()!=null){Uri tree=data.getData();try{if((data.getFlags()&Intent.FLAG_GRANT_READ_URI_PERMISSION)==0)throw new SecurityException();getContentResolver().takePersistableUriPermission(tree,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception e){Toast.makeText(this,"Lesender Ordnerzugriff fehlgeschlagen",Toast.LENGTH_LONG).show();return;}importTripFolder(tree);}return;}if((request!=91&&request!=92)||result!=RESULT_OK||data==null||data.getData()==null)return;
         Uri tree=data.getData();int required=Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION;try{if((data.getFlags()&required)!=required)throw new SecurityException("Lese- und Schreibzugriff erforderlich");getContentResolver().takePersistableUriPermission(tree,Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);}catch(Exception e){Toast.makeText(this,"Dauerhafter Ordnerzugriff fehlgeschlagen",Toast.LENGTH_LONG).show();return;}
         String key=request==91?StorageFolders.SETTINGS:StorageFolders.TRIPS;
         StorageFolders store=StorageFolders.install(this);

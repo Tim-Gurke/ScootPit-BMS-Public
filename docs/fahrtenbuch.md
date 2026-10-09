@@ -4,12 +4,14 @@
 
 ## Fahrt auswählen
 
-Im Cockpit **Fahrtenbuch** oder unter Einstellungen **Fahrtenbuch / Karte / Statistiken** öffnen. Zwischen **Letzte 7 Tage** und **Letzte 30 Tage** wählen. Die Liste enthält abgeschlossene, lokal gespeicherte Fahrten des aktiven Scooter-Profils mit Datum, Startzeit, Strecke und Dauer. Auf eine Fahrt tippen und **Statistiken**, **Karte** oder **GPX und CSV teilen** wählen.
+Im Cockpit **Fahrtenbuch** oder unter Einstellungen **Fahrtenbuch / Karte / Statistiken** öffnen. Zwischen **7 Tage**, **30 Tage** und **Alle** wählen. Die Liste enthält abgeschlossene, lokal gespeicherte Fahrten des aktiven Scooter-Profils mit Datum, Startzeit, Strecke und Dauer. Auf eine Fahrt tippen und **Statistiken**, **Karte** oder **GPX und CSV teilen** wählen.
 
-Es gibt keine automatische Löschung nach 30 Tagen; die Anzeige begrenzt nur den Zeitraum. Bereits vorhandene lokale Aufzeichnungen werden anhand ihrer JSON-Zusammenfassung und CSV-Datei gelesen. Externe Sicherungen werden nicht automatisch zurückimportiert; nach einer Neuinstallation sind lokal entfernte Fahrten nicht allein durch Auswahl des Exportordners wiederhergestellt.
+Es gibt keine automatische Löschung nach 30 Tagen; die 7- und 30-Tage-Ansichten begrenzen nur den Zeitraum. **Alle** zeigt den kompletten Bestand des aktiven Scooter-Profils. Bereits vorhandene lokale Aufzeichnungen werden anhand ihrer JSON-Zusammenfassung und CSV-Datei gelesen.
 ## Fahrten importieren
 
-Im Fahrtenbuch **Fahrt aus CSV oder GPX importieren** wählen und die Datei im Android-Dateiauswahldialog öffnen. Unterstützt werden ScootPit-CSV-Dateien sowie CSV-Dateien mit Zeitstempel und GPS-Koordinaten (Breite/Länge oder latitude/longitude) und GPX-Tracks mit Zeitangaben. Die Fahrt wird lokal dem aktiven Scooter-Profil hinzugefügt und erscheint in der Liste, sobald sie im gewählten Zeitraum liegt. Der Import wird auf 32 MB und 200.000 GPS-Punkte begrenzt; dieselbe Datei kann nicht doppelt importiert werden. Eine Fahrt benötigt mindestens zwei gültige GPS-Punkte.
+Für eine einzelne Route **Einzelne Fahrt aus CSV oder GPX importieren** wählen. Unterstützt werden ScootPit-CSV-Dateien sowie CSV-Dateien mit Zeitstempel und GPS-Koordinaten (Breite/Länge oder latitude/longitude) und GPX-Tracks mit Zeitangaben. Die Fahrt wird lokal dem aktiven Scooter-Profil hinzugefügt und erscheint in der Liste, sobald sie im gewählten Zeitraum liegt. Der Import wird auf 32 MB und 200.000 GPS-Punkte begrenzt; dieselbe Datei kann nicht doppelt importiert werden. Eine Fahrt benötigt mindestens zwei gültige GPS-Punkte.
+
+Für den vollständigen Bestand **Komplettes Fahrtenbuch aus Ordner importieren** wählen und danach den Scooter-Fahrtenordner auswählen. ScootPit liest Metadaten (`.json`), CSV-Aufzeichnungen und vorhandene GPX-Dateien; Unterordner werden mit durchsucht. Der Ordner kann direkt aus der von ScootPit verwendeten Fahrtenbuch-Sicherung stammen. Die importierten Fahrten werden dem gerade aktiven Scooter-Profil zugeordnet. Bestehende Fahrten werden nicht ersetzt; bereits vorhandene Fahrten werden anhand von Startzeit, Endzeit und CSV-Inhalt erkannt und übersprungen. Unterstützt werden bis zu 5.000 Dateien, höchstens 32 MB je Datei und 512 MB insgesamt. Danach **Alle** öffnen, um auch ältere importierte Fahrten anzuzeigen.
 
 ## Karte
 

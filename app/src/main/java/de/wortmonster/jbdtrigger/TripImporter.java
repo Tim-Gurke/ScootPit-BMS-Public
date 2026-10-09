@@ -41,7 +41,8 @@ final class TripImporter {
         write(jsonFile,metadata.toString(2).getBytes(StandardCharsets.UTF_8));
     }
 
-    private static File folder(Context c,SharedPreferences p){File root=c.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);if(root==null)root=new File(c.getFilesDir(),"trips");return new File(new File(root,"ScootPit-BMS"),p.getString(ScooterProfiles.ACTIVE,"legacy"));}
+    static File folder(Context c,SharedPreferences p){return folder(c,p.getString(ScooterProfiles.ACTIVE,"legacy"));}
+    static File folder(Context c,String profileId){File root=c.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);if(root==null)root=new File(c.getFilesDir(),"trips");return new File(new File(root,"ScootPit-BMS"),profileId);}
     private static byte[] read(Context c,Uri uri)throws Exception{try(InputStream in=c.getContentResolver().openInputStream(uri);ByteArrayOutputStream out=new ByteArrayOutputStream()){if(in==null)throw new IOException("Datei nicht lesbar.");byte[] b=new byte[8192];int n,total=0;while((n=in.read(b))>=0){total+=n;if(total>32*1024*1024)throw new IOException("Fahrtdatei ist größer als 32 MB.");out.write(b,0,n);}return out.toByteArray();}}
     private static byte[] read(File f)throws IOException{try(InputStream in=new FileInputStream(f);ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=in.read(b))>=0)out.write(b,0,n);return out.toByteArray();}}
     private static void write(File f,byte[] bytes)throws IOException{File temp=new File(f.getParentFile(),f.getName()+".tmp");try(FileOutputStream out=new FileOutputStream(temp)){out.write(bytes);out.getFD().sync();}if(!temp.renameTo(f)){temp.delete();throw new IOException("Importdatei konnte nicht gespeichert werden.");}}

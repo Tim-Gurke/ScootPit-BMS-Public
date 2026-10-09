@@ -356,6 +356,20 @@ public class CockpitSmokeTest extends Instrumentation {
         org.json.JSONArray jobs=new org.json.JSONArray(prefs.getString("pending_exports","[]"));jobs.getJSONObject(0).put("tree",tree);prefs.edit().putString("pending_exports",jobs.toString()).commit();storage.retry();
         if(new org.json.JSONArray(prefs.getString("pending_exports","[]")).length()!=0)throw new AssertionError("Retry queue not cleared");
         android.net.Uri copied=StorageFolders.document(getTargetContext(),tree,"test-trip.csv",false,"text/csv");if(copied==null||!StorageFolders.read(getTargetContext(),copied).equals("trip;980"))throw new AssertionError("SAF trip copy");
+        File localTrips=TripImporter.folder(getTargetContext(),prefs);if(localTrips.exists()){File[] old=localTrips.listFiles();if(old!=null)for(File file:old)if(file.getName().startsWith("folder_import_test_"))file.delete();}
+        long now=System.currentTimeMillis();long[] starts={now-40L*86400000L,now-10L*86400000L};
+        for(int i=0;i<starts.length;i++){
+            String stem="folder_import_test_"+i;long start=starts[i];
+            org.json.JSONObject metadata=new org.json.JSONObject().put("scooter_id","old-profile").put("scooter_name","Alter Roller").put("started_at",start).put("ended_at",start+60000).put("moving_ms",50000).put("standing_ms",10000).put("distance_m",1234+i).put("max_speed_kmh",20+i).put("ascent_m",5).put("energy_wh",30).put("max_power_w",400);
+            android.net.Uri metaUri=StorageFolders.document(getTargetContext(),tree,stem+".json",true,"application/json");StorageFolders.write(getTargetContext(),metaUri,metadata.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            String csvText="Zeit;Breite;Laenge;Genauigkeit_m;Geschwindigkeit_kmh;Hoehe_m;BMS_Prozent;Spannung_V;Strom_A;Entnahme_W;Energie_Wh;Maximale_Fahrtleistung_W;Aussentemperatur_C;Temp1_C;Temp2_C\n"+java.time.Instant.ofEpochMilli(start)+";49.0000000;8.0000000;5;12;100;;;;;;;;;;\n"+java.time.Instant.ofEpochMilli(start+60000)+";49.0010000;8.0010000;5;18;105;;;;;;;;;;\n";
+            android.net.Uri csvUri=StorageFolders.document(getTargetContext(),tree,stem+".csv",true,"text/csv");StorageFolders.write(getTargetContext(),csvUri,csvText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if(i==0){android.net.Uri gpxUri=StorageFolders.document(getTargetContext(),tree,stem+".gpx",true,"application/gpx+xml");StorageFolders.write(getTargetContext(),gpxUri,"<gpx/>".getBytes(java.nio.charset.StandardCharsets.UTF_8));}
+        }
+        TripFolderImporter.Summary first=TripFolderImporter.importFolder(getTargetContext(),prefs,android.net.Uri.parse(tree));if(first.found!=2||first.imported!=2||first.duplicates!=0)throw new AssertionError("Full folder import did not add both rides");
+        TripFolderImporter.Summary repeat=TripFolderImporter.importFolder(getTargetContext(),prefs,android.net.Uri.parse(tree));if(repeat.imported!=0||repeat.duplicates!=2)throw new AssertionError("Repeated folder import must skip duplicates");
+        java.util.List<TripJournal.Ride> all=TripJournal.list(getTargetContext(),prefs,0),recent=TripJournal.list(getTargetContext(),prefs,30);if(all.size()!=2||recent.size()!=1)throw new AssertionError("Complete journal view or date filter");
+        if(!all.get(0).metadata.getString("scooter_id").equals(prefs.getString(ScooterProfiles.ACTIVE,""))||!all.get(0).metadata.getString("scooter_name").equals(ScooterProfiles.name(prefs)))throw new AssertionError("Imported rides not assigned to active scooter");
         prefs.edit().remove(StorageFolders.SETTINGS).apply();
     }
     private static TextView findText(View view,String text){if(view instanceof TextView&&((TextView)view).getText().toString().equals(text))return (TextView)view;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){TextView found=findText(group.getChildAt(i),text);if(found!=null)return found;}}return null;}

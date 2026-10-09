@@ -6,7 +6,7 @@
 
 **ScootPit – für alle, die ihren Roller überwachen wollen, ohne selbst überwacht zu werden.**
 
-**Version 1.4.2 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.4.3 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
@@ -25,12 +25,16 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Verbrauch der let
 - **Automatisches Tracking:** Fahrtstart und Fahrtende erkennen, Fahr- und Standzeit erfassen, auch mit gesperrtem Handy.
 - **Live-Werte im Blick:** GPS-Tacho, Akkustand, Spannung, Strom, Leistung, Energie, Temperaturen und verfügbare Zusatzdaten des BMS.
 - **Drei Kilometerzähler:** Gesamtkilometer, Tageskilometer mit täglichem Neustart und ein manuell zurücksetzbarer Tourenzähler – getrennt je Scooter.
-- **Fahrtenbuch mit Karte:** Fahrten der letzten 7 oder 30 Tage auswählen, Route mit Start und Ziel anzeigen, zoomen, verschieben, GPX/CSV teilen und CSV-/GPX-Fahrten importieren.
+- **Fahrtenbuch mit Karte:** Fahrten der letzten 7 oder 30 Tage oder das ganze Fahrtenbuch ansehen, Route mit Start und Ziel anzeigen, zoomen, verschieben, GPX/CSV teilen und einzelne Fahrten oder den kompletten Bestand aus einem Ordner importieren.
 - **Auswählbare Statistiken:** Per Häkchen Werte und Diagramme wählen. Geschwindigkeit, Leistung und GPS-Höhe im Zeitverlauf; Zeitraumübersicht, Tagesstrecken und Vergleich einzelner Fahrten.
 - **Eigenes Cockpit:** Feines Raster mit 24 Spalten, überlappende Kacheln mit wählbarer Ebene, transparente Hintergründe, einzeln einstellbare Rahmen und Ecken. Zahl/Balken/Rundinstrument wählen, Kreisbogen und Drehwinkel stufenlos anpassen, Messwerte bleiben waagerecht. Neue Installationen starten mit dem gespeicherten ScootPit-Design. Farben, Schrift und Einheitenposition lassen sich anpassen. Eigene Bild- und Freitextkacheln sowie getrennte Hoch-/Querformatlayouts.
 - **Restreichweite einschätzen:** Akkureserve und Verbrauch berücksichtigen; aktuelle Fahrtdaten und passende Verbrauchshistorie verbessern die Schätzung. Startwert: 20 Wh/km.
 - **Samsung-Routinen nutzen:** Editierbare Fahrtstart-/Fahrtende-Nachrichten können eingerichtete Routinen zum Umschalten des Energiesparmodus auslösen. Die App richtet die Routinen nicht selbst ein.
 - **Daten behalten:** Fahrten und Einstellungen lokal speichern, zusätzliche Sicherungsordner auswählen. Keine Anmeldung erforderlich.
+
+## Neu in 1.4.3
+
+Das vollständige ScootPit-Fahrtenbuch lässt sich aus einem ausgewählten Ordner importieren. Fahrt-Metadaten und CSV-/GPX-Dateien werden dem aktiven Scooter zugeordnet; vorhandene Fahrten bleiben erhalten und Duplikate werden übersprungen. Die neue Ansicht **Alle** zeigt den gesamten importierten Zeitraum.
 
 ## Neu in 1.4.2
 
