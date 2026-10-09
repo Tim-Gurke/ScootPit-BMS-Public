@@ -198,7 +198,9 @@ final class CockpitBoard extends FrameLayout {
         if(tile.has("unit_font")){double size=tile.getDouble("unit_font");if(!Double.isFinite(size)||size<8||size>80)throw new Exception("Einheit-Schriftgröße von 8 bis 80 erforderlich");}
         if(tile.has("unit_position")&&(tile.getInt("unit_position")<0||tile.getInt("unit_position")>3))throw new Exception("Ungültige Einheit-Position");
         if(tile.has("gauge_value_position")&&(tile.getInt("gauge_value_position")<0||tile.getInt("gauge_value_position")>2))throw new Exception("Ungültige Messwertposition");
-        for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color","border_color"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
+        if(tile.has("scale_gradient_mode")&&(tile.getInt("scale_gradient_mode")<0||tile.getInt("scale_gradient_mode")>2))throw new Exception("Ungültiger Skalenfarbmodus");
+        if(tile.optInt("scale_gradient_mode",0)>0&&(tile.optInt("scale_gradient_low_full",20)<0||tile.optInt("scale_gradient_low_full",20)>=tile.optInt("scale_gradient_high_full",80)||tile.optInt("scale_gradient_high_full",80)>100))throw new Exception("Die rote Schwelle muss unter der grünen Schwelle liegen");
+        for(String field:new String[]{"background","text","instrument_color","scale_color","icon_color","border_color","scale_gradient_low","scale_gradient_mid","scale_gradient_high"})if(tile.has(field))android.graphics.Color.parseColor(tile.getString(field));
         if(tile.has("corner_radius")&&(tile.getInt("corner_radius")<0||tile.getInt("corner_radius")>48))throw new Exception("Eckenradius muss zwischen 0 und 48 dp liegen");
         if(tile.optString("caption").length()>300)throw new Exception("Beschriftung zu lang");
         if(tile.optString("free_text").length()>4000)throw new Exception("Freitext mit maximal 4000 Zeichen");

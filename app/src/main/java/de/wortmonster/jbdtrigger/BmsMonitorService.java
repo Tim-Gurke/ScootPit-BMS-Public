@@ -944,7 +944,8 @@ public class BmsMonitorService extends Service implements LocationListener {
                 .putExtra("average_speed_kmh", movingMs > 0 ? distanceMeters / movingMs * 3600 : 0)
                 .putExtra("total_km", number(prefs.getString("total_km", "0"), 0))
                 .putExtra("wh_km", consumption())
-                .putExtra("wh_500m", recentConsumption.whPerKm(500))
+                .putExtra("wh_500m", recentConsumption.whPerKm(consumptionWindowMeters()))
+                .putExtra("consumption_window_m",consumptionWindowMeters())
                 .putExtra("trip_time_ms", movingMs + standingMs + (tripPausedAt>0?Math.max(0,System.currentTimeMillis()-tripPausedAt):0))
                 .putExtra("range_km", rangeKm())
                 .putExtra("trip_active", recorder != null)
@@ -972,6 +973,7 @@ public class BmsMonitorService extends Service implements LocationListener {
         double adjusted=TemperatureHistory.estimate(temperatureHistory,prefs.getBoolean("weather_enabled",true)&&weatherAt>0&&System.currentTimeMillis()-weatherAt<=1800000?outsideTemperature:Double.NaN,reference);
         return recentConsumption.estimate(adjusted);
     }
+    private int consumptionWindowMeters(){return Math.max(100,Math.min(1000,prefs.getInt("consumption_window_m",500)));}
     private double rangeKm() {
         if (voltage <= 0) return Double.NaN;
         return RangeEstimator.range(soc, remainingAh, fullAh,
@@ -1046,3 +1048,4 @@ public class BmsMonitorService extends Service implements LocationListener {
 
     @Override public IBinder onBind(Intent intent) { return null; }
 }
+

@@ -19,7 +19,7 @@ Bereitschaft starten/beenden, manuelles Fahrtende, BMS-Lastausgang und Log sind 
 
 Fehlende, veraltete und inaktive Messwerte erscheinen deutlich gedimmt: Text, Balken und Rundinstrumente werden grau; auch individuell gefärbte Kachelhintergründe werden abgedunkelt und entsättigt. Bei frischen Daten kehren die gewählten Farben zurück. BMS-Werte gelten ohne laufende Bereitschaft/Verbindung oder nach 8 s als inaktiv, GPS-Geschwindigkeit/Höhe ohne laufende Fahrt oder nach 8 s ohne Fix. Wetterwerte werden nach 30 Minuten gedimmt; Fahrtstatistiken ohne laufende Fahrt ebenfalls. Gespeicherte Gesamt-, Tages- und Tourenkilometer bleiben normal sichtbar. Ein gültiger Nullwert bleibt aktiv.
 
-GPS-Geschwindigkeit, Fahrtstrecke, Gesamtkilometer, Fahr-/Standzeit (Bewegung ab 2 km/h), **Gesamtzeit** als Summe von Fahr- und Standzeit, Durchschnitt während Bewegung, Höchstgeschwindigkeit, Höhe/Höhenmeter, Akku-Prozent, Spannung, Strom, elektrische Entladeleistung, maximale elektrische Fahrtleistung, verbrauchte Wh, Wh/km, **Verbrauch · letzte 500 m**, Restreichweite, Temp1, Temp2 und Außentemperatur.
+GPS-Geschwindigkeit, Fahrtstrecke, Gesamtkilometer, Fahr-/Standzeit (Bewegung ab 2 km/h), **Gesamtzeit** als Summe von Fahr- und Standzeit, Durchschnitt während Bewegung, Höchstgeschwindigkeit, Höhe/Höhenmeter, Akku-Prozent, Spannung, Strom, elektrische Entladeleistung, maximale elektrische Fahrtleistung, verbrauchte Wh, Wh/km, **Verbrauch der letzten 100–1000 m**, Restreichweite, Temp1, Temp2 und Außentemperatur.
 
 Gesamtkilometer können jederzeit korrigiert werden, auch bei laufender Fahrt. Nur akzeptierte GPS-Strecken werden addiert. Ungenaue, alte und zeitlich rückwärts laufende Punkte werden verworfen. Höhe/Höhenmeter bleiben GPS-Schätzungen. Maximale Leistung ist das Maximum der BMS-Messwerte bei etwa 1-s-Abfrage; sehr kurze Spitzen können fehlen.
 
@@ -36,6 +36,13 @@ Unplausible GPS-Geschwindigkeiten und Positionssprünge werden vor der Anzeige v
 ## Kacheln, Farben und Einheiten
 
 Das voreingestellte Skalenmaximum des Tachos beträgt **22 km/h**. Ein selbst gespeichertes Maximum bleibt erhalten; ändern kannst du es im Kacheleditor unter **Skalenmaximum**.
+
+### Skalenfarben und Verbrauchsfenster
+
+Im Kacheleditor kannst du Balken und Rundinstrumente **einfarbig, zweifarbig oder dreifarbig** färben. Die Farben für niedrige, mittlere und hohe Werte lassen sich einzeln über **Farbe auswählen / mischen** einstellen. Zwei Schieberegler legen die Schwellen fest: Unterhalb der niedrigen Schwelle bleibt die niedrige Farbe voll sichtbar, oberhalb der hohen Schwelle die hohe Farbe. Dazwischen geht der Farbton stufenlos über; bei drei Farben liegt die Mittelfarbe in der Mitte des Übergangs. Voreinstellung: Rot bis 20 %, Grün ab 80 %, dazwischen ein weicher Übergang. Die Einstellung gilt für die jeweilige Kachel und wird mit dem Scooter-Profil gesichert.
+
+Die Kachel **Verbrauch · letzte 500 m** besitzt im Editor einen Schieberegler für **100 bis 1000 m** in 10-m-Schritten. Messfenster und Beschriftung werden je Scooter gespeichert. Bei noch zu kurzer oder fehlender Aufzeichnung erscheint kein erfundener Wert.
+
 
 Unter **Einheit: Schriftgröße** kannst du die Einheit jeder Messwertkachel unabhängig vom Zahlenwert auf **8–80** einstellen, etwa für **km/h**, **%**, **W** oder **°C**. Ein leeres Feld verwendet dieselbe Größe wie der Wert. Die Einstellung gilt für Zahl, Balken und Rundinstrument und wird im Layout mit Profilen und Sicherungen gespeichert. In schmalen Kacheln passt sich die gesamte Anzeige weiterhin an den verfügbaren Platz an.
 

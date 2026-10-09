@@ -5,6 +5,8 @@ ScootPit BMS zeichnet Fahrten mit einem kompatiblen JBD/Jiabaida-Bluetooth-Batte
 <li>Erfasst GPS-Route, Strecke, Fahr- und Standzeit sowie Fahrtenstatistiken</li>
 <li>Zeigt Akkustand, Spannung, Strom, Leistung, Energieverbrauch, geschätzte Reichweite und Temperaturen</li>
 <li>Gestaltet das Cockpit mit Rundinstrumenten, Balken, Zahlenkacheln, Fotos und Text; Bögen lassen sich drehen, Messwerte bleiben waagerecht</li>
+<li>Färbt Skalen mit frei wählbaren Zwei- oder Dreifarbenverläufen und einstellbaren Übergängen</li>
+<li>Stellt den Bereich für den Live-Verbrauch je Scooter per Schieberegler von 100 bis 1000 m ein</li>
 <li>Importiert einzelne Fahrten als GPX oder CSV und stellt komplette Fahrtenbücher aus Ordnern wieder her</li>
 <li>Überspringt beim Sammelimport bereits vorhandene Fahrten; die Ansicht „Alle“ zeigt den vollständigen Zeitraum</li>
 </ul>

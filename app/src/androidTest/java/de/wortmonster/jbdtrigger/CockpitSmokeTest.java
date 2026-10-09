@@ -243,6 +243,10 @@ public class CockpitSmokeTest extends Instrumentation {
             unitSize.setText("7");clickText(dialog.getWindow().getDecorView(),"Übernehmen");
             if(!dialog.isShowing())throw new AssertionError("Invalid unit font accepted");unitSize.setText("16");
             spinnerAfterLabel(dialog.getWindow().getDecorView(),"Einheit: Position").setSelection(2);
+            spinnerAfterLabel(dialog.getWindow().getDecorView(),"Farbverlauf für Balken und Rundinstrument").setSelection(2);
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Farbe bei hohem Wert (#RRGGBB)").setText("#00FF00");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Mittelfarbe (#RRGGBB)").setText("#FF8000");
+            inputAfterLabel(dialog.getWindow().getDecorView(),"Farbe bei niedrigem Wert (#RRGGBB)").setText("#FF0000");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Instrument / Balken: Farbe (#RRGGBB)").setText("#26C6DA");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Skala / Hintergrundbogen: Farbe (#RRGGBB)").setText("#AB47BC");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");
@@ -253,10 +257,16 @@ public class CockpitSmokeTest extends Instrumentation {
             try{gauge.config.put("display",2);gauge.draw(new android.graphics.Canvas(rendered));}
             catch(Exception e){throw new RuntimeException(e);}
             finally{try{gauge.config.put("display",originalDisplay);}catch(Exception ignored){}}
-            int fill=0,track=0;for(int y=0;y<360;y++)for(int x=0;x<320;x++){int pixel=rendered.getPixel(x,y);if(pixel==android.graphics.Color.parseColor("#26C6DA"))fill++;if(pixel==android.graphics.Color.parseColor("#AB47BC"))track++;}rendered.recycle();
-            if(fill<10||track<10)throw new AssertionError("Independent instrument/scale colours not drawn");
-            invoke(activity,"addTile",new Class[]{String.class},new Object[]{"free_text"});
+            int fill=0,track=0;for(int y=0;y<360;y++)for(int x=0;x<320;x++){int pixel=rendered.getPixel(x,y);if(pixel==android.graphics.Color.parseColor("#00FF00"))fill++;if(pixel==android.graphics.Color.parseColor("#AB47BC"))track++;}rendered.recycle();
+            if(fill<10||track<10||gauge.config.optInt("scale_gradient_mode")!=2)throw new AssertionError("Three-colour scale gradient not drawn or saved");
+            invoke(activity,"addTile",new Class[]{String.class},new Object[]{"consumption_500m"});
             CockpitBoard board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());int index=board.tiles.length()-1;
+            invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{index});dialog=(android.app.AlertDialog)member(activity,"tileDialog");
+            android.widget.SeekBar window=(android.widget.SeekBar)findDescription(dialog.getWindow().getDecorView(),"Verbrauchsfenster 100 bis 1000 Meter");
+            if(window==null||window.getProgress()!=40)throw new AssertionError("Recent consumption window defaults to 500 m");window.setProgress(90);clickText(dialog.getWindow().getDecorView(),"Übernehmen");
+            if(prefs.getInt("consumption_window_m",500)!=1000||ScooterProfiles.settingsFor(prefs,prefs.getString(ScooterProfiles.ACTIVE,"")).optInt("consumption_window_m")!=1000)throw new AssertionError("Recent consumption window was not saved per scooter");
+            invoke(activity,"addTile",new Class[]{String.class},new Object[]{"free_text"});
+            board=(CockpitBoard)findBoard(activity.getWindow().getDecorView());index=board.tiles.length()-1;
             invoke(activity,"editBoardTile",new Class[]{int.class},new Object[]{index});dialog=(android.app.AlertDialog)member(activity,"tileDialog");
             inputAfterLabel(dialog.getWindow().getDecorView(),"Freitext (max. 4000 Zeichen)").setText("Mein Roller\nT6e – Los geht’s!");
             clickText(dialog.getWindow().getDecorView(),"Übernehmen");
@@ -526,7 +536,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.4.3".equals(version))throw new AssertionError("Official version");
+                if(!"1.5.0".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }

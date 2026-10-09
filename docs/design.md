@@ -12,6 +12,10 @@ Zwei transparente Halbkreisinstrumente zeigen den Verbrauch der letzten 500 m un
 
 Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transparenz sowie Innenabstand jeder Kachel separat einstellen. Ein Innenabstand von 0 erlaubt Schrift bis nahe an den Rahmen. Bild- und Freitextkacheln bleiben möglich. Farben werden sichtbar als Vorschau gezeigt; **Farbe auswählen / mischen** bietet Farbton, Sättigung und Helligkeit sowie optional einen Hex-Code.
 
+## Skalenfarben
+
+Balken und Rundinstrumente können je Kachel ein- oder mehrfarbig dargestellt werden. Wähle zwei oder drei Farben und lege mit Schiebereglern die Schwelle für die hohe und niedrige Vollfarbe fest. Dazwischen blendet ScootPit stufenlos; bei drei Farben liegt die Mittelfarbe in der Mitte. Farben und Schwellen werden im jeweiligen Scooter-Layout gespeichert.
+
 ## Helles und dunkles Design
 
 **App-Farben** bietet Dunkel/Orange und Hell/Blau. **Nur App-Farben** erhält eigene Kachelfarben; **Alle Kacheln** übernimmt das Schema auch für Hoch- und Querformat. Transparente Kacheln, Anordnung, Bilder und Texte bleiben erhalten. Der Bildschirm kann einen frei wählbaren Verlauf zwischen zwei Farben erhalten. Alle Farben sind danach manuell anpassbar.

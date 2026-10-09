@@ -4,6 +4,8 @@ import java.util.ArrayDeque;
 
 /** Cumulative GPS distance and integrated battery energy, rather than W / instantaneous speed. */
 final class RecentConsumption {
+    static final double MAX_WINDOW_METERS=1000;
+    private static final double RETAIN_METERS=MAX_WINDOW_METERS+200;
     private final ArrayDeque<double[]> samples = new ArrayDeque<>();
     private double distance, energy, baseDistance, baseEnergy;
     void reset() { resetAt(0,0); }
@@ -16,7 +18,7 @@ final class RecentConsumption {
         // Keep stationary energy in the next travelled segment, but keep memory bounded.
         if (meters==samples.peekLast()[0]) return;
         samples.add(new double[]{meters,wh});
-        while(samples.size()>2 && meters-second()[0]>800) samples.removeFirst();
+        while(samples.size()>2 && meters-second()[0]>RETAIN_METERS) samples.removeFirst();
     }
     private double[] second() { java.util.Iterator<double[]> it=samples.iterator();it.next();return it.next(); }
     boolean ready() { return distance>=250 && energy>0; }
@@ -41,8 +43,9 @@ final class RecentConsumption {
         if (!ready()) return reference;
         double trip=energy/(distance/1000);
         double[] first=samples.peekFirst();
-        double span=distance-first[0], used=energy-first[1];
-        double recent=span>=200 && used>0 ? used/(span/1000):trip;
+        double span=Math.min(800,distance-first[0]);
+        double recent=span>=200?whPerKm(span):trip;
         return Math.max(1, .75*recent+.25*trip);
     }
 }
+

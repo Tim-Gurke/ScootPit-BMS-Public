@@ -1,0 +1,4 @@
+Neu in 1.5.0:
+- Skalen und Balken mit frei wählbaren Zwei- oder Dreifarbenverläufen
+- Farben und Schwellen für den stufenlosen Übergang selbst einstellen
+- Live-Verbrauch je Scooter für 100 bis 1000 m per Schieberegler wählen
