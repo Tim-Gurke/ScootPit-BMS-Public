@@ -152,8 +152,9 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->{
                 try{
                     String portrait=prefs.getString("cockpit_board","");
-                    if(!CockpitBoard.load(prefs,"cockpit_board_landscape").toString().equals(portrait))throw new AssertionError("Landscape fallback");
-                    org.json.JSONArray landscape=new org.json.JSONArray(portrait);landscape.getJSONObject(0).put("caption","Querformat-Test");
+                    org.json.JSONArray landscape=CockpitBoard.load(prefs,"cockpit_board_landscape");
+                    if(landscape.length()!=25||landscape.getJSONObject(0).getInt("h")!=15)throw new AssertionError("User landscape default");
+                    landscape=new org.json.JSONArray(landscape.toString());landscape.getJSONObject(0).put("caption","Querformat-Test");
                     prefs.edit().putString("cockpit_board_landscape",landscape.toString()).putString("connect_rssi","-85").putString("departure_rssi","-95").commit();
                     if(!CockpitBoard.load(prefs,"cockpit_board_landscape").getJSONObject(0).getString("caption").equals("Querformat-Test"))throw new AssertionError("Independent landscape");
                     if(!CockpitBoard.load(prefs).toString().equals(portrait))throw new AssertionError("Landscape overwrote portrait");
