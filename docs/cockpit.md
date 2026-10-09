@@ -39,6 +39,8 @@ Das voreingestellte Skalenmaximum des Tachos beträgt **22 km/h**. Ein selbst ge
 
 ### Skalenfarben und Verbrauchsfenster
 
+Mit **Skalenrichtung umkehren** wird die Skala einer Balken- oder Rundinstrumentkachel umgedreht: Hohe Werte liegen am Skalenanfang, niedrige am Ende. Zahlen und Messwerte ändern sich nicht. Die Einstellung gilt für die einzelne Kachel und kann zum Beispiel beim Akku eine Entladung in der gewünschten Richtung zeigen.
+
 Im Kacheleditor kannst du Balken und Rundinstrumente **einfarbig, zweifarbig oder dreifarbig** färben. Anfangsfarbe und Endfarbe lassen sich einzeln über **Farbe auswählen / mischen** einstellen; im Dreifarbenmodus ist auch die Mittelfarbe frei wählbar. Zwei Schieberegler legen die Schwellen fest: Bis zur Anfangsschwelle bleibt die Anfangsfarbe voll sichtbar, ab der Endschwelle die Endfarbe. Dazwischen geht der Farbton stufenlos über; bei drei Farben liegt die Mittelfarbe in der Mitte des Übergangs. Voreinstellung: Rot bis 20 %, Grün ab 80 %, dazwischen ein weicher Übergang. Die Einstellung gilt für die jeweilige Kachel und wird mit dem Scooter-Profil gesichert.
 
 Die Verbrauchskachel besitzt im Editor einen Schieberegler für **100 bis 1000 m** in 10-m-Schritten; ihre Beschriftung zeigt das eingestellte Fenster. Messfenster und Beschriftung werden je Scooter gespeichert. Bei noch zu kurzer oder fehlender Aufzeichnung erscheint kein erfundener Wert.

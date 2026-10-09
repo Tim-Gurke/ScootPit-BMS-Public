@@ -17,7 +17,7 @@ Base64 ist lediglich ein Transportformat. Der Workflow schreibt den Keystore nur
 
 ## Offizielle Version
 
-Die öffentliche Version heißt **1.5.0**. Android verwendet intern **versionCode 23**, damit das Update über bereits installierte Entwicklungsstände funktioniert. Die Versionsbezeichnung kann öffentlich neu beginnen; der interne Code muss bei jedem Update weiter steigen. App-ID und Signierschlüssel bleiben erhalten.
+Die öffentliche Version heißt **1.5.1**. Android verwendet intern **versionCode 24**, damit das Update über bereits installierte Entwicklungsstände funktioniert. Die Versionsbezeichnung kann öffentlich neu beginnen; der interne Code muss bei jedem Update weiter steigen. App-ID und Signierschlüssel bleiben erhalten.
 
-Build: Java 17, Gradle 8.9, Android SDK 35. Die Java-Tests decken Protokoll, Steuerung, Reichweite, Raster, Empfang, bestätigten Stillstand, Skalenfarbverläufe und Verbrauchsfenster bis 1000 m ab; Android Lint und Emulatorprüfungen unter Android 13/15 ergänzen die Prüfung. Reales BLE/GPS und Samsung-Routinen müssen am eigenen Roller geprüft werden.
+Build: Java 17, Gradle 8.9, Android SDK 35. Die Java-Tests decken Protokoll, Steuerung, Reichweite, Raster, Empfang, bestätigten Stillstand, Skalenfarbverläufe, umgekehrte Skalenrichtung und Verbrauchsfenster bis 1000 m ab; Android Lint und Emulatorprüfungen unter Android 13/15 ergänzen die Prüfung. Reales BLE/GPS und Samsung-Routinen müssen am eigenen Roller geprüft werden.
 

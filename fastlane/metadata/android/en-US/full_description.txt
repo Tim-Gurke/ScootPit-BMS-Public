@@ -6,6 +6,7 @@ ScootPit BMS automatically records electric scooter rides with a compatible Blue
 <li>Shows battery level, voltage, current, power, energy use, estimated range, and temperatures</li>
 <li>Customizes the dashboard with gauges, bars, number tiles, photos, and text; gauges rotate while readings stay horizontal</li>
 <li>Colors scales with custom start, middle, and end colors and adjustable transition thresholds</li>
+<li>Reverses bars and gauge scales per tile without changing the reading</li>
 <li>Sets the live consumption distance per scooter from 100 to 1000 m with a slider</li>
 <li>Imports single GPX or CSV rides and restores complete ride journals from folders</li>
 <li>Skips rides already in the journal; an “All” view shows the complete date range</li>

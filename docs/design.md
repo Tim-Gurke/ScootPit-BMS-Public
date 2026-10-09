@@ -14,6 +14,8 @@ Rahmen ein-/ausschalten, Rahmenfarbe, Eckenradius, Hintergrundfarbe und Transpar
 
 ## Skalenfarben
 
+Mit **Skalenrichtung umkehren** liegen hohe Werte am Anfang und niedrige Werte am Ende der Skala. Markierungen und Anzeige drehen sich zusammen; der Messwert bleibt gleich. Die Option lässt sich pro Balken- oder Rundinstrumentkachel setzen.
+
 Balken und Rundinstrumente können je Kachel einfarbig, zweifarbig oder dreifarbig dargestellt werden. Anfangsfarbe und Endfarbe sind frei wählbar; im Dreifarbenmodus ist auch die Mittelfarbe wählbar. Schieberegler legen fest, bis zu welchem Wert die Anfangsfarbe und ab welchem Wert die Endfarbe voll erscheint. Dazwischen blendet ScootPit stufenlos. Farben und Schwellen werden im jeweiligen Scooter-Layout gespeichert.
 
 ## Helles und dunkles Design

@@ -1,0 +1,3 @@
+New in 1.5.1:
+- Reverse the scale direction of bars and gauges per tile
+- Show high values at the scale start without changing the reading

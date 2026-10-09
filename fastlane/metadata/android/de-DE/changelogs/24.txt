@@ -1,0 +1,3 @@
+Neu in 1.5.1:
+- Skalenrichtung von Balken und Rundinstrumenten je Kachel umkehren
+- Hohe Werte am Skalenanfang anzeigen; Messwert bleibt unverändert

@@ -98,7 +98,7 @@ final class MetricTile extends TextView {
         if(style==2&&bottom-top>=dp(85)&&width>=dp(100)){
             float sweep=Math.max(90,Math.min(270,config.optInt("gauge_sweep",180)));
             float radius=Math.min(width/2-dp(10),(bottom-top)/2-dp(6));paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(6));paint.setStrokeCap(Paint.Cap.ROUND);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);
-            RectF arc=new RectF(cx-radius,middle-radius,cx+radius,middle+radius);float start=270-sweep/2;c.save();c.rotate(config.optInt("gauge_rotation",0),cx,middle);c.drawArc(arc,start,sweep,false,paint);paint.setColor(scaleColor(progress(value),accent));c.drawArc(arc,start,(float)(sweep*progress(value)),false,paint);c.restore();
+            RectF arc=new RectF(cx-radius,middle-radius,cx+radius,middle+radius);float start=270-sweep/2;double p=progress(value);boolean reversed=config.optBoolean("scale_reverse",false);double position=ScaleDirection.position(p,reversed);c.save();c.rotate(config.optInt("gauge_rotation",0),cx,middle);c.drawArc(arc,start,sweep,false,paint);paint.setColor(scaleColor(p,accent));c.drawArc(arc,reversed?start+(float)(sweep*position):start,(float)(sweep*p),false,paint);c.restore();
             valueWidth=radius*1.55f;valueSize=Math.min(valueSize,radius*.60f);
         }else if(style!=0){bar(c,dp(8),bottom-dp(5),getWidth()-dp(16),progress(value));bottom-=dp(12);middle=(top+bottom)/2;}
         float available=Math.max(dp(12),bottom-top);valueSize=Math.min(valueSize,available*.65f);
@@ -131,12 +131,12 @@ final class MetricTile extends TextView {
         float valueCenter=cy+(valuePosition==1?-radius*.22f:valuePosition==2?radius*.22f:0);
         double max=config.optDouble("scale_max",CockpitLayout.DEFAULT_SPEED_SCALE_MAX);
         if(!Double.isFinite(max)||max<=0)max=CockpitLayout.DEFAULT_SPEED_SCALE_MAX;
-        double progress=progress(value);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;
+        double progress=progress(value);boolean reversed=config.optBoolean("scale_reverse",false);double position=ScaleDirection.position(progress,reversed);int track=inactive?Color.argb(Color.alpha(scale),55,55,55):scale;
         RectF bounds=new RectF(cx-radius,cy-radius,cx+radius,cy+radius);
         c.save();c.rotate(rotation,cx,cy);
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeCap(Paint.Cap.BUTT);paint.setStrokeWidth(dp(3));paint.setColor(track);c.drawArc(bounds,start,sweep,false,paint);
         int progressColor=scaleColor(progress,accent);
-        paint.setColor(progressColor);paint.setStrokeWidth(dp(4));if(progress>0)c.drawArc(bounds,start,(float)(sweep*progress),false,paint);
+        paint.setColor(progressColor);paint.setStrokeWidth(dp(4));if(progress>0)c.drawArc(bounds,reversed?start+(float)(sweep*position):start,(float)(sweep*progress),false,paint);
         double rawMajorStep=max/4d;
         double magnitude=Math.pow(10,Math.floor(Math.log10(rawMajorStep)));
         double normalized=rawMajorStep/magnitude;
@@ -145,7 +145,7 @@ final class MetricTile extends TextView {
         int tickCount=Math.max(1,(int)Math.ceil(max/minorStep));
         List<String> scaleLabels=new ArrayList<>();List<float[]> scaleLabelPoints=new ArrayList<>();
         for(int i=0;i<=tickCount;i++){
-            double number=Math.min(max,i*minorStep),fraction=number/max;double angle=Math.toRadians(start+sweep*fraction);boolean major=Math.abs(number/majorStep-Math.rint(number/majorStep))<.001;
+            double number=Math.min(max,i*minorStep),fraction=number/max;double angle=Math.toRadians(start+sweep*ScaleDirection.position(fraction,reversed));boolean major=Math.abs(number/majorStep-Math.rint(number/majorStep))<.001;
             float outer=radius-dp(7),inner=outer-dp(major?10:5);
             paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(major?1.3f:.8f));paint.setColor(fraction<=progress&&progress>0?progressColor:track);
             c.drawLine(cx+(float)Math.cos(angle)*inner,cy+(float)Math.sin(angle)*inner,cx+(float)Math.cos(angle)*outer,cy+(float)Math.sin(angle)*outer,paint);
@@ -154,7 +154,7 @@ final class MetricTile extends TextView {
                 scaleLabels.add(label);scaleLabelPoints.add(new float[]{cx+(float)Math.cos(labelAngle)*labelRadius,cy+(float)Math.sin(labelAngle)*labelRadius+sp(4)});
             }
         }
-        if(progress>0){double angle=Math.toRadians(start+sweep*progress);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(progressColor);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
+        if(progress>0){double angle=Math.toRadians(start+sweep*position);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(dp(3));paint.setColor(progressColor);c.drawLine(cx+(float)Math.cos(angle)*(radius+dp(2)),cy+(float)Math.sin(angle)*(radius+dp(2)),cx+(float)Math.cos(angle)*(radius-dp(17)),cy+(float)Math.sin(angle)*(radius-dp(17)),paint);}
         c.restore();
         for(int i=0;i<scaleLabels.size();i++){float[] point=scaleLabelPoints.get(i);text(c,scaleLabels.get(i),point[0],point[1],dp(36),sp(11),false,foreground);}
         float numberSize=Math.min(sp(Math.max(12,Math.min(80,config.optInt("font",72)))),radius*.76f);
@@ -172,6 +172,6 @@ final class MetricTile extends TextView {
         try{return ScaleColorRange.color(progress,Color.parseColor(config.optString("scale_gradient_low","#FF3B30")),Color.parseColor(config.optString("scale_gradient_mid","#FF9800")),Color.parseColor(config.optString("scale_gradient_high","#34C759")),config.optInt("scale_gradient_low_full",20),config.optInt("scale_gradient_high_full",80),mode==2);}
         catch(Exception ignored){return fallback;}
     }
-    private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?Color.argb(Color.alpha(accent),96,96,96):scaleColor(progress,accent));c.drawRoundRect(x,y,x+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
+    private void bar(Canvas c,float x,float y,float w,double progress){paint.setStyle(Paint.Style.FILL);paint.setColor(inactive?Color.argb(Color.alpha(scale),41,41,41):scale);c.drawRoundRect(x,y,x+w,y+dp(4),dp(2),dp(2),paint);paint.setColor(inactive?Color.argb(Color.alpha(accent),96,96,96):scaleColor(progress,accent));float left=x+(config.optBoolean("scale_reverse",false)?(float)(w*(1-progress)):0);c.drawRoundRect(left,y,left+(float)(w*progress),y+dp(4),dp(2),dp(2),paint);}
 }
 
