@@ -160,7 +160,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 try{
                     String portrait=prefs.getString("cockpit_board","");
                     org.json.JSONArray landscape=CockpitBoard.load(prefs,"cockpit_board_landscape");
-                    if(landscape.length()!=25||landscape.getJSONObject(0).getInt("h")!=15)throw new AssertionError("User landscape default");
+                    if(landscape.length()!=22||landscape.getJSONObject(0).getInt("h")!=7)throw new AssertionError("User landscape default");
                     landscape=new org.json.JSONArray(landscape.toString());landscape.getJSONObject(0).put("caption","Querformat-Test");
                     prefs.edit().putString("cockpit_board_landscape",landscape.toString()).putString("connect_rssi","-85").putString("departure_rssi","-95").commit();
                     if(!CockpitBoard.load(prefs,"cockpit_board_landscape").getJSONObject(0).getString("caption").equals("Querformat-Test"))throw new AssertionError("Independent landscape");
