@@ -1,0 +1,4 @@
+New in 1.5.3:
+- Moved landscape readiness status into the shorter header; portrait stays unchanged
+- Reduced landscape header and grid height
+- Updated standard layouts for portrait and landscape

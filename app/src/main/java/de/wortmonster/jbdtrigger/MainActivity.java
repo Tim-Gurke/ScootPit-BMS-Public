@@ -142,22 +142,32 @@ public class MainActivity extends Activity {
         WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightStatusBars(CockpitTheme.light(prefs));
         WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightNavigationBars(CockpitTheme.light(prefs));
         getWindow().setNavigationBarColor(android.os.Build.VERSION.SDK_INT<27?0xff0b1015:color(prefs.getString("app_background","#0B1015"),0xff0b1015));
-        LinearLayout root=column();root.setPadding(dp(14),dp(6),dp(14),dp(20));
+        boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        LinearLayout root=column();root.setPadding(dp(14),dp(landscape?0:6),dp(14),dp(landscape?0:20));
         root.setBackgroundColor(prefs.getBoolean("background_gradient_enabled",false)?Color.TRANSPARENT:color(prefs.getString("app_background","#0B1015"),0xff0b1015));
-        LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(0,dp(3),0,dp(7));
-        ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.app_logo);logo.setContentDescription("ScootPit BMS Logo");header.addView(logo,new LinearLayout.LayoutParams(dp(42),dp(48)));
-        LinearLayout identity=column();identity.setPadding(dp(8),0,dp(4),0);
-        TextView title=label("ScootPit BMS",22,color(prefs.getString("header_color",prefs.getString("accent_color","#FF9800")),accent()));title.setTypeface(null,Typeface.BOLD);title.setPadding(0,0,0,0);title.setSingleLine(true);title.setAutoSizeTextTypeUniformWithConfiguration(14,22,1,android.util.TypedValue.COMPLEX_UNIT_SP);identity.addView(title,new LinearLayout.LayoutParams(-1,dp(28)));
-        LinearLayout profileRow=new LinearLayout(this);profileRow.setGravity(Gravity.CENTER_VERTICAL);profileRow.setMinimumHeight(dp(40));profileRow.setContentDescription("Scooter-Profil auswählen: "+ScooterProfiles.name(prefs));profileRow.setEnabled(!editingBoard);profileRow.setOnClickListener(v->profileMenu());
-        TextView profile=label(ScooterProfiles.name(prefs),14,foreground());profile.setSingleLine(true);profile.setEllipsize(android.text.TextUtils.TruncateAt.END);profileRow.addView(profile,new LinearLayout.LayoutParams(0,-2,1));TextView arrow=label("⌄",18,accent());arrow.setPadding(dp(5),0,0,0);profileRow.addView(arrow);identity.addView(profileRow);
+        LinearLayout header=new LinearLayout(this);header.setTag("cockpit_header");header.setGravity(Gravity.CENTER_VERTICAL);header.setPadding(0,dp(landscape?0:3),0,dp(landscape?0:7));
+        ImageView logo=new ImageView(this);logo.setImageResource(R.drawable.app_logo);logo.setContentDescription("ScootPit BMS Logo");header.addView(logo,new LinearLayout.LayoutParams(dp(landscape?36:42),dp(landscape?38:48)));
+        LinearLayout identity=column();identity.setPadding(dp(landscape?6:8),0,dp(4),0);
+        TextView title=label("ScootPit BMS",landscape?20:22,color(prefs.getString("header_color",prefs.getString("accent_color","#FF9800")),accent()));title.setTypeface(null,Typeface.BOLD);title.setPadding(0,0,0,0);title.setSingleLine(true);title.setAutoSizeTextTypeUniformWithConfiguration(14,landscape?20:22,1,android.util.TypedValue.COMPLEX_UNIT_SP);identity.addView(title,new LinearLayout.LayoutParams(-1,dp(landscape?24:28)));
+        LinearLayout profileRow=new LinearLayout(this);profileRow.setGravity(Gravity.CENTER_VERTICAL);profileRow.setMinimumHeight(dp(landscape?30:40));profileRow.setContentDescription("Scooter-Profil auswählen: "+ScooterProfiles.name(prefs));profileRow.setEnabled(!editingBoard);profileRow.setOnClickListener(v->profileMenu());
+        TextView profile=label(ScooterProfiles.name(prefs),landscape?13:14,foreground());profile.setSingleLine(true);profile.setEllipsize(android.text.TextUtils.TruncateAt.END);profileRow.addView(profile,new LinearLayout.LayoutParams(0,-2,1));TextView arrow=label("⌄",landscape?16:18,accent());arrow.setPadding(dp(5),0,0,0);profileRow.addView(arrow);identity.addView(profileRow);
         header.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
-        LinearLayout.LayoutParams divider=new LinearLayout.LayoutParams(dp(1),dp(38));divider.setMargins(dp(4),0,dp(4),0);header.addView(separator(true),divider);
-        header.addView(headerAction("journal","Fahrtenbuch",()->{journalAfterImport=new JournalUi(this,prefs);journalAfterImport.show();}),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        header.addView(headerAction("settings","Einstellungen öffnen",()->showSettings()),new LinearLayout.LayoutParams(dp(48),dp(56)));root.addView(header);
-        LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,dp(1));rule.setMargins(0,0,0,dp(8));root.addView(separator(false),rule);
-        LinearLayout stateRow=new LinearLayout(this);stateRow.setGravity(Gravity.CENTER_VERTICAL);stateRow.setPadding(0,dp(7),0,dp(10));
-        stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(16),dp(16));dotParams.setMargins(0,0,dp(10),0);stateRow.addView(stateDot,dotParams);
-        stateView=label(BmsMonitorService.running?"Bereitschaft aktiv":"Bereitschaft aus",15,foreground());stateRow.addView(stateView);root.addView(stateRow);updateStateDot();
+        LinearLayout stateRow=new LinearLayout(this);stateRow.setTag("cockpit_readiness_status");stateRow.setGravity(Gravity.CENTER_VERTICAL);
+        if(landscape){
+            stateRow.setPadding(dp(4),0,dp(4),0);
+            stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(12),dp(12));dotParams.setMargins(0,0,dp(6),0);stateRow.addView(stateDot,dotParams);
+            stateView=label(BmsMonitorService.running?"Bereitschaft aktiv":"Bereitschaft aus",13,foreground());stateRow.addView(stateView);header.addView(stateRow,new LinearLayout.LayoutParams(-2,-2));
+        }
+        LinearLayout.LayoutParams divider=new LinearLayout.LayoutParams(dp(1),dp(landscape?32:38));divider.setMargins(dp(4),0,dp(4),0);header.addView(separator(true),divider);
+        header.addView(headerAction("journal","Fahrtenbuch",()->{journalAfterImport=new JournalUi(this,prefs);journalAfterImport.show();}),new LinearLayout.LayoutParams(dp(landscape?40:48),dp(landscape?40:48)));
+        header.addView(headerAction("settings","Einstellungen öffnen",()->showSettings()),new LinearLayout.LayoutParams(dp(landscape?40:48),dp(landscape?40:56)));root.addView(header);
+        LinearLayout.LayoutParams rule=new LinearLayout.LayoutParams(-1,dp(1));rule.setMargins(0,0,0,dp(landscape?0:8));root.addView(separator(false),rule);
+        if(!landscape){
+            stateRow.setGravity(Gravity.CENTER_VERTICAL);stateRow.setPadding(0,dp(7),0,dp(10));
+            stateDot=new View(this);LinearLayout.LayoutParams dotParams=new LinearLayout.LayoutParams(dp(16),dp(16));dotParams.setMargins(0,0,dp(10),0);stateRow.addView(stateDot,dotParams);
+            stateView=label(BmsMonitorService.running?"Bereitschaft aktiv":"Bereitschaft aus",15,foreground());stateRow.addView(stateView);root.addView(stateRow);
+        }
+        updateStateDot();
         if(!hasSelectedBms()&&!editingBoard){
             root.addView(label("Bitte zuerst das BMS deines Rollers auswählen.",14,muted()));
             Button select=button("BMS auswählen");select.setOnClickListener(v->openBmsPicker());root.addView(select);

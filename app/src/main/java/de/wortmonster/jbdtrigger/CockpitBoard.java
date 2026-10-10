@@ -21,7 +21,7 @@ final class CockpitBoard extends FrameLayout {
     private int[][] initial;
     CockpitBoard(Context context, JSONArray tiles, boolean editing, Runnable changed) {
         super(context);this.tiles=tiles;this.editing=editing;this.changed=changed;
-        unit=Math.round(GRID_UNIT_DP*getResources().getDisplayMetrics().density);
+        boolean landscape=context.getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;unit=Math.round((landscape?14:GRID_UNIT_DP)*getResources().getDisplayMetrics().density);
         setClipChildren(false);
     }
     void addTile(View view, JSONObject tile, Runnable configure) {

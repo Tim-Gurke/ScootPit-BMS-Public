@@ -6,7 +6,7 @@
 
 **ScootPit – für alle, die ihren Roller überwachen wollen, ohne selbst überwacht zu werden.**
 
-**Version 1.5.2 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.5.3 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
@@ -49,9 +49,13 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch ein
 <em>Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.</em>
 
 
+## Neu in 1.5.3
+
+Im Querformat sitzt die Bereitschaftsanzeige direkt im kompakteren Appkopf. Das Querformat-Raster nutzt 14-dp-Höheneinheiten, damit die bereitgestellte Anordnung auf mehr Displays ohne Scrollen Platz findet. Das Hochformat behält seine bisherige Kopf- und Rastergröße.
+
 ## Neu in 1.5.2
 
-Das Standardcockpit wurde in Hoch- und Querformat neu angeordnet. Im Querformat fasst eine kompakte Anordnung die Rundinstrumente, Fahrdaten, Zeiten und Aktionen zusammen. **Standardlayout** übernimmt die neue Voreinstellung. Bestehende persönliche Layouts bleiben erhalten, bis du das Standardlayout auswählst.
+Das Standardcockpit wurde in Hoch- und Querformat neu angeordnet. Im Querformat fasst eine kompakte Anordnung Rundinstrumente, Fahrdaten, Zeiten und Aktionen zusammen; die Bereitschaftsanzeige sitzt im flacheren Appkopf und das Raster wird platzsparend dargestellt. **Standardlayout** übernimmt die neue Voreinstellung. Bestehende persönliche Layouts bleiben erhalten, bis du das Standardlayout auswählst.
 
 ## Neu in 1.5.1
 

@@ -22,7 +22,7 @@ Balken und Rundinstrumente können je Kachel einfarbig, zweifarbig oder dreifarb
 
 **App-Farben** bietet Dunkel/Orange und Hell/Blau. **Nur App-Farben** erhält eigene Kachelfarben; **Alle Kacheln** übernimmt das Schema auch für Hoch- und Querformat. Transparente Kacheln, Anordnung, Bilder und Texte bleiben erhalten. Der Bildschirm kann einen frei wählbaren Verlauf zwischen zwei Farben erhalten. Alle Farben sind danach manuell anpassbar.
 
-Der Appkopf integriert Appname und antippbaren Profilnamen, Fahrtenbuch und Zahnrad mit Blitz. Der grüne Punkt zeigt aktive Bereitschaft. Das feste App-Symbol bleibt beim Schemawechsel gleich. Alle Kacheln besitzen passende Symbole mit separat wählbarer Farbe; Symbol, Beschriftung, beides oder keines sind einstellbar.
+Im Hochformat bleibt die Bereitschaftszeile unter dem Appkopf. Im Querformat wandert Statuspunkt samt Text in den Kopf; die Kopfzeile ist dort flacher, damit die Cockpitfläche mehr Displayhöhe erhält. Das feste App-Symbol bleibt beim Schemawechsel gleich. Alle Kacheln besitzen passende Symbole mit separat wählbarer Farbe; Symbol, Beschriftung, beides oder keines sind einstellbar.
 
 ![Individuell angeordnetes Cockpit im dunklen Farbschema](assets/screenshots/cockpit-dunkel.jpg)
 

@@ -1,0 +1,4 @@
+Neu in 1.5.3:
+- Bereitschaftsanzeige ins Querformat-Kopffeld verschoben; Hochformat unverändert
+- Kopfbereich und Rasterhöhe im Querformat verkleinert
+- Aktualisierte Standardanordnung für Hoch- und Querformat
