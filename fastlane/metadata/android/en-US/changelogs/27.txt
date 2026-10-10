@@ -1,0 +1,4 @@
+New in 1.5.4:
+- Restored the original 20 dp landscape grid and the 1.5.2 standard arrangement
+- Kept the shorter landscape header with readiness status inside it
+
