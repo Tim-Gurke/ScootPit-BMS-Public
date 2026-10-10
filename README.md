@@ -16,13 +16,25 @@ Mehrere gespeicherte Scooter? Die App prüft erreichbare BMS nacheinander und ü
 
 Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch einer frei wählbaren Strecke und die aktuelle elektrische Leistung stehen im Mittelpunkt. Akku, Restreichweite, Kilometer und Temperaturen ergänzen die Übersicht; GPS-Geschwindigkeit bleibt als kleinere Anzeige verfügbar.
 
-![ScootPit-Cockpit im dunklen Farbschema mit aktuellen Messwerten](docs/assets/screenshots/cockpit-dunkel.jpg)
+### Hochformat
 
-<em>Das aktuelle Cockpit im dunklen Farbschema mit überlagerten Anzeigen und Statuswerten.</em>
+![ScootPit-Cockpit im dunklen Design im Hochformat](docs/assets/screenshots/cockpit-dunkel.jpg)
 
-![ScootPit-Cockpit im hellen Farbschema mit aktuellen Messwerten](docs/assets/screenshots/cockpit-hell.jpg)
+<em>Dunkles Design im Hochformat · Samsung Galaxy S20 FE 5G · Android 13.</em>
 
-<em>Dasselbe aktuelle Cockpit im hellen Farbschema.</em>
+![ScootPit-Cockpit im hellen Design im Hochformat](docs/assets/screenshots/cockpit-hell.jpg)
+
+<em>Helles Design im Hochformat · Samsung Galaxy S10 · ArtisanROM Quant 3.1.1 (Android 16).</em>
+
+### Querformat
+
+![ScootPit-Cockpit im dunklen Design im Querformat](docs/assets/screenshots/cockpit-querformat-dunkel.jpg)
+
+<em>Dunkles Design im Querformat · Samsung Galaxy S20 FE 5G · Android 13.</em>
+
+![ScootPit-Cockpit im hellen Design im Querformat](docs/assets/screenshots/cockpit-querformat-hell.jpg)
+
+<em>Helles Design im Querformat · Samsung Galaxy S10 · ArtisanROM Quant 3.1.1 (Android 16).</em>
 
 ## Was bringt dir ScootPit?
 
