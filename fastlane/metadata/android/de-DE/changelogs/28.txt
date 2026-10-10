@@ -1,0 +1,4 @@
+Neu in 1.5.5:
+- Hoch- und Querformat-Anordnung aus der Einstellungsdatei übernommen
+- Lange Untermenüs lassen sich auch im Querformat scrollen
+- Kompakter Querformat-Kopf bleibt erhalten

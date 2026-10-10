@@ -34,10 +34,10 @@ public class CockpitSmokeTest extends Instrumentation {
                     org.json.JSONArray portrait=CockpitBoard.standardDefaults(activity,"cockpit_board");
                     org.json.JSONArray landscape=CockpitBoard.standardDefaults(activity,"cockpit_board_landscape");
                     CockpitBoard.validate(landscape);
-                    if(!board.tiles.toString().equals(portrait.toString())||portrait.length()!=22||landscape.length()!=22)throw new AssertionError("Standardlayout must keep the supplied portrait and original 1.5.2 landscape presets");
-                    org.json.JSONObject landscapeGauge=landscape.getJSONObject(0),landscapePower=landscape.getJSONObject(1);
+                    if(!board.tiles.toString().equals(portrait.toString())||portrait.length()!=22||landscape.length()!=22)throw new AssertionError("Standardlayout must match the supplied portrait and landscape presets");
+                    org.json.JSONObject landscapeGauge=landscape.getJSONObject(0),landscapePower=landscape.getJSONObject(1),landscapeSoc=landscape.getJSONObject(2);
                     int landscapeBottom=0;for(int i=0;i<landscape.length();i++){org.json.JSONObject tile=landscape.getJSONObject(i);landscapeBottom=Math.max(landscapeBottom,tile.getInt("y")+tile.getInt("h"));}
-                    if(landscapeGauge.getInt("w")!=24||landscapeGauge.getInt("h")!=7||landscapePower.getInt("x")!=1||landscapePower.getInt("y")!=3||landscapeBottom!=17)throw new AssertionError("Original landscape grid dimensions");
+                    if(landscapeGauge.getInt("x")!=6||landscapeGauge.getInt("y")!=0||landscapeGauge.getInt("w")!=12||landscapeGauge.getInt("h")!=14||landscapePower.getInt("x")!=8||landscapePower.getInt("y")!=7||landscapeSoc.getInt("x")!=11||landscapeSoc.getInt("y")!=7||landscapeBottom!=19)throw new AssertionError("Imported portrait and landscape arrangements");
                     org.json.JSONObject leadGauge=board.tiles.getJSONObject(0),powerGauge=board.tiles.getJSONObject(1),socGauge=board.tiles.getJSONObject(3);
                     if(leadGauge.getInt("w")!=24||leadGauge.getInt("h")!=14||leadGauge.optInt("gauge_sweep")!=240||leadGauge.optInt("display")!=2||powerGauge.optInt("display")!=2||powerGauge.optInt("gauge_sweep")!=160||!socGauge.optBoolean("scale_reverse"))throw new AssertionError("User cockpit gauges");
                     if(!prefs.getBoolean("background_gradient_enabled",false)||!prefs.getString("accent_color","").equals("#FF981F")||!prefs.getString("background_gradient_start","").equals("#28282D")||!prefs.getString("background_gradient_end","").equals("#071018"))throw new AssertionError("User cockpit color defaults");
@@ -160,7 +160,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 try{
                     String portrait=prefs.getString("cockpit_board","");
                     org.json.JSONArray landscape=CockpitBoard.load(prefs,"cockpit_board_landscape");
-                    if(landscape.length()!=22||landscape.getJSONObject(0).getInt("h")!=7)throw new AssertionError("User landscape default");
+                    if(landscape.length()!=22||landscape.getJSONObject(0).getInt("h")!=14)throw new AssertionError("User landscape default");
                     landscape=new org.json.JSONArray(landscape.toString());landscape.getJSONObject(0).put("caption","Querformat-Test");
                     prefs.edit().putString("cockpit_board_landscape",landscape.toString()).putString("connect_rssi","-85").putString("departure_rssi","-95").commit();
                     if(!CockpitBoard.load(prefs,"cockpit_board_landscape").getJSONObject(0).getString("caption").equals("Querformat-Test"))throw new AssertionError("Independent landscape");
@@ -210,6 +210,9 @@ public class CockpitSmokeTest extends Instrumentation {
             checked(()->activity.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             Activity landscape=landscapeMonitor.waitForActivityWithTimeout(10000);if(landscape==null)throw new AssertionError("Landscape recreation");waitForIdleSync();removeMonitor(landscapeMonitor);checked(()->systemInsetsCheck(landscape));
             checked(()->{if(landscape.getResources().getConfiguration().orientation!=android.content.res.Configuration.ORIENTATION_LANDSCAPE)throw new AssertionError("Landscape activity orientation");View header=findTag(landscape.getWindow().getDecorView(),"cockpit_header"),readiness=findTag(landscape.getWindow().getDecorView(),"cockpit_readiness_status");CockpitBoard compactBoard=(CockpitBoard)findBoard(landscape.getWindow().getDecorView());if(header==null||readiness==null||readiness.getParent()!=header)throw new AssertionError("Landscape readiness belongs in the header");if(header.getHeight()>Math.round(64*landscape.getResources().getDisplayMetrics().density))throw new AssertionError("Landscape header was not compacted");int expectedBoardHeight=Math.round(CockpitBoard.GRID_UNIT_DP*landscape.getResources().getDisplayMetrics().density)*(compactBoard.bottom()+4);if(compactBoard.getMeasuredHeight()!=expectedBoardHeight)throw new AssertionError("Landscape grid must keep the original 20-dp units (expected "+expectedBoardHeight+", got "+compactBoard.getMeasuredHeight()+")");if(!contains(landscape.getWindow().getDecorView(),"Layout: Querformat · Kachel lange drücken und ziehen · unten rechts Größe ziehen · antippen für Inhalt/Farbe."))throw new AssertionError("Landscape editor lost");try{compactBoard.tiles.getJSONObject(0).put("caption","Landscape draft");}catch(Exception e){throw new RuntimeException(e);}});
+            checked(()->{try{invoke(landscape,"storageSettings",new Class[0],new Object[0]);}catch(Exception e){throw new RuntimeException(e);}});
+            waitForIdleSync();
+            checked(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("storageDialog");field.setAccessible(true);android.app.AlertDialog dialog=(android.app.AlertDialog)field.get(landscape);android.widget.ScrollView scroll=findScrollView(dialog.getWindow().getDecorView());if(scroll==null||!scroll.canScrollVertically(1))throw new AssertionError("Landscape storage submenu must scroll down");scroll.scrollTo(0,scroll.getChildAt(0).getMeasuredHeight());if(scroll.getScrollY()<=0)throw new AssertionError("Landscape storage submenu scrolling");dialog.dismiss();}catch(Exception e){throw new RuntimeException(e);}});
             android.app.Instrumentation.ActivityMonitor portraitMonitor=addMonitor(MainActivity.class.getName(),null,false);
             checked(()->landscape.setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
             Activity portrait=portraitMonitor.waitForActivityWithTimeout(10000);if(portrait==null)throw new AssertionError("Portrait recreation");waitForIdleSync();removeMonitor(portraitMonitor);checked(()->systemInsetsCheck(portrait));
@@ -545,7 +548,7 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.5.4".equals(version))throw new AssertionError("Official version");
+                if(!"1.5.5".equals(version))throw new AssertionError("Official version");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
@@ -575,6 +578,7 @@ public class CockpitSmokeTest extends Instrumentation {
     private static View findDescription(View v,String text){if(v.getContentDescription()!=null&&text.contentEquals(v.getContentDescription()))return v;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View found=findDescription(((ViewGroup)v).getChildAt(i),text);if(found!=null)return found;}return null;}
     private static void invoke(Object target,String name,Class[] types,Object[] args){try{Method m=target.getClass().getDeclaredMethod(name,types);m.setAccessible(true);m.invoke(target,args);}catch(Exception e){throw new RuntimeException(e);}}
     private static void findSliders(View view,java.util.List<android.widget.SeekBar> result){if(view instanceof android.widget.SeekBar)result.add((android.widget.SeekBar)view);if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)findSliders(((ViewGroup)view).getChildAt(i),result);}
+    private static android.widget.ScrollView findScrollView(View v){if(v instanceof android.widget.ScrollView)return (android.widget.ScrollView)v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){android.widget.ScrollView found=findScrollView(g.getChildAt(i));if(found!=null)return found;}}return null;}
     private static androidx.core.widget.NestedScrollView findLog(View v){if(v instanceof androidx.core.widget.NestedScrollView)return (androidx.core.widget.NestedScrollView)v;if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){androidx.core.widget.NestedScrollView found=findLog(g.getChildAt(i));if(found!=null)return found;}}return null;}
     private static View findBoard(View view){if(view instanceof CockpitBoard)return view;if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++){View found=findBoard(g.getChildAt(i));if(found!=null)return found;}}return null;}
     private static boolean clickText(View view,String text){if(view instanceof TextView && text.contentEquals(((TextView)view).getText()))return view.performClick();if(view instanceof ViewGroup){ViewGroup g=(ViewGroup)view;for(int i=0;i<g.getChildCount();i++)if(clickText(g.getChildAt(i),text))return true;}return false;}

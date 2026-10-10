@@ -108,7 +108,7 @@ final class JournalUi {
         RouteMap map=new RouteMap(activity,ride.points);l.addView(map,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout controls=new LinearLayout(activity);controls.addView(button("−",()->map.changeZoom(-1)),new LinearLayout.LayoutParams(0,-2,1));controls.addView(button("Route",map::fit),new LinearLayout.LayoutParams(0,-2,1));controls.addView(button("+",()->map.changeZoom(1)),new LinearLayout.LayoutParams(0,-2,1));l.addView(controls);
         TextView attribution=text("© OpenStreetMap contributors · Grün: Start · Rot: Ziel");attribution.setOnClickListener(v->activity.startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://www.openstreetmap.org/copyright"))));l.addView(attribution);
-        AlertDialog d=new AlertDialog.Builder(activity).setTitle("Fahrtroute · "+date(ride.start)).setView(l).setNegativeButton("Zurück",null).create();d.show();d.getWindow().setLayout(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.88));
+        AlertDialog d=new AlertDialog.Builder(activity).setTitle("Fahrtroute · "+date(ride.start)).setView(scroll(l)).setNegativeButton("Zurück",null).create();d.show();d.getWindow().setLayout(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.88));
     }
     private void share(TripJournal.Ride ride){
         try{ArrayList<Uri> files=new ArrayList<>();for(java.io.File f:new java.io.File[]{ride.gpx,ride.csv})if(f.isFile())files.add(FileProvider.getUriForFile(activity,activity.getPackageName()+".files",f));

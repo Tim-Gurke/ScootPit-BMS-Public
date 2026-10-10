@@ -56,7 +56,7 @@ Im Kacheleditor sind **Instrument / Balken** und **Skala / Hintergrundbogen** un
 
 **+ Kachel → Freitext** erlaubt bis zu 4000 Zeichen mit Groß-/Kleinschreibung und Zeilenumbrüchen. Schriftgröße, Hintergrund und Textfarbe einschließlich Transparenz bleiben einstellbar.
 
-Das Hochformat zeigt die Rundinstrumente für Verbrauch, Leistung und Akkustand sowie die kompakte Restreichweite. Das Querformat ordnet die Instrumente oben und Fahrdaten, Kilometerzähler, Temperaturen, Zeiten und Aktionen darunter an; das Log bleibt am unteren Rand. Die Querformat-Voreinstellung nutzt 17 Rasterzeilen und verzichtet auf leere Bild-, Spannungs- und Stromkacheln. **Standardlayout → Zurücksetzen → Speichern** übernimmt die jeweilige Anordnung für das aktuelle Format. Bereits gespeicherte Layouts bleiben bei einem Update erhalten.
+Das Hochformat zeigt die Rundinstrumente für Verbrauch, Leistung und Akkustand sowie die kompakte Restreichweite. Das Querformat ordnet die Instrumente oben und Fahrdaten, Kilometerzähler, Temperaturen, Zeiten und Aktionen darunter an; das Log bleibt am unteren Rand. Die bereitgestellte Querformat-Voreinstellung nutzt 19 Rasterzeilen und verzichtet auf leere Bild-, Spannungs- und Stromkacheln. **Standardlayout → Zurücksetzen → Speichern** übernimmt die jeweilige Anordnung für das aktuelle Format. Bereits gespeicherte Layouts bleiben bei einem Update erhalten.
 
 
 Zurück aus einem Einstellungs-Untermenü führt zum Hauptmenü der Einstellungen. Beschriftungen von Schaltflächen behalten ihre Groß-/Kleinschreibung.

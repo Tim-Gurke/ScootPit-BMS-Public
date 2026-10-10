@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
             if(BmsMonitorService.ACTION_STATUS.equals(intent.getAction()))renderStatus(intent);
         }
     };
-    private AlertDialog tileDialog, settingsDialog, batteryDialog, batteryConfigDialog, colorDialog, tourDialog;
+    private AlertDialog tileDialog, settingsDialog, batteryDialog, batteryConfigDialog, colorDialog, tourDialog, storageDialog;
     private boolean editorFromSettings;
     private String displayedProfile="";
     private JournalUi journalAfterImport;
@@ -137,6 +137,8 @@ public class MainActivity extends Activity {
         if(CockpitSymbols.title(cell)){TextView label=label(CockpitSymbols.caption(cell),12,text);label.setPadding(dp(5),0,0,0);row.addView(label,new LinearLayout.LayoutParams(-2,-2));}box.addView(row);
     }
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
+    private ScrollView scrollMenu(View content){ScrollView s=new ScrollView(this);s.setFillViewport(true);s.setVerticalScrollBarEnabled(true);s.setTag("submenu_scroll");s.addView(content);return s;}
+    private void limitDialogHeight(AlertDialog dialog,float fraction){if(dialog.getWindow()!=null)dialog.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*fraction));}
     private void rebuild() {
         setTheme(CockpitTheme.light(prefs)?R.style.AppThemeLight:R.style.AppTheme);
         WindowCompat.getInsetsController(getWindow(),getWindow().getDecorView()).setAppearanceLightStatusBars(CockpitTheme.light(prefs));
@@ -456,6 +458,7 @@ public class MainActivity extends Activity {
         if(settingsDialog!=null&&settingsDialog.isShowing())return;
         settingsDialog=new AlertDialog.Builder(this).setTitle("Einstellungen").setItems(items,null).setNegativeButton("Schließen",null).create();
         settingsDialog.show();
+        settingsDialog.getListView().setVerticalScrollBarEnabled(true);
         settingsDialog.getListView().setOnItemClickListener((parent,view,w,id)->{
             switch(w){case 0:editorFromSettings=true;settingsDialog.dismiss();editLayout();break;case 1:editColors();break;case 2:editOdometer();break;
                 case 3:editBms();break;case 4:editBattery();break;case 5:notificationSettings();break;
@@ -474,12 +477,12 @@ public class MainActivity extends Activity {
         if(!rename&&BmsMonitorService.running){Toast.makeText(this,"Zuerst Bereitschaft beenden",Toast.LENGTH_LONG).show();return;}
         LinearLayout l=column();EditText name=textField(l,"Scooter-Name",rename?ScooterProfiles.name(prefs):"");name.setSingleLine(true);name.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(40)});
         if(copy)l.addView(label("Übernimmt Design und Akku-Einstellungen. BMS, Kilometer, Fahrten und Verbrauchshistorie beginnen leer.",13,muted()));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(rename?"Profil umbenennen":"Neuer Scooter").setView(l).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{try{if(rename)ScooterProfiles.rename(prefs,name.getText().toString());else ScooterProfiles.add(prefs,name.getText().toString(),copy);dialog.dismiss();changedProfile();}catch(Exception e){name.setError(e.getMessage());}}));dialog.show();
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(rename?"Profil umbenennen":"Neuer Scooter").setView(scrollMenu(l)).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{try{if(rename)ScooterProfiles.rename(prefs,name.getText().toString());else ScooterProfiles.add(prefs,name.getText().toString(),copy);dialog.dismiss();changedProfile();}catch(Exception e){name.setError(e.getMessage());}}));dialog.show();limitDialogHeight(dialog,.86f);
     }
     private void editTemperatures(){
         LinearLayout l=column();l.addView(label("Sensorreihenfolge unverändert. Temp1 = Platine und Temp2 = Akkupack ist bei deinem BMS bisher eine Vermutung. Eigene Kachelbeschriftungen haben Vorrang.",13,muted()));
         EditText first=textField(l,"Temp1-Beschriftung",prefs.getString("temp1_label","Temp1")),second=textField(l,"Temp2-Beschriftung",prefs.getString("temp2_label","Temp2"));first.setSingleLine(true);second.setSingleLine(true);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Temperatursensoren").setView(l).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{if(first.getText().toString().trim().isEmpty()||second.getText().toString().trim().isEmpty()||first.length()>40||second.length()>40){first.setError("Jeweils 1–40 Zeichen");return;}prefs.edit().putString("temp1_label",first.getText().toString().trim()).putString("temp2_label",second.getText().toString().trim()).apply();dialog.dismiss();rebuild();}));dialog.show();
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Temperatursensoren").setView(scrollMenu(l)).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{if(first.getText().toString().trim().isEmpty()||second.getText().toString().trim().isEmpty()||first.length()>40||second.length()>40){first.setError("Jeweils 1–40 Zeichen");return;}prefs.edit().putString("temp1_label",first.getText().toString().trim()).putString("temp2_label",second.getText().toString().trim()).apply();dialog.dismiss();rebuild();}));dialog.show();limitDialogHeight(dialog,.86f);
     }
     private void addTileMenu(){
         String[] titles=Arrays.copyOf(CockpitLayout.TITLES,CockpitLayout.TITLES.length+1);titles[titles.length-1]="BMS-Daten (optional)";
@@ -523,8 +526,8 @@ public class MainActivity extends Activity {
         .setPositiveButton("Aktivieren",(d,w)->prefs.edit().putBoolean("weather_enabled",true).apply())
         .setNeutralButton("Deaktivieren",(d,w)->prefs.edit().putBoolean("weather_enabled",false).apply()).setNegativeButton("Zurück",null).show();}
     private void editOdometer(){LinearLayout l=column();EditText km=field(l,"Aktueller Gesamtkilometerstand (km)",prefs.getString("total_km","0"));
-        AlertDialog d=new AlertDialog.Builder(this).setTitle("Gesamtkilometer korrigieren").setView(l).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
-            Double n=valid(km,0,10000000);if(n==null)return;prefs.edit().putString("total_km",n.toString()).apply();if(lastStatus!=null)renderStatus(lastStatus);else buildTiles();d.dismiss();}));d.show();}
+        AlertDialog d=new AlertDialog.Builder(this).setTitle("Gesamtkilometer korrigieren").setView(scrollMenu(l)).setPositiveButton("Speichern",null).setNegativeButton("Zurück",null).create();d.setOnShowListener(x->d.getButton(-1).setOnClickListener(v->{
+            Double n=valid(km,0,10000000);if(n==null)return;prefs.edit().putString("total_km",n.toString()).apply();if(lastStatus!=null)renderStatus(lastStatus);else buildTiles();d.dismiss();}));d.show();limitDialogHeight(d,.86f);}
     private void editColors(){
         LinearLayout l=column();Button dark=button("Dunkel · Schwarz / Orange"),light=button("Hell · Weiß / Blau");l.addView(dark);l.addView(light);dark.setOnClickListener(v->chooseTheme(false));light.setOnClickListener(v->chooseTheme(true));
         EditText bg=textField(l,"App-Hintergrund (#RRGGBB)",prefs.getString("app_background","#0B1015"));
@@ -565,7 +568,7 @@ public class MainActivity extends Activity {
         android.widget.EditText hex=new android.widget.EditText(this);hex.setSingleLine(true);hex.setHint("#RRGGBB");hex.setText(target.getText());hex.setTextColor(foreground());panel.addView(hex);
         for(int i=0;i<3;i++){final int index=i;int initial=index==0?Math.round(hsv[index]):Math.round(hsv[index]*100);TextView label=label(labels[i]+": "+initial,12,muted());panel.addView(label);android.widget.SeekBar s=new android.widget.SeekBar(this);s.setMax(i==0?360:100);s.setProgress(initial);sliders[i]=s;panel.addView(s);s.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(android.widget.SeekBar b,int value,boolean fromUser){hsv[index]=index==0?value:value/100f;label.setText(labels[index]+": "+value);int color=Color.HSVToColor(hsv);sample.setBackgroundColor(color);hex.setText(String.format(Locale.ROOT,"#%06X",color&0xffffff));}public void onStartTrackingTouch(android.widget.SeekBar b){}public void onStopTrackingTouch(android.widget.SeekBar b){}});}
         Runnable sync=()->{try{int color=Color.parseColor(hex.getText().toString());Color.colorToHSV(color,hsv);for(int i=0;i<3;i++)sliders[i].setProgress(i==0?Math.round(hsv[i]):Math.round(hsv[i]*100));sample.setBackgroundColor(color);}catch(Exception ignored){}};hex.addTextChangedListener(new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}public void onTextChanged(CharSequence s,int st,int before,int count){sync.run();}public void afterTextChanged(android.text.Editable e){}});
-        AlertDialog picker=new AlertDialog.Builder(this).setTitle("Farbe auswählen").setView(panel).setPositiveButton("Übernehmen",null).setNegativeButton("Zurück",null).create();picker.setOnShowListener(v->picker.getButton(-1).setOnClickListener(b->{try{int c=Color.parseColor(hex.getText().toString());target.setText(String.format(Locale.ROOT,"#%06X",c&0xffffff));updateColorButton(preview,target.getText().toString());picker.dismiss();}catch(Exception ex){hex.setError("Bitte eine gültige Farbe eingeben");}}));picker.show();picker.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*.7f));
+        AlertDialog picker=new AlertDialog.Builder(this).setTitle("Farbe auswählen").setView(scrollMenu(panel)).setPositiveButton("Übernehmen",null).setNegativeButton("Zurück",null).create();picker.setOnShowListener(v->picker.getButton(-1).setOnClickListener(b->{try{int c=Color.parseColor(hex.getText().toString());target.setText(String.format(Locale.ROOT,"#%06X",c&0xffffff));updateColorButton(preview,target.getText().toString());picker.dismiss();}catch(Exception ex){hex.setError("Bitte eine gültige Farbe eingeben");}}));picker.show();limitDialogHeight(picker,.72f);
     }
     private void editBattery(){LinearLayout l=column();String[] keys={"capacity_ah","nominal_voltage","reserve_percent","reference_wh_km"};String[] titles={"Kapazität (Ah, Ersatzwert ohne BMS-Kapazität)","Nennspannung (V)","Restreserve (%)","Startwert Verbrauch (Wh/km)"};String[] values={"26","48","10","20"};List<EditText> es=new ArrayList<>();for(int i=0;i<keys.length;i++)es.add(field(l,titles[i],prefs.getString(keys[i],values[i])));
         l.addView(label("Ab 250 m wird der aktuelle Fahrtverbrauch verwendet; die jüngsten ungefähr 800 m werden stärker gewichtet. Reichweite ist eine Schätzung.",12,muted()));
@@ -587,7 +590,7 @@ public class MainActivity extends Activity {
             SharedPreferences.Editor edit=prefs.edit();for(int i=0;i<keys.length;i++)edit.putString(keys[i],values[i].toString());edit.putBoolean("auto_scooter",automatic.isChecked()).putString("connection_policy_version","3");edit.apply();d.dismiss();
         }));d.show();}
 
-    private void tripDialog(){LinearLayout l=column();lastTripView=panel("");l.addView(lastTripView);showLastTrip();Button share=button("Letzte GPX- und CSV-Datei teilen");share.setOnClickListener(v->shareLastTrip());l.addView(share);new AlertDialog.Builder(this).setTitle("Letzte Fahrt").setView(l).setNegativeButton("Schließen",null).show();}
+    private void tripDialog(){LinearLayout l=column();lastTripView=panel("");l.addView(lastTripView);showLastTrip();Button share=button("Letzte GPX- und CSV-Datei teilen");share.setOnClickListener(v->shareLastTrip());l.addView(share);AlertDialog d=new AlertDialog.Builder(this).setTitle("Letzte Fahrt").setView(scrollMenu(l)).setNegativeButton("Schließen",null).create();d.show();limitDialogHeight(d,.86f);}
     private void storageSettings(){
         String settings=prefs.getString(StorageFolders.SETTINGS,""),trips=prefs.getString(StorageFolders.TRIPS,"");
         String status="Einstellungen: "+(settings.isEmpty()?"App-Speicher":prefs.getString(StorageFolders.SETTINGS+"_label",settings))+"\n\nFahrtenbuch: "+(trips.isEmpty()?"App-Speicher":prefs.getString(StorageFolders.TRIPS+"_label",trips));
@@ -600,7 +603,7 @@ public class MainActivity extends Activity {
             new AlertDialog.Builder(this).setMessage("Aktuelle Einstellungen durch die Datei im gewählten Ordner ersetzen?").setPositiveButton("Laden",(d,w)->StorageFolders.install(this).run(()->{try{StorageFolders.install(this).importSettings(settings);}catch(Exception e){throw new IllegalStateException(e.getMessage());}},errorMessage->{if(errorMessage==null){boardTiles=loadBoard();rebuild();}Toast.makeText(this,errorMessage==null?"Einstellungen geladen":errorMessage,Toast.LENGTH_LONG).show();})).setNegativeButton("Zurück",null).show();});
         retry.setOnClickListener(v->{StorageFolders.install(this).retryAsync();Toast.makeText(this,"Speicherung wird erneut versucht. Ergebnis hier nach erneutem Öffnen.",Toast.LENGTH_LONG).show();});
         l.addView(label("Fahrten werden während der Aufzeichnung lokal gepuffert und nach Abschluss in den gewählten Ordner kopiert. Ordnerwechsel gilt ab der nächsten Fahrt. Die lokale Kopie bleibt zum Teilen erhalten.",12,muted()));
-        new AlertDialog.Builder(this).setTitle("Separate Speicherorte").setView(l).setNegativeButton("Schließen",null).show();
+        storageDialog=new AlertDialog.Builder(this).setTitle("Separate Speicherorte").setView(scrollMenu(l)).setNegativeButton("Schließen",null).create();storageDialog.show();limitDialogHeight(storageDialog,.82f);
     }
     void chooseTripImport(JournalUi journal){
         journalAfterImport=journal;

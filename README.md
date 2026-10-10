@@ -6,7 +6,7 @@
 
 **ScootPit – für alle, die ihren Roller überwachen wollen, ohne selbst überwacht zu werden.**
 
-**Version 1.5.4 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.5.5 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
@@ -49,9 +49,13 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch ein
 <em>Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.</em>
 
 
+## Neu in 1.5.5
+
+Die Standardanordnungen für Hoch- und Querformat entsprechen jetzt deiner Einstellungsdatei. Die gespeicherten Farben, Skalen und Kachelpositionen wurden übernommen. Untermenüs wie **Speicherorte** lassen sich auch im Querformat bis zum Ende scrollen.
+
 ## Neu in 1.5.4
 
-Das Querformat verwendet wieder das ursprüngliche 20-dp-Raster mit der bewährten Standardanordnung aus 1.5.2. Der flachere Appkopf und die Bereitschaftsanzeige im Kopf bleiben im Querformat erhalten.
+Das Querformat verwendet wieder das ursprüngliche 20-dp-Raster. Der flachere Appkopf und die Bereitschaftsanzeige im Kopf bleiben im Querformat erhalten.
 
 ## Neu in 1.5.2
 
