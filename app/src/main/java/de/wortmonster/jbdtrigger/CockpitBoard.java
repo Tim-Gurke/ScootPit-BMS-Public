@@ -97,12 +97,25 @@ final class CockpitBoard extends FrameLayout {
     static JSONArray load(android.content.SharedPreferences prefs){return load(prefs,"cockpit_board");}
     static JSONArray load(android.content.SharedPreferences prefs,String key){
         if(key.equals("cockpit_board_landscape"))try{
-            String savedText=prefs.getString(key,"");if(savedText.isEmpty()){JSONArray portrait=load(prefs,"cockpit_board");prefs.edit().putString(key,portrait.toString()).putString("cockpit_board_landscape_version","1.2.1").apply();return portrait;}
-            JSONArray saved=new JSONArray(savedText);
-            if(!"1.2.1".equals(prefs.getString("cockpit_board_landscape_version",""))){
-                JSONArray original=new JSONArray(saved.toString());for(int i=0;i<saved.length();i++){JSONObject t=saved.getJSONObject(i);for(String coordinate:new String[]{"x","y","w","h"})t.put(coordinate,t.getInt(coordinate)*2);}
-                validate(saved);prefs.edit().putString("cockpit_board_landscape_before_121",original.toString()).putString(key,saved.toString()).putString("cockpit_board_landscape_version","1.2.1").apply();
-            }validate(saved);return saved;
+            String savedText=prefs.getString(key,"");
+            JSONArray portrait;
+            JSONArray saved;
+            if(savedText.isEmpty()){
+                portrait=load(prefs,"cockpit_board");saved=new JSONArray(portrait.toString());
+                prefs.edit().putString("cockpit_board_landscape_version","1.2.1").apply();
+            }else{
+                saved=new JSONArray(savedText);
+                if(!"1.2.1".equals(prefs.getString("cockpit_board_landscape_version",""))){
+                    JSONArray original=new JSONArray(saved.toString());for(int i=0;i<saved.length();i++){JSONObject t=saved.getJSONObject(i);for(String coordinate:new String[]{"x","y","w","h"})t.put(coordinate,t.getInt(coordinate)*2);}
+                    validate(saved);prefs.edit().putString("cockpit_board_landscape_before_121",original.toString()).putString(key,saved.toString()).putString("cockpit_board_landscape_version","1.2.1").apply();
+                }
+                portrait=load(prefs,"cockpit_board");
+            }
+            if(!"1.5.6".equals(prefs.getString("cockpit_scale_sync_version",""))){
+                saved=syncScaleSettings(portrait,saved);validate(saved);
+                prefs.edit().putString(key,saved.toString()).putString("cockpit_scale_sync_version","1.5.6").apply();
+            }
+            validate(saved);return saved;
         }catch(Exception ignored){}
 
         try{JSONArray saved=new JSONArray(prefs.getString("cockpit_board",""));validate(saved);
@@ -112,6 +125,17 @@ final class CockpitBoard extends FrameLayout {
             }return saved;}catch(Exception ignored){}
         JSONArray result=prefs.contains("cockpit_layout")?fromRows(CockpitLayout.load(prefs)):defaults();
         prefs.edit().putString("cockpit_board",result.toString()).putString("cockpit_design_version","1.2.1").apply();return result;
+    }
+    static JSONArray syncScaleSettings(JSONArray portrait,JSONArray landscape)throws Exception{
+        JSONArray result=new JSONArray(landscape.toString());
+        String[] fields={"scale_max","scale_color","instrument_color","scale_gradient_mode","scale_gradient_low","scale_gradient_mid","scale_gradient_high","scale_gradient_low_full","scale_gradient_high_full","scale_reverse"};
+        java.util.Map<String,JSONObject> source=new java.util.HashMap<>();
+        for(int i=0;i<portrait.length();i++){JSONObject tile=portrait.getJSONObject(i);if(tile.optInt("display",0)>0)source.put(tile.optString("key"),tile);}
+        for(int i=0;i<result.length();i++){
+            JSONObject tile=result.getJSONObject(i);if(tile.optInt("display",0)<=0)continue;JSONObject from=source.get(tile.optString("key"));if(from==null)continue;
+            for(String field:fields){if(from.has(field))tile.put(field,from.get(field));else tile.remove(field);}
+        }
+        return result;
     }
     static JSONArray arrange121(JSONArray previous)throws Exception{
         JSONArray result=defaults();boolean[] used=new boolean[previous.length()];
@@ -214,4 +238,5 @@ final class CockpitBoard extends FrameLayout {
         for(int i=0;i<tiles.length();i++)for(int j=i+1;j<tiles.length();j++){JSONObject a=tiles.getJSONObject(i),b=tiles.getJSONObject(j);if(a.getInt("x")<b.getInt("x")+b.getInt("w")&&a.getInt("x")+a.getInt("w")>b.getInt("x")&&a.getInt("y")<b.getInt("y")+b.getInt("h")&&a.getInt("y")+a.getInt("h")>b.getInt("y")&&!a.optBoolean("allow_overlap",false)&&!b.optBoolean("allow_overlap",false))throw new Exception("Kacheln überlappen – bei einer Kachel Überlappung aktivieren");}
     }
 }
+
 

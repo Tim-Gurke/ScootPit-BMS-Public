@@ -1,0 +1,4 @@
+Neu in 1.5.6:
+- Fußwege ohne Motorlast werden nicht als Fahrstrecke gezählt
+- Fahrtpause und Fortsetzung mit GPS- und BMS-Erkennung verbessert
+- Skalenwerte und -farben aus Hochformat für Querformat übernommen

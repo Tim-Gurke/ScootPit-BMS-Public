@@ -24,7 +24,7 @@
       "text": "#FFFFFFFF",
       "arrangement": 2,
       "display": 2,
-      "scale_max": 40,
+      "scale_max": 30,
       "caption": "Verbrauch",
       "gauge_sweep": 240,
       "custom_colors": true,
@@ -48,12 +48,13 @@
       "gauge_value_position": 1,
       "unit_position": 0,
       "scale_gradient_mode": 2,
-      "scale_gradient_high": "#FF3A30",
-      "scale_gradient_mid": "#34C759",
+      "gauge_rotation": 0,
+      "scale_reverse": false,
       "scale_gradient_low": "#FF3B30",
-      "scale_gradient_low_full": 30,
-      "scale_gradient_high_full": 50,
-      "gauge_rotation": 0
+      "scale_gradient_mid": "#34C759",
+      "scale_gradient_high": "#FF3A30",
+      "scale_gradient_low_full": 25,
+      "scale_gradient_high_full": 90
     },
     {
       "key": "power",
@@ -91,7 +92,7 @@
       "scale_gradient_high": "#FF3A30",
       "scale_gradient_mid": "#FF9800",
       "scale_gradient_low": "#34C759",
-      "scale_gradient_low_full": 0,
+      "scale_gradient_low_full": 33,
       "scale_gradient_high_full": 50,
       "scale_reverse": false
     },
@@ -717,7 +718,7 @@
       "text": "#FFFFFFFF",
       "arrangement": 2,
       "display": 2,
-      "scale_max": 40,
+      "scale_max": 30,
       "caption": "Verbrauch",
       "gauge_sweep": 240,
       "custom_colors": true,
@@ -741,12 +742,13 @@
       "gauge_value_position": 1,
       "unit_position": 0,
       "scale_gradient_mode": 2,
-      "scale_gradient_high": "#FF3A30",
-      "scale_gradient_mid": "#34C759",
+      "gauge_rotation": 0,
+      "scale_reverse": false,
       "scale_gradient_low": "#FF3B30",
-      "scale_gradient_low_full": 30,
-      "scale_gradient_high_full": 50,
-      "gauge_rotation": 0
+      "scale_gradient_mid": "#34C759",
+      "scale_gradient_high": "#FF3A30",
+      "scale_gradient_low_full": 25,
+      "scale_gradient_high_full": 90
     },
     {
       "key": "power",
@@ -784,7 +786,7 @@
       "scale_gradient_high": "#FF3A30",
       "scale_gradient_mid": "#FF9800",
       "scale_gradient_low": "#34C759",
-      "scale_gradient_low_full": 0,
+      "scale_gradient_low_full": 33,
       "scale_gradient_high_full": 50,
       "scale_reverse": false
     },
@@ -1309,9 +1311,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "standing",
@@ -1341,9 +1341,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "trip_time",
@@ -1373,9 +1371,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "log",
