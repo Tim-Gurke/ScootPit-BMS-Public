@@ -1,0 +1,4 @@
+Neu in 1.5.4:
+- Querformat-Raster auf ursprüngliche 20-dp-Höheneinheiten und die Standardanordnung aus 1.5.2 zurückgesetzt
+- Flacher Appkopf und Bereitschaftsanzeige im Querformat-Kopf bleiben erhalten
+
