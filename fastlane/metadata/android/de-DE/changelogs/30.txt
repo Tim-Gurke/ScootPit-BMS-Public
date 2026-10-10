@@ -1,0 +1,2 @@
+Neu in 1.5.7:
+• Kartenansicht im Fahrtenbuch wieder sichtbar; Größe passt sich dem Display an.

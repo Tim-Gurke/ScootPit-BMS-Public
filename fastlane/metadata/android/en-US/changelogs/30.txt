@@ -1,0 +1,2 @@
+New in 1.5.7:
+• Fixed the trip book map display with a screen-size-aware map area.

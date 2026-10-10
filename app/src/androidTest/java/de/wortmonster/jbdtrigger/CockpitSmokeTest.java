@@ -552,7 +552,9 @@ public class CockpitSmokeTest extends Instrumentation {
                 if(found.points.size()!=2||found.moving!=2000||Math.abs(found.averagePower-96)>.01)throw new AssertionError("Journal statistics");
                 summary.gpxFile.delete();summary.csvFile.delete();summary.metadataFile.delete();
                 String version=activity.getPackageManager().getPackageInfo(activity.getPackageName(),0).versionName;
-                if(!"1.5.6".equals(version))throw new AssertionError("Official version");
+                if(!"1.5.7".equals(version))throw new AssertionError("Official version");
+                int portraitMap=JournalUi.routeMapHeight(2400,3),landscapeMap=JournalUi.routeMapHeight(1080,3);
+                if(portraitMap<=0||landscapeMap<=0||portraitMap>1080||landscapeMap>1080)throw new AssertionError("Route map must have a visible bounded height in both orientations");
             }catch(Exception e){throw new RuntimeException(e);}
         });test.edit().clear().commit();
     }
