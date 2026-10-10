@@ -34,7 +34,7 @@ public class CockpitSmokeTest extends Instrumentation {
                     org.json.JSONArray portrait=CockpitBoard.standardDefaults(activity,"cockpit_board");
                     org.json.JSONArray landscape=CockpitBoard.standardDefaults(activity,"cockpit_board_landscape");
                     CockpitBoard.validate(landscape);
-                    if(!board.tiles.toString().equals(portrait.toString())||portrait.length()!=22||landscape.length()!=22)throw new AssertionError("Standardlayout must use the supplied portrait and compact landscape presets");
+                    if(!board.tiles.toString().equals(portrait.toString())||portrait.length()!=22||landscape.length()!=22)throw new AssertionError("Standardlayout must keep the supplied portrait and original 1.5.2 landscape presets");
                     org.json.JSONObject landscapeGauge=landscape.getJSONObject(0),landscapePower=landscape.getJSONObject(1);
                     int landscapeBottom=0;for(int i=0;i<landscape.length();i++){org.json.JSONObject tile=landscape.getJSONObject(i);landscapeBottom=Math.max(landscapeBottom,tile.getInt("y")+tile.getInt("h"));}
                     if(landscapeGauge.getInt("w")!=24||landscapeGauge.getInt("h")!=7||landscapePower.getInt("x")!=1||landscapePower.getInt("y")!=3||landscapeBottom!=17)throw new AssertionError("Original landscape grid dimensions");
