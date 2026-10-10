@@ -1,0 +1,4 @@
+New in 1.5.5:
+- Adopted the supplied portrait and landscape cockpit layouts
+- Long submenus can now scroll in landscape
+- Kept the compact landscape header
