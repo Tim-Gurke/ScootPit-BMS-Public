@@ -20,6 +20,10 @@ final class JournalUi {
     private static final String[] NAMES={"Strecke","Fahr- und Standzeit","Geschwindigkeit","Energie und Verbrauch","Leistung","Höhenmeter","Temperaturen","Geschwindigkeitsdiagramm","Leistungsdiagramm","Höhendiagramm"};
     JournalUi(Activity a,SharedPreferences p){activity=a;prefs=p;}
     private int dp(int v){return Math.round(v*activity.getResources().getDisplayMetrics().density);}
+    static int routeMapHeight(int screenHeightPx,float density){
+        int minimum=Math.round(160*density),maximum=Math.round(360*density);
+        return Math.max(minimum,Math.min(maximum,Math.round(screenHeightPx*.38f)));
+    }
     private LinearLayout column(){LinearLayout l=new LinearLayout(activity);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(dp(12),dp(8),dp(12),dp(8));return l;}
     private TextView text(String value){TextView v=new TextView(activity);v.setText(value);v.setTextColor(CockpitTheme.foreground(prefs));v.setTextSize(15);v.setPadding(0,dp(8),0,dp(8));return v;}
     private Button button(String value,Runnable action){Button b=new Button(activity);b.setText(value);b.setAllCaps(false);b.setOnClickListener(v->action.run());return b;}
@@ -105,10 +109,12 @@ final class JournalUi {
     }
     private void map(TripJournal.Ride ride){
         LinearLayout l=column();l.addView(text("Kartenhintergrund: OpenStreetMap · Internet nötig. Sichtbare Kartenausschnitte werden angefragt; die Fahrtdatei bleibt auf deinem Handy."));
-        RouteMap map=new RouteMap(activity,ride.points);l.addView(map,new LinearLayout.LayoutParams(-1,0,1));
+        // AlertDialog measures its custom content as wrap-content. A weighted, zero-height
+        // child therefore collapses before the dialog's window height is applied.
+        RouteMap map=new RouteMap(activity,ride.points);l.addView(map,new LinearLayout.LayoutParams(-1,routeMapHeight(activity.getResources().getDisplayMetrics().heightPixels,activity.getResources().getDisplayMetrics().density)));
         LinearLayout controls=new LinearLayout(activity);controls.addView(button("−",()->map.changeZoom(-1)),new LinearLayout.LayoutParams(0,-2,1));controls.addView(button("Route",map::fit),new LinearLayout.LayoutParams(0,-2,1));controls.addView(button("+",()->map.changeZoom(1)),new LinearLayout.LayoutParams(0,-2,1));l.addView(controls);
         TextView attribution=text("© OpenStreetMap contributors · Grün: Start · Rot: Ziel");attribution.setOnClickListener(v->activity.startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://www.openstreetmap.org/copyright"))));l.addView(attribution);
-        AlertDialog d=new AlertDialog.Builder(activity).setTitle("Fahrtroute · "+date(ride.start)).setView(scroll(l)).setNegativeButton("Zurück",null).create();d.show();d.getWindow().setLayout(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.88));
+        AlertDialog d=new AlertDialog.Builder(activity).setTitle("Fahrtroute · "+date(ride.start)).setView(l).setNegativeButton("Zurück",null).create();d.show();d.getWindow().setLayout(-1,(int)(activity.getResources().getDisplayMetrics().heightPixels*.88));
     }
     private void share(TripJournal.Ride ride){
         try{ArrayList<Uri> files=new ArrayList<>();for(java.io.File f:new java.io.File[]{ride.gpx,ride.csv})if(f.isFile())files.add(FileProvider.getUriForFile(activity,activity.getPackageName()+".files",f));
