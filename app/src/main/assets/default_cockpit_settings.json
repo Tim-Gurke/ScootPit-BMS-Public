@@ -195,9 +195,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "moving",
@@ -466,9 +464,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "outside",
@@ -704,9 +700,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     }
   ],
   "cockpit_board_landscape": [
@@ -858,9 +852,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "consumption_500m",
@@ -890,9 +882,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "ready_start",
@@ -1159,9 +1149,7 @@
       "border_enabled": false,
       "corner_radius": 12,
       "content_inset": 0,
-      "unit_position": 0,
-      "scale_gradient_mode": 0,
-      "scale_reverse": false
+      "unit_position": 0
     },
     {
       "key": "outside",

@@ -35,7 +35,7 @@ public class CockpitSmokeTest extends Instrumentation {
                     org.json.JSONArray landscape=CockpitBoard.standardDefaults(activity,"cockpit_board_landscape");
                     CockpitBoard.validate(landscape);
                     if(!board.tiles.toString().equals(portrait.toString())||portrait.length()!=22||landscape.length()!=22)throw new AssertionError("Standardlayout must match the supplied portrait and landscape presets");
-                    org.json.JSONArray sourceScales=new org.json.JSONArray(landscape.toString());
+                    org.json.JSONArray sourceScales=new org.json.JSONArray(portrait.toString());
                     for(int i=0;i<sourceScales.length();i++){org.json.JSONObject tile=sourceScales.getJSONObject(i);if(tile.getString("key").equals("consumption_500m"))tile.put("scale_max",31).put("scale_gradient_low_full",24).put("scale_gradient_high_full",91).put("scale_gradient_low","#112233");}
                     org.json.JSONArray synced=CockpitBoard.syncScaleSettings(sourceScales,landscape);
                     if(!synced.getJSONObject(0).getString("key").equals(landscape.getJSONObject(0).getString("key"))||synced.getJSONObject(0).getInt("x")!=landscape.getJSONObject(0).getInt("x")||synced.getJSONObject(0).getInt("scale_max")!=31||synced.getJSONObject(0).getInt("scale_gradient_low_full")!=24||synced.getJSONObject(0).getInt("scale_gradient_high_full")!=91||!synced.getJSONObject(0).getString("scale_gradient_low").equals("#112233"))throw new AssertionError("Scale sync must preserve layout and transfer scale settings");
