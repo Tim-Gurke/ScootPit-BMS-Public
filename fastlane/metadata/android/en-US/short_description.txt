@@ -1,1 +1,2 @@
-Automatic ride log and customizable cockpit for scooter BMS
+Ride log and cockpit for Joyor T6E Pro with JBD BMS
+

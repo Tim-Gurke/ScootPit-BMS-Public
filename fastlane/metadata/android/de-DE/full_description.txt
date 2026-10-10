@@ -1,4 +1,4 @@
-ScootPit BMS zeichnet Fahrten mit einem kompatiblen JBD/Jiabaida-Bluetooth-Batteriemanagementsystem (BMS) automatisch auf.
+ScootPit BMS ist die Android-Cockpit- und Fahrtenbuch-App für den Joyor T6E Pro mit kompatiblem JBD/Jiabaida-Bluetooth-Batteriemanagementsystem (BMS). Entwickelt wurde die App mit dem Joyor T6E Pro und JBD SP14S004. Sie zeigt Akku- und Fahrtdaten live an und zeichnet Scooter-Fahrten automatisch auf.
 
 <ul>
 <li>Verbindet sich mit einem eingerichteten BMS und zeichnet auf, sobald die eingestellten Fahrbedingungen erfüllt sind</li>

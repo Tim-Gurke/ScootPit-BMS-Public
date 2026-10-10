@@ -1,4 +1,4 @@
-ScootPit BMS automatically records electric scooter rides with a compatible Bluetooth JBD/Jiabaida battery management system (BMS).
+ScootPit BMS is an Android dashboard and ride log app for the Joyor T6E Pro with a compatible JBD/Jiabaida Bluetooth battery management system (BMS). It was developed with the Joyor T6E Pro and JBD SP14S004 and automatically records scooter rides while showing battery and ride data live.
 
 <ul>
 <li>Connects to a configured BMS and records rides when the configured riding conditions are met</li>

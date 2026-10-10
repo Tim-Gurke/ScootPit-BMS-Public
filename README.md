@@ -1,6 +1,10 @@
-# ScootPit BMS
+# ScootPit BMS – Joyor T6E Pro App
 
 <img src="docs/assets/app-logo.svg" width="96" alt="ScootPit BMS App-Logo">
+
+**Android-Cockpit und automatisches Fahrtenbuch für den Joyor T6E Pro mit kompatiblem JBD-BMS.**
+
+ScootPit BMS wurde mit dem **Joyor T6E Pro und dem JBD SP14S004** entwickelt. Die App zeigt BMS-, Akku- und Fahrtdaten live an und zeichnet Scooter-Fahrten automatisch auf – auch bei gesperrtem Handy. [Kompatibilität, Einrichtung und Download für den Joyor T6E Pro](docs/joyor-t6e-app.md).
 
 **Automatisches Fahrtenbuch für deinen E-Scooter – auch mit dem Handy in der Hosentasche.**
 
@@ -117,7 +121,7 @@ Der Appkopf mit Profil, Fahrtenbuch, Zahnrad mit Blitz und grünem Bereitschafts
 
 ## Was brauchst du?
 
-Ein Handy ab **Android 8** und ein **kompatibles, auslesbares JBD/Jiabaida-Bluetooth-BMS** im Roller. Entwickelt für den **Joyor T6e Pro mit JBD SP14S004**. Andere BMS müssen auf Kompatibilität geprüft werden; Bluetooth allein genügt nicht. Ein Aufzeichnungsmodus ohne kompatibles BMS ist nicht enthalten.
+Ein Handy ab **Android 8** und ein **kompatibles, auslesbares JBD/Jiabaida-Bluetooth-BMS** im Roller. Für den **Joyor T6E Pro mit JBD SP14S004** entwickelt. Andere BMS müssen auf Kompatibilität geprüft werden; Bluetooth allein genügt nicht. Ein Aufzeichnungsmodus ohne kompatibles BMS ist nicht enthalten. [Details zur Joyor-T6E-Pro-Kompatibilität](docs/joyor-t6e-app.md).
 
 Bluetooth, präziser Standort und die nötigen Berechtigungen müssen aktiv sein. Starte die Bereitschaft bei geöffneter App. Für zuverlässigen Hintergrundbetrieb ScootPit von Akkuoptimierung und App-Standby ausnehmen. Prüfe die Kombination aus Handy, BMS und Samsung-Energiesparmodus auf einer kurzen Fahrt. [Hintergrundbetrieb einrichten](docs/hintergrund-routinen.md).
 

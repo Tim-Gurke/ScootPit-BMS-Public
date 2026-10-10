@@ -1,1 +1,2 @@
-Automatisches Fahrtenbuch und Cockpit für Scooter-BMS
+Fahrtenbuch und Cockpit für Joyor T6E Pro mit JBD-BMS
+
