@@ -41,4 +41,4 @@ Das Antippen der Tourenzähler-Kachel öffnet im normalen Cockpit die Rückfrage
 
 ## Standardgestaltung ab 1.5.2
 
-Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie die neuen Hoch- und Querformatlayouts. Im Querformat nutzt die 17-Zeilen-Anordnung Rundinstrumente, Reichweite, Fahrwerte, Zeiten und Aktionen zusammen. **Standardlayout** stellt beide Layouts einschließlich der bewusst überlappenden Instrumente wieder her. Bestehende Installationen und Profileinstellungen werden bei einem Update nicht überschrieben.
+Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie die aktuellen Hoch- und Querformatlayouts aus der Voreinstellung. Das Querformat nutzt eine überlappende Anordnung. **Standardlayout** stellt beide Layouts wieder her. Bestehende Installationen und Profileinstellungen werden bei einem Update nicht überschrieben.
