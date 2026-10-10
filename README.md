@@ -6,21 +6,27 @@
 
 **ScootPit – für alle, die ihren Roller überwachen wollen, ohne selbst überwacht zu werden.**
 
-**Version 1.5.5 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
+**Version 1.5.6 · [APK herunterladen](https://github.com/Tim-Gurke/ScootPit-BMS-Public/releases/latest)**
 
 Das Highlight ist die Automatik: **Bereitschaft einschalten, zum Scooter gehen und losfahren.** ScootPit erkennt ein gespeichertes Bluetooth-BMS in Reichweite, wählt das zugehörige Scooter-Profil und verbindet sich bei ausreichend stabilem Empfang automatisch. Die Fahrtaufzeichnung startet, sobald die eingestellten Bedingungen für die Stromentnahme erfüllt sind. Die Annäherung allein startet noch keine Fahrt.
 
-Die Aufzeichnung läuft auch mit ausgeschaltetem Bildschirm und gesperrtem Handy. Beim Ausrollen wird GPS weiter ausgewertet. Nach **45 Sekunden zuverlässig erkanntem Stillstand** pausiert die Fahrt; die erreichbare BMS-Verbindung bleibt bestehen. Fährst du weiter, wird dieselbe Fahrt fortgesetzt. Nach **10 Minuten Pause** wird sie rückwirkend zum Pausenbeginn abgeschlossen. Geht die Verbindung während der Pause verloren, sucht die App weiter und wartet standardmäßig bis 2 Minuten nach Pausenbeginn auf eine Wiederverbindung. Die Zeiten sind je Scooter einstellbar. GPS-Ausfall allein gilt nicht als Stillstand.
+Die Aufzeichnung läuft auch mit ausgeschaltetem Bildschirm und gesperrtem Handy. Beim Ausrollen wird GPS weiter ausgewertet. Nach **45 Sekunden zuverlässig erkanntem Stillstand** oder **15 Sekunden langsamer Bewegung ohne Motorlast** pausiert die Fahrt; Fußwege werden nicht als Fahrstrecke gezählt. Die BMS-Verbindung bleibt bestehen. Eine Fortsetzung erfordert passende GPS-Fahrgeschwindigkeit und anhaltende Motorlast. Nach **10 Minuten Pause** wird sie rückwirkend zum Pausenbeginn abgeschlossen. Geht die Verbindung während der Pause verloren, sucht die App weiter und wartet standardmäßig bis 2 Minuten nach Pausenbeginn auf eine Wiederverbindung. Die Zeiten sind je Scooter einstellbar. GPS-Ausfall allein gilt nicht als Stillstand.
 
 Mehrere gespeicherte Scooter? Die App prüft erreichbare BMS nacheinander und übernimmt das passende Profil. Während einer laufenden Fahrt bleibt die Zuordnung fest. Unbekannte BMS werden nicht ungefragt übernommen; jedes Gerät wird bei der Einrichtung einmal seinem Profil zugeordnet.
 
 Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch einer frei wählbaren Strecke und die aktuelle elektrische Leistung stehen im Mittelpunkt. Akku, Restreichweite, Kilometer und Temperaturen ergänzen die Übersicht; GPS-Geschwindigkeit bleibt als kleinere Anzeige verfügbar.
 
-### Hochformat
+### Hauptansicht · Fahrt läuft
+
+![ScootPit BMS während einer Fahrt mit Verbrauch, Leistung, Akkustand und Fahrtdaten](docs/assets/screenshots/cockpit-s20fe-android13-fahrt.jpg)
+
+<em>Aktuelle Hauptansicht während der Fahrt · Samsung Galaxy S20 FE 5G · Android 13.</em>
+
+### Weitere Ansichten
 
 ![ScootPit-Cockpit im dunklen Design im Hochformat](docs/assets/screenshots/cockpit-dunkel.jpg)
 
-<em>Dunkles Design im Hochformat · Samsung Galaxy S20 FE 5G · Android 13.</em>
+<em>Dunkles Cockpit im Hochformat · Samsung Galaxy S20 FE 5G · Android 13.</em>
 
 ![ScootPit-Cockpit im hellen Design im Hochformat](docs/assets/screenshots/cockpit-hell.jpg)
 
@@ -60,6 +66,10 @@ Am Lenker wird ScootPit zum **persönlichen Energie-Cockpit**: Der Verbrauch ein
 <p><img src="docs/assets/screenshots/fahrtenbuch-ordnerimport.jpg" width="260" alt="Fahrtenbuch mit Zeitraumwahl sowie Import des kompletten Ordners oder einzelner Fahrten"></p>
 <em>Im Fahrtenbuch kannst du einen Zeitraum wählen und den gesamten Scooter-Fahrtenordner oder einzelne CSV-/GPX-Fahrten importieren.</em>
 
+
+## Neu in 1.5.6
+
+Langsame GPS-Bewegung ohne BMS-Motorlast wird als möglicher Fußweg behandelt und nicht zur Fahrstrecke addiert. Nach der einstellbaren Verzögerung pausiert die Fahrt. Fortsetzen setzt zuverlässige GPS-Fahrgeschwindigkeit und anhaltende Motorlast voraus. Beim ersten Öffnen des Querformats werden Skalenbereiche, Farben, Farbübergänge und Skalenrichtung aus dem Hochformat übernommen; Kachelanordnung und -positionen bleiben erhalten.
 
 ## Neu in 1.5.5
 
@@ -135,4 +145,5 @@ Der Quellcode enthält keine persönlichen Geräteadressen, Fahrtdateien oder Si
 ## Lizenz
 
 Quellcode, Dokumentation und Originalgrafiken von ScootPit BMS stehen unter der [Apache-Lizenz 2.0](LICENSE). Marken und Inhalte Dritter bleiben Eigentum ihrer jeweiligen Rechteinhaber.
+
 

@@ -30,7 +30,7 @@ jobs:
           gradle-version: '8.9'
       - name: Test and build APK
         run: |
-          javac -d /tmp/joyor-tests app/src/main/java/de/wortmonster/jbdtrigger/BmsPacket.java app/src/main/java/de/wortmonster/jbdtrigger/BmsExtras.java app/src/main/java/de/wortmonster/jbdtrigger/JbdControl.java app/src/main/java/de/wortmonster/jbdtrigger/RangeEstimator.java app/src/main/java/de/wortmonster/jbdtrigger/RecentConsumption.java app/src/main/java/de/wortmonster/jbdtrigger/ScaleColorRange.java app/src/main/java/de/wortmonster/jbdtrigger/ScaleDirection.java app/src/main/java/de/wortmonster/jbdtrigger/GridPacking.java app/src/main/java/de/wortmonster/jbdtrigger/GpsPlausibility.java app/src/main/java/de/wortmonster/jbdtrigger/ConnectionPolicy.java app/src/main/java/de/wortmonster/jbdtrigger/RideMotion.java tests/*.java
+          javac -d /tmp/joyor-tests app/src/main/java/de/wortmonster/jbdtrigger/BmsPacket.java app/src/main/java/de/wortmonster/jbdtrigger/BmsExtras.java app/src/main/java/de/wortmonster/jbdtrigger/JbdControl.java app/src/main/java/de/wortmonster/jbdtrigger/RangeEstimator.java app/src/main/java/de/wortmonster/jbdtrigger/RecentConsumption.java app/src/main/java/de/wortmonster/jbdtrigger/ScaleColorRange.java app/src/main/java/de/wortmonster/jbdtrigger/ScaleDirection.java app/src/main/java/de/wortmonster/jbdtrigger/GridPacking.java app/src/main/java/de/wortmonster/jbdtrigger/GpsPlausibility.java app/src/main/java/de/wortmonster/jbdtrigger/ConnectionPolicy.java app/src/main/java/de/wortmonster/jbdtrigger/RideMotion.java app/src/main/java/de/wortmonster/jbdtrigger/RideResumeGate.java tests/*.java
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.JbdControlTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.BmsExtrasTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.BmsPacketTest
@@ -39,6 +39,7 @@ jobs:
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.ScaleColorRangeTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.ScaleDirectionTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.RideMotionTest
+          java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.RideResumeGateTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.ConnectionPolicyTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.GpsPlausibilityTest
           java -cp /tmp/joyor-tests de.wortmonster.jbdtrigger.GridPackingTest
@@ -166,4 +167,5 @@ jobs:
             --title "ScootPit BMS $VERSION" \
             --notes-file "$NOTES" \
             --target "$GITHUB_SHA"
+
 

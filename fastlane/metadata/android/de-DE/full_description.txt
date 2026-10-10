@@ -2,6 +2,7 @@ ScootPit BMS zeichnet Fahrten mit einem kompatiblen JBD/Jiabaida-Bluetooth-Batte
 
 <ul>
 <li>Verbindet sich mit einem eingerichteten BMS und zeichnet auf, sobald die eingestellten Fahrbedingungen erfüllt sind</li>
+<li>Erkennt langsame GPS-Bewegung ohne Motorlast als Fußweg, zählt sie nicht zur Scooter-Strecke und pausiert die Fahrt nach einer einstellbaren Zeit</li>
 <li>Erfasst GPS-Route, Strecke, Fahr- und Standzeit sowie Fahrtenstatistiken</li>
 <li>Zeigt Akkustand, Spannung, Strom, Leistung, Energieverbrauch, geschätzte Reichweite und Temperaturen</li>
 <li>Gestaltet das Cockpit mit Rundinstrumenten, Balken, Zahlenkacheln, Fotos und Text; Bögen lassen sich drehen, Messwerte bleiben waagerecht</li>
@@ -16,4 +17,5 @@ ScootPit BMS zeichnet Fahrten mit einem kompatiblen JBD/Jiabaida-Bluetooth-Batte
 Benötigt Android 8 oder neuer und ein kompatibles JBD/Jiabaida-Bluetooth-BMS. Entwickelt wurde die App mit dem Joyor T6e Pro und JBD SP14S004; die Kompatibilität anderer BMS-Modelle ist nicht garantiert. Bluetooth und Standortberechtigungen werden für die Gerätesuche und GPS-Aufzeichnung verwendet.
 
 Datenschutz: Profile und Fahrtdaten bleiben lokal gespeichert. Optionale Wetterabfragen senden gerundete Standortkoordinaten an Open-Meteo. Beim Öffnen einer Karte werden die sichtbaren Kartenausschnitte von OpenStreetMap geladen.
+
 

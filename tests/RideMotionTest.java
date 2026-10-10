@@ -9,6 +9,10 @@ public class RideMotionTest {
         m.reset();for(int i=0;i<=45;i++)m.fix(i*1000,0,true);check(!m.stopped(51000,45000));
         m.fix(51000,0,false);check(!m.stopped(51000,45000));
         m.reset();for(int i=0;i<90;i++)m.fix(i*1000,0,true);check(!m.stopped(89000,90000));m.fix(90000,0,true);check(m.stopped(90000,90000));
+        m.reset();for(int i=0;i<=15;i++)m.fix(i*1000,4,true,false);check(m.walking(15000,15000));
+        m.reset();for(int i=0;i<=15;i++)m.fix(i*1000,4,true,true);check(!m.walking(15000,15000));
+        check(RideMotion.likelyWalking(4,true,false));check(!RideMotion.likelyWalking(8,true,false));check(!RideMotion.likelyWalking(4,true,true));check(!RideMotion.likelyWalking(4,false,false));
         System.out.println("RideMotionTest OK");
     }
 }
+

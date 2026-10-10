@@ -1,0 +1,4 @@
+New in 1.5.6:
+- Walking without motor load is no longer counted as scooter distance
+- Improved ride pause and resume detection using GPS and BMS data
+- Copied scale values and colors from portrait to landscape
