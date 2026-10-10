@@ -39,6 +39,6 @@ Beim ersten Öffnen eines Profils wird das Hochformat auf 1.2.1 umgestellt; Foto
 Das Antippen der Tourenzähler-Kachel öffnet im normalen Cockpit die Rückfrage zum Zurücksetzen. Temperaturkacheln fordern beim Antippen eine Aktualisierung an. Im Editor öffnet das Antippen jeweils die Kacheleinstellungen.
 
 
-## Standardgestaltung ab 1.4.1
+## Standardgestaltung ab 1.5.2
 
-Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie Hoch- und Querformatlayout aus der bereinigten Cockpit-Voreinstellung. **Standardlayout** stellt diese Layouts einschließlich der bewusst überlappenden Instrumente wieder her. Bestehende Installationen und Profileinstellungen werden bei der Installation nicht überschrieben.
+Bei einer Neuinstallation übernimmt ScootPit das dunkle Design mit orangefarbenen Akzenten sowie die neuen Hoch- und Querformatlayouts. Im Querformat passt die kompakte 17-Zeilen-Anordnung Rundinstrumente, Reichweite, Fahrwerte, Zeiten und Aktionen zusammen. **Standardlayout** stellt beide Layouts einschließlich der bewusst überlappenden Instrumente wieder her. Bestehende Installationen und Profileinstellungen werden bei einem Update nicht überschrieben.

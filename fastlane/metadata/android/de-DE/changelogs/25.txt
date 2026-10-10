@@ -1,0 +1,4 @@
+Neu in 1.5.2:
+- Neues Standardcockpit im Hoch- und Querformat
+- Kompaktes Querformat mit Instrumenten, Fahrwerten, Zeiten und Aktionen
+- Persönliche Layouts bleiben bei Updates erhalten
